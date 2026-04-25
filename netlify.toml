@@ -1,0 +1,9 @@
+[build]
+  functions = "netlify/functions"
+
+# No build command needed — static site + functions
+[functions]
+  node_bundler = "esbuild"
+
+# Environment variables are set in Netlify dashboard:
+# AIRTABLE_PAT = your_personal_access_token

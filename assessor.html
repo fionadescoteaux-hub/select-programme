@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SELECT — Assessor Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#faf9f7;--bg2:#f0efeb;--bg3:#e4e3de;--card:#ffffff;
+--tp:#111;--ts2:#2d2d2a;--ts:#5a5a55;--tt:#8a8a82;
+--tb:rgba(0,0,0,0.07);--tb2:rgba(0,0,0,0.12);
+--navy:#0f2b4c;--navy-light:#e8edf3;--navy-mid:#1a3d6b;
+--teal:#0a6b5a;--teal-light:#e5f4f0;--teal-mid:#087a66;
+--coral:#c44b2b;--coral-light:#fdf0ec;
+--gold:#b8860b;--gold-light:#fdf8ec;
+--r:6px;--r2:10px;--r3:14px;
+--serif:'Playfair Display',Georgia,serif;
+--sans:'Source Sans 3',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+--bg:#141413;--bg2:#1c1c1a;--bg3:#262624;--card:#1e1e1c;
+--tp:#ece9e1;--ts2:#c5c2b8;--ts:#8f8d84;--tt:#666560;
+--tb:rgba(255,255,255,0.06);--tb2:rgba(255,255,255,0.12);
+--navy:#7aaad4;--navy-light:#162538;--navy-mid:#4d82b5;
+--teal:#5cc4a8;--teal-light:#0d2a23;--teal-mid:#4db899;
+--coral:#e87a5e;--coral-light:#2e1a14;
+--gold:#d4a84b;--gold-light:#2a2010;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--tp);margin:0;line-height:1.65;font-size:15px;-webkit-font-smoothing:antialiased}
+
+/* ═══ HEADER ═══ */
+.header{background:var(--navy);padding:28px 32px 24px;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--gold),var(--coral))}
+.header-inner{max-width:820px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-family:var(--serif);font-size:24px;color:#fff;font-weight:600}
+.header p{font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px}
+.header-nav{display:flex;gap:10px;align-items:center}
+.header-nav a{font-size:11px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.12);padding:5px 14px;border-radius:var(--r);transition:all .2s}
+.header-nav a:hover{color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.3)}
+
+.main{max-width:820px;margin:0 auto;padding:28px 24px 60px}
+
+/* ═══ DATA & ASSESSOR BAR ═══ */
+.toolbar{display:flex;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--tb);margin-bottom:20px;flex-wrap:wrap;font-size:12px;color:var(--ts)}
+.toolbar select{padding:5px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-family:var(--sans);font-size:13px;background:var(--card);color:var(--tp)}
+.dbtn{padding:5px 12px;font-size:11px;font-weight:600;border-radius:4px;border:none;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.dbtn-exp{background:var(--teal);color:#fff}
+.dbtn-imp{background:var(--bg2);color:var(--ts2);border:1px solid var(--tb2)}
+
+/* ═══ DASHBOARD — ORG GRID ═══ */
+.dash h2{font-family:var(--serif);font-size:22px;color:var(--navy);margin-bottom:16px}
+.org-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.org-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:16px;cursor:pointer;transition:all .2s;position:relative}
+.org-card:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(10,107,90,0.08);transform:translateY(-1px)}
+.org-card h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.org-card .oc-ceo{font-size:12px;color:var(--ts);margin-bottom:8px}
+.org-card .oc-status{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px}
+.os-locked{background:var(--teal-light);color:var(--teal)}.os-pending{background:var(--gold-light);color:var(--gold)}
+.org-card .oc-score{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--navy);margin-top:6px}
+.org-card .oc-score span{font-size:11px;font-weight:400;color:var(--tt)}
+/* Progress dots on card */
+.org-card .oc-progress{display:flex;gap:4px;margin-top:8px}
+.oc-dot{width:8px;height:8px;border-radius:50%;background:var(--bg3);transition:background .2s}
+.oc-dot.done{background:var(--teal)}.oc-dot.active{background:var(--gold);box-shadow:0 0 0 2px rgba(184,134,11,0.2)}
+
+/* ═══ BACK LINK ═══ */
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--teal);text-decoration:none;cursor:pointer;margin-bottom:16px;transition:color .2s}
+.back-link:hover{color:var(--teal-mid);text-decoration:underline}
+
+/* ═══ ORG HEADER ═══ */
+.org-header{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--tb)}
+.org-header h2{font-family:var(--serif);font-size:24px;color:var(--navy)}
+.org-header .oh-meta{font-size:13px;color:var(--ts);margin-top:3px}
+
+/* ═══ STEP WORKFLOW — the core UX ═══ */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:20px;align-items:flex-start;position:relative;padding-bottom:0}
+/* Vertical connector line */
+.step::before{content:'';position:absolute;left:21px;top:48px;bottom:0;width:2px;background:var(--tb2)}
+.step:last-child::before{display:none}
+
+.step-num{width:44px;height:44px;border-radius:50%;background:var(--bg3);color:var(--tt);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:20px;font-weight:700;flex-shrink:0;position:relative;z-index:1;transition:all .3s;border:2px solid transparent}
+.step-num.available{background:var(--navy);color:#fff}
+.step-num.active{background:var(--teal);color:#fff;box-shadow:0 0 0 4px rgba(10,107,90,0.15)}
+.step-num.done{background:var(--teal);color:#fff}
+.step-num.done::after{content:'\2713';position:absolute;font-size:13px;font-weight:900;font-family:var(--sans)}
+
+.step-body{flex:1;padding:8px 0 28px}
+.step-body h3{font-size:16px;font-weight:700;color:var(--tp);margin-bottom:3px;line-height:1.3}
+.step.locked .step-body h3{color:var(--tt)}
+.step-body .step-desc{font-size:13px;color:var(--ts);margin:0 0 12px;line-height:1.6}
+.step.locked .step-body .step-desc{color:var(--tt)}
+
+.step-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer;font-family:var(--sans)}
+.step-btn-primary{background:var(--navy);color:#fff}.step-btn-primary:hover{background:var(--navy-mid);transform:translateY(-1px)}
+.step-btn-teal{background:var(--teal);color:#fff}.step-btn-teal:hover{background:var(--teal-mid);transform:translateY(-1px)}
+.step-btn-ghost{background:transparent;color:var(--ts);border:1px solid var(--tb2)}.step-btn-ghost:hover{background:var(--bg2)}
+.step-btn:disabled{background:var(--bg3);color:var(--tt);cursor:not-allowed;transform:none}
+
+.step-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:3px;margin-left:8px}
+.ss-done{background:var(--teal-light);color:var(--teal)}
+.ss-inprog{background:var(--gold-light);color:var(--gold)}
+
+/* ═══ PANEL OVERLAY — slides in for each step ═══ */
+.panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:50;animation:fadeIn .2s ease}
+.panel-overlay.open{display:flex;justify-content:flex-end}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.panel{width:min(720px,100vw);height:100vh;background:var(--bg);overflow-y:auto;box-shadow:-8px 0 40px rgba(0,0,0,0.15);animation:slideIn .25s ease;position:relative}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
+.panel-head{background:var(--navy);padding:20px 28px;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between}
+.panel-head h2{font-family:var(--serif);font-size:18px;color:#fff;font-weight:600;display:flex;align-items:center;gap:10px}
+.panel-head .panel-step-num{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700}
+.panel-close{background:none;border:none;color:rgba(255,255,255,0.5);font-size:24px;cursor:pointer;padding:4px 8px;transition:color .2s}
+.panel-close:hover{color:#fff}
+
+.panel-body{padding:24px 28px 40px}
+
+/* ═══ SHARED FORM STYLES ═══ */
+.sh{font-family:var(--serif);font-size:18px;color:var(--navy);font-weight:600;margin-bottom:12px}
+.sh2{font-family:var(--serif);font-size:16px;color:var(--navy);font-weight:600;margin:20px 0 10px}
+.sh3{font-size:12px;font-weight:700;color:var(--ts2);margin:18px 0 8px;text-transform:uppercase;letter-spacing:0.4px}
+
+.card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:20px;margin-bottom:16px}
+.card-header{background:var(--navy);padding:12px 16px;border-radius:var(--r2) var(--r2) 0 0;margin:-20px -20px 16px;display:flex;align-items:center;gap:10px}
+.card-header h3{font-family:var(--serif);font-size:15px;color:#fff;font-weight:600}
+.card-header .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;color:#fff}
+.badge-found{background:var(--teal)}.badge-engine{background:var(--navy-mid)}.badge-enabler{background:var(--coral)}
+
+textarea,input[type="text"],input[type="date"]{font-family:var(--sans);font-size:13.5px;color:var(--tp);border:1px solid var(--tb2);border-radius:var(--r);padding:8px 12px;background:var(--bg);width:100%;transition:border-color .2s}
+textarea:focus,input:focus{outline:none;border-color:var(--teal);background:var(--card)}
+textarea{min-height:70px;resize:vertical}
+.field-label{font-size:12px;font-weight:600;color:var(--ts);margin-bottom:4px;display:block}
+
+/* ═══ CHECKLIST STYLES ═══ */
+.check-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--tb)}
+.check-row:last-child{border-bottom:none}
+.check-row input[type="checkbox"]{margin-top:3px;accent-color:var(--teal);width:16px;height:16px}
+.check-row label{font-size:13.5px;color:var(--ts2);cursor:pointer;flex:1}
+.check-row .ck-time{font-size:10px;color:var(--tt);margin-left:auto;white-space:nowrap}
+
+/* ═══ MATRIX TABLE ═══ */
+.tier-legend{display:flex;gap:10px;margin:12px 0 16px;flex-wrap:wrap}
+.tier-pill{padding:5px 12px;border-radius:var(--r);font-size:11px;font-weight:600;color:#fff}
+.tier-pill.found{background:var(--teal)}.tier-pill.engine{background:var(--navy)}.tier-pill.enabler{background:var(--coral)}
+
+.matrix-table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+.matrix-table th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase}
+.matrix-table td{padding:8px 10px;border-bottom:1px solid var(--tb);vertical-align:top}
+.matrix-table tr:hover{background:var(--bg2)}
+.matrix-table .tier-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;color:#fff;white-space:nowrap}
+.matrix-table select{width:60px;padding:4px;border:1px solid var(--tb2);border-radius:4px;font-family:var(--sans);font-size:13px;text-align:center}
+.matrix-table textarea{width:100%;min-height:50px;padding:6px 8px;border:1px solid var(--tb2);border-radius:4px;font-family:var(--sans);font-size:12px;resize:vertical;background:var(--bg)}
+.matrix-table textarea:focus{outline:none;border-color:var(--teal);background:var(--card)}
+.matrix-table .heat-0,.matrix-table .heat-1{background:rgba(196,75,43,0.1)}
+.matrix-table .heat-2,.matrix-table .heat-3{background:rgba(184,134,11,0.08)}
+.matrix-table .heat-4,.matrix-table .heat-5{background:rgba(10,107,90,0.08)}
+
+.summary-row{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap}
+.summary-box{flex:1;min-width:100px;background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:12px;text-align:center}
+.summary-box .val{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy)}
+.summary-box .lbl{font-size:10px;color:var(--tt);margin-top:2px;text-transform:uppercase;letter-spacing:0.3px}
+
+.weak-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.weak-chip{background:var(--coral-light);color:var(--coral);padding:4px 10px;border-radius:var(--r);font-size:11px;font-weight:600}
+
+/* ═══ VALIDATION SECTIONS ═══ */
+.val-section{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);margin-bottom:10px;overflow:hidden}
+.val-section-head{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--tb);display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .2s}
+.val-section-head:hover{background:var(--bg3)}
+.val-section-head .num{background:var(--navy);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.val-section-head .title{font-size:13.5px;font-weight:600;color:var(--ts2)}
+.val-section-body{padding:16px;display:none}
+
+/* ═══ GOALS ═══ */
+.goal-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.goal-row .num{background:var(--teal);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:8px}
+.goal-row textarea{flex:1}
+
+.priority-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.priority-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--tb2);border-radius:var(--r);cursor:pointer;font-size:12.5px;color:var(--ts2);transition:all .2s;user-select:none}
+.priority-item:hover{border-color:var(--navy)}
+.priority-item.selected{background:var(--navy-light);border-color:var(--navy);color:var(--navy);font-weight:600}
+.priority-item input{display:none}
+
+.radio-pills{display:flex;gap:6px;margin:8px 0}
+.radio-pill{padding:8px 16px;border:1px solid var(--tb2);border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;color:var(--ts2);transition:all .2s;user-select:none}
+.radio-pill:hover{border-color:var(--navy)}
+.radio-pill.selected{background:var(--navy);color:#fff;border-color:var(--navy)}
+.radio-pill input{display:none}
+
+/* ═══ LOCK ═══ */
+.lock-check{display:flex;align-items:flex-start;gap:10px;padding:10px 0;font-size:13.5px}
+.lock-check input{margin-top:3px;accent-color:var(--coral);width:16px;height:16px}
+.lock-btn{display:block;width:100%;padding:14px;background:var(--coral);color:#fff;border:none;border-radius:var(--r2);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;margin-top:16px;transition:all .2s}
+.lock-btn:hover{background:#a03a1f}
+.lock-btn:disabled{background:var(--bg3);color:var(--tt);cursor:not-allowed}
+
+/* ═══ SCORING GUIDE ═══ */
+.sg-domain{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);margin-bottom:12px;overflow:hidden}
+.sg-domain-head{background:var(--navy);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.sg-domain-head h3{font-family:var(--serif);font-size:15px;color:#fff;font-weight:600}
+.sg-domain-head .meta{font-size:11px;color:rgba(255,255,255,0.65)}
+.sg-domain-body{padding:0;max-height:0;overflow:hidden;transition:max-height .35s ease}
+.sg-domain.open .sg-domain-body{max-height:2000px;padding:14px}
+.sg-domain-head::after{content:'\25B8';color:rgba(255,255,255,0.5);font-size:14px;transition:transform .2s}
+.sg-domain.open .sg-domain-head::after{transform:rotate(90deg)}
+.sg-what{background:var(--bg2);padding:10px 14px;border-radius:var(--r);margin-bottom:12px;font-size:13px;color:var(--ts2);border-left:3px solid var(--teal)}
+.anchor-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.anchor-table th{background:var(--navy);color:#fff;padding:6px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase}
+.anchor-table td{padding:8px 10px;border-bottom:1px solid var(--tb);vertical-align:top}
+.anchor-table .score-cell{text-align:center;font-family:var(--serif);font-weight:700;font-size:18px;width:46px}
+.anchor-table .level-cell{font-weight:700;width:110px;font-size:12px}
+.anchor-table tr:nth-child(even){background:var(--bg)}
+.score-0,.score-1{color:var(--coral)}.score-2,.score-3{color:var(--gold)}.score-4,.score-5{color:var(--teal)}
+
+/* ═══ PANEL BUTTONS ═══ */
+.panel-actions{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-top:24px;padding-top:16px;border-top:1px solid var(--tb)}
+
+/* ═══ HANDOFF CTA ═══ */
+.handoff-card{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);border-radius:var(--r2);padding:24px;margin-top:24px;color:#fff;text-align:center}
+.handoff-card h3{font-family:var(--serif);font-size:18px;margin-bottom:6px}
+.handoff-card p{font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:16px}
+.handoff-card .hc-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:var(--r);font-size:14px;font-weight:700;text-decoration:none;background:#fff;color:var(--navy);transition:all .2s;border:none;cursor:pointer;font-family:var(--sans)}
+.handoff-card .hc-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.2)}
+
+/* ═══ TOAST ═══ */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200}
+.toast.show{opacity:1}
+
+/* ═══ AUTH ═══ */
+.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
+.auth-overlay.hidden{display:none}
+.auth-box{max-width:400px;width:90%;text-align:center}
+.auth-box h2{font-family:var(--serif);font-size:24px;color:var(--navy);margin-bottom:8px}
+.auth-box p{font-size:14px;color:var(--ts);margin-bottom:24px}
+.auth-box input{width:100%;padding:12px 16px;border:1px solid var(--tb2);border-radius:var(--r);font-size:15px;font-family:var(--sans);margin-bottom:12px;background:var(--card);color:var(--tp)}
+.auth-box button{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer}
+.auth-box button:hover{background:var(--navy-mid)}
+.auth-err{color:var(--coral);font-size:13px;margin-top:8px;display:none}
+
+/* ═══ PRINT ═══ */
+@media print{.header,.toolbar,.auth-overlay,.panel-overlay,.back-link,.step-btn,.handoff-card{display:none!important}}
+@media(max-width:640px){
+  .header-inner{flex-direction:column;align-items:flex-start;gap:8px}
+  .org-grid{grid-template-columns:1fr}
+  .priority-grid{grid-template-columns:1fr}
+  .panel{width:100vw}
+  .summary-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ AUTH ═══════════════════ -->
+<div class="auth-overlay" id="authOverlay">
+<div class="auth-box">
+<h2>Assessor Portal</h2>
+<p>Internal use only — Fiona &amp; Clodagh</p>
+<input type="password" id="authPw" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
+<button onclick="doAuth()">Continue</button>
+<div class="auth-err" id="authErr">Incorrect password.</div>
+</div>
+</div>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<div class="header">
+<div class="header-inner">
+<div>
+<h1>Assessor Portal</h1>
+<p>SELECT · Baseline Assessment Phase · April–May 2026</p>
+</div>
+<div class="header-nav">
+<a href="/tracker">SMART Tracker</a>
+<a href="/team">Programme Team</a>
+</div>
+</div>
+</div>
+
+<div class="main">
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+<span style="font-weight:600">Assessor:</span>
+<select id="assessorSelect"><option value="">Select…</option><option value="Fiona">Fiona</option><option value="Clodagh">Clodagh</option></select>
+<span style="margin-left:auto"></span>
+<button class="dbtn dbtn-exp" onclick="exportData()">Export JSON</button>
+<button class="dbtn dbtn-imp" onclick="document.getElementById('impFile').click()">Import</button>
+<input type="file" id="impFile" accept=".json" onchange="importData(event)" style="display:none">
+</div>
+
+<!-- ═══════════════════ DASHBOARD VIEW ═══════════════════ -->
+<div id="dashView">
+<div class="dash">
+<h2>Organisations</h2>
+<div class="org-grid" id="orgGrid"></div>
+</div>
+</div>
+
+<!-- ═══════════════════ ORG WORKFLOW VIEW ═══════════════════ -->
+<div id="orgView" style="display:none">
+<a class="back-link" onclick="showDash()">← All organisations</a>
+
+<div class="org-header">
+<h2 id="ovName"></h2>
+<div class="oh-meta" id="ovMeta"></div>
+</div>
+
+<!-- THE 5-STEP WORKFLOW -->
+<div class="steps" id="stepsContainer">
+
+<!-- Step 1 -->
+<div class="step" id="step1wrap">
+<div class="step-num available" id="sn1">1</div>
+<div class="step-body">
+<h3>Receive CEO Submission <span class="step-status ss-done" id="ss1" style="display:none">Complete</span></h3>
+<p class="step-desc">CEO submits their assessment via Formspree. Log receipt, read end-to-end, and tick off pre-work items.</p>
+<button class="step-btn step-btn-primary" onclick="openPanel('checklist')">Open Checklist →</button>
+</div>
+</div>
+
+<!-- Step 2 -->
+<div class="step" id="step2wrap">
+<div class="step-num" id="sn2">2</div>
+<div class="step-body">
+<h3>Score in the Rating Matrix <span class="step-status ss-done" id="ss2" style="display:none">Complete</span></h3>
+<p class="step-desc">Score each of 9 domains (0–5) with evidence notes. Weighted scores auto-calculate. Use the Scoring Guide alongside.</p>
+<button class="step-btn step-btn-primary" id="btn2" onclick="openPanel('matrix')">Open Rating Matrix →</button>
+<button class="step-btn step-btn-ghost" onclick="openPanel('scoring')">Scoring Guide</button>
+</div>
+</div>
+
+<!-- Step 3 -->
+<div class="step" id="step3wrap">
+<div class="step-num" id="sn3">3</div>
+<div class="step-body">
+<h3>Run Validation Meeting <span class="step-status ss-done" id="ss3" style="display:none">Complete</span></h3>
+<p class="step-desc">2–3 hours with CEO. Probing questions pre-loaded by theme. Test assumptions, explore constraints, adjust scores if new evidence emerges (once only).</p>
+<button class="step-btn step-btn-primary" id="btn3" onclick="openPanel('validation')">Open Validation Notes →</button>
+</div>
+</div>
+
+<!-- Step 4 -->
+<div class="step" id="step4wrap">
+<div class="step-num" id="sn4">4</div>
+<div class="step-body">
+<h3>Agree Problem Statement &amp; Goals <span class="step-status ss-done" id="ss4" style="display:none">Complete</span></h3>
+<p class="step-desc">With CEO: define the commercial problem, set 3 goals, write SMART objectives, choose priority domains and programme intensity.</p>
+<button class="step-btn step-btn-primary" id="btn4" onclick="openPanel('goals')">Open Goals →</button>
+</div>
+</div>
+
+<!-- Step 5 -->
+<div class="step" id="step5wrap">
+<div class="step-num" id="sn5">5</div>
+<div class="step-body">
+<h3>Lock Baseline <span class="step-status ss-done" id="ss5" style="display:none">Locked</span></h3>
+<p class="step-desc">Confirm all checks, lock the baseline (irreversible), then issue CEO Feedback within 48 hours. Data flows directly to the SMART Tracker.</p>
+<button class="step-btn step-btn-teal" id="btn5" onclick="openPanel('lock')">Open Lock →</button>
+</div>
+</div>
+
+</div><!-- /steps -->
+
+<!-- After baseline lock — handoff -->
+<div class="handoff-card" id="handoffCard" style="display:none">
+<h3>Baseline Locked ✓</h3>
+<p>This organisation's baseline is complete. All data is already synced to the SMART Tracker for 9 months of programme delivery.</p>
+<a class="hc-btn" href="/tracker">Open SMART Tracker →</a>
+</div>
+
+</div><!-- /orgView -->
+
+</div><!-- /main -->
+
+<!-- ═══════════════════ PANEL OVERLAY ═══════════════════ -->
+<div class="panel-overlay" id="panelOverlay">
+<div class="panel" id="panel">
+<div class="panel-head">
+<h2 id="panelTitle"><span class="panel-step-num" id="panelStepNum">1</span> <span id="panelTitleText">Checklist</span></h2>
+<button class="panel-close" onclick="closePanel()">&times;</button>
+</div>
+<div class="panel-body" id="panelBody"></div>
+</div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+<div id="syncStatus" class="sync-status" style="display:none"></div>
+<style>
+.sync-status{position:fixed;top:0;left:50%;transform:translateX(-50%);padding:4px 16px;font-size:11px;font-weight:600;font-family:var(--sans);border-radius:0 0 6px 6px;z-index:300;letter-spacing:0.3px;transition:all .3s}
+.sync-info{background:var(--navy);color:rgba(255,255,255,0.85)}
+.sync-ok{background:var(--teal);color:#fff}
+.sync-warn{background:var(--gold);color:#fff}
+.sync-err{background:var(--coral);color:#fff}
+</style>
+
+<script src="airtable-data.js"></script>
+<script>
+/* ════════════════════════════════════════════
+   SHARED DATA STORE — Airtable-backed with localStorage cache
+   ════════════════════════════════════════════ */
+var STORE_KEY='select_tracker_v4';
+var currentOrg=null;
+var selectedIntensity='';
+var currentPanel=null;
+
+function loadData(){return AT.loadDataSync();}
+function saveData(d){AT.saveData(d, currentOrg);}
+function getOrg(code){var data=loadData();return data.orgs.find(function(o){return o.code===code;})||null;}
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+/* ════════════════════════════════════════════
+   DOMAIN DATA (9 domains, 3 tiers)
+   ════════════════════════════════════════════ */
+var D = [
+{n:1,name:'Business Model & Revenue Mix',wt:15,tier:'Foundation',mult:1.5,
+ what:'Income diversification, concentration risk, predictability and forward visibility of revenue.',
+ qs:['Q1.1 — Income split (trading, contracts, grants, other) and greatest risk if lost.','Q1.2 — Which income streams are recurring/predictable vs one-off/uncertain.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No documented income breakdown. Revenue sources unknown or entirely grant-dependent. No visibility of forward income.'},
+  {s:1,l:'Minimal Awareness',d:'Basic awareness that trading income exists but no breakdown available. Revenue almost entirely from one source. No forward visibility beyond current month.'},
+  {s:2,l:'Emerging Structure',d:'Income breakdown exists but is approximate or outdated. Heavy reliance on 1–2 sources (>70% from top source). Some awareness of concentration risk but no mitigation.'},
+  {s:3,l:'Defined Model',d:'Documented income breakdown across 3+ sources with reasonable accuracy. Concentration risk acknowledged. Some recurring income (20–40%). Forward visibility of 3–6 months.'},
+  {s:4,l:'Structured & Evidenced',d:'Clear, current revenue breakdown with verified data. No single source exceeds 50%. Recurring/predictable income ≥40%. Forward pipeline visible 6–12 months. Active concentration reduction plans.'},
+  {s:5,l:'Optimised & Scalable',d:'Fully diversified revenue model with strong recurring base (≥60%). Concentration risk managed and monitored. 12+ month forward visibility. Revenue mix actively managed as a strategic tool.'}
+]},
+{n:2,name:'Products & Unit Economics',wt:15,tier:'Foundation',mult:1.5,
+ what:'Pricing logic, cost visibility, margin awareness and portfolio performance.',
+ qs:['Q2.1 — Active products/services listed with pricing method.','Q2.2 — Which offerings make money, break even, or lose money.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No product/service listing. Pricing not documented. No awareness of cost to deliver or margins.'},
+  {s:1,l:'Minimal Awareness',d:'Products/services exist but are not formally listed. Pricing is reactive or set by gut feel. No cost-to-deliver data. Margin awareness absent.'},
+  {s:2,l:'Emerging Structure',d:'Basic product/service list exists. Pricing follows one method without market validation. Approximate awareness of which offerings lose money. No formal margin tracking.'},
+  {s:3,l:'Defined Model',d:'Products/services documented with pricing rationale. At least one pricing method is structured. General understanding of profitable vs loss-making offerings. Some cost data available.'},
+  {s:4,l:'Structured & Evidenced',d:'Full portfolio documented with pricing methodology per product/service. Cost-to-deliver tracked for core offerings. Margin data available and reviewed. Scale/fix/stop decisions being made.'},
+  {s:5,l:'Optimised & Scalable',d:'Portfolio actively managed with unit economics per offering. Full cost visibility. Margins tracked and benchmarked. Pricing tested and optimised. Clear portfolio strategy.'}
+]},
+{n:3,name:'Financial Management & Cash',wt:15,tier:'Foundation',mult:1.5,
+ what:'Quality of management accounts, forecasting discipline, cash visibility and runway clarity.',
+ qs:['Q3.1 — Financial tools in use, cashflow tracking, months of runway.','Q3.2 — Confidence in current financial forecasts.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No financial records beyond statutory accounts. No budgets, forecasts or cash tracking. Runway unknown.'},
+  {s:1,l:'Minimal Awareness',d:'Annual accounts exist but are significantly dated. No management accounts. No cashflow tracking. Runway unknown or guessed.'},
+  {s:2,l:'Emerging Structure',d:'Basic financial tracking in place (e.g. annual budget). Cash position known approximately. No formal forecasting. Runway estimated but not monitored.'},
+  {s:3,l:'Defined Model',d:'Management accounts produced (at least quarterly). Budget in place. Cashflow tracked monthly. Runway known (3–6 months visibility). Some forecasting attempted.'},
+  {s:4,l:'Structured & Evidenced',d:'Monthly management accounts with variance reporting. Active cashflow management and 6–12 month forecasting. Runway clearly quantified. Financial data informs decisions.'},
+  {s:5,l:'Optimised & Scalable',d:'Full financial management suite: monthly accounts, rolling forecasts, scenario planning, cash management. 12+ month visibility. Investment-ready reporting. Board receives financial dashboard.'}
+]},
+{n:4,name:'Commercial Strategy & Market Focus',wt:10,tier:'Engine',mult:1.0,
+ what:'Paying customer clarity, strength of value proposition and evidence of repeatable demand.',
+ qs:['Q4.1 — What commercial success looks like in 12 months and 2–3 years.','Q4.2 — Who pays and strongest evidence of demand.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No commercial strategy articulated. No clarity on who pays or why. No evidence of demand.'},
+  {s:1,l:'Minimal Awareness',d:'Vague sense of market opportunity but nothing documented. Customer base undefined. Demand assumed rather than evidenced.'},
+  {s:2,l:'Emerging Structure',d:'Some commercial ambition articulated but not documented as strategy. Demand based on anecdotal evidence. Limited differentiation.'},
+  {s:3,l:'Defined Model',d:'12-month commercial goals documented. Priority customer segments identified. Some evidence of demand (paying customers, contracts, or pilots). Value proposition articulated.'},
+  {s:4,l:'Structured & Evidenced',d:'Clear strategy with 12-month and 2–3 year horizons. Target segments defined with buyer evidence. Repeatable demand demonstrated. Competitive positioning understood.'},
+  {s:5,l:'Optimised & Scalable',d:'Robust commercial strategy with multi-year trajectory. Deep customer insight. Strong, evidenced repeatable demand. Clear competitive advantage. Market sizing completed.'}
+]},
+{n:5,name:'Go-To-Market & Sales',wt:10,tier:'Engine',mult:1.0,
+ what:'Sales ownership, pipeline visibility, conversion process and systemisation.',
+ qs:['Q5.1 — How customers find, engage, buy; founder-led vs systemised.','Q5.2 — Digital channels in use; % revenue from repeat customers.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No sales process. No pipeline or conversion tracking. No digital presence. Revenue entirely reactive.'},
+  {s:1,l:'Minimal Awareness',d:'Sales happen but are entirely founder-led and undocumented. No pipeline tracking. Digital presence minimal. Repeat business not tracked.'},
+  {s:2,l:'Emerging Structure',d:'Some sales activity with informal process. Founder-dependent. Basic digital channels in use. No CRM. Repeat customer % unknown.'},
+  {s:3,l:'Defined Model',d:'Sales process broadly understood and partially documented. Pipeline exists. Some delegation. 2–3 digital channels active. Repeat rate known approximately.'},
+  {s:4,l:'Structured & Evidenced',d:'Documented sales process others could follow. Pipeline tracked. CRM in use. Multiple digital channels monitored. Repeat rate tracked (≥40%). Sales not wholly founder-dependent.'},
+  {s:5,l:'Optimised & Scalable',d:'Systemised sales engine with defined process, pipeline management, conversion metrics. Sales operates independently of founder. Digital channels integrated. Retention strategy active.'}
+]},
+{n:6,name:'Operations & Delivery Capacity',wt:10,tier:'Engine',mult:1.0,
+ what:'Delivery model robustness, bottlenecks, scalability and systemisation.',
+ qs:['Q6.1 — What currently limits ability to deliver more.','Q6.2 — What would stop if CEO stepped away for 3 months.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No defined delivery model. Operations entirely ad hoc. Everything depends on one person.'},
+  {s:1,l:'Minimal Awareness',d:'Delivery happens but is undocumented and reactive. Key-person dependency acknowledged but unaddressed. Operations would collapse if CEO stepped away.'},
+  {s:2,l:'Emerging Structure',d:'Delivery model broadly understood. Key bottlenecks identified. Significant key-person risk remains. No contingency planning.'},
+  {s:3,l:'Defined Model',d:'Delivery model documented at a basic level. Bottlenecks being addressed. At least one other person can deliver core service. 3-month CEO absence would cause disruption but not collapse.'},
+  {s:4,l:'Structured & Evidenced',d:'Delivery model documented with roles and processes. Bottlenecks have mitigation plans. Team can operate for extended period without CEO. Scalability constraints understood.'},
+  {s:5,l:'Optimised & Scalable',d:'Robust delivery infrastructure with documented processes, clear roles, capacity planning. Key-person risk fully mitigated. Delivery independent of any single individual. Growth capacity modelled.'}
+]},
+{n:7,name:'Cross-Border Readiness',wt:10,tier:'Engine',mult:1.0,
+ what:'Evidence of cross-border activity, opportunity, partnerships, and barrier awareness (NI ↔ ROI focus).',
+ qs:['Q7.1 — Current cross-border activity, opportunity, and partnerships explored.','Q7.2 — Barriers to cross-border trade.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No cross-border activity or awareness. Has not considered selling outside home jurisdiction.'},
+  {s:1,l:'Minimal Awareness',d:'Vague interest in cross-border but no activity. No market research or partnerships explored. Barriers not identified.'},
+  {s:2,l:'Emerging Structure',d:'Some cross-border interest with initial exploration. Barriers broadly identified but not addressed. No active cross-border revenue.'},
+  {s:3,l:'Defined Model',d:'Active exploration with some evidence (pilot, partnership, or small revenue). Key barriers identified and at least one being addressed. Some cross-border revenue (<10%).'},
+  {s:4,l:'Structured & Evidenced',d:'Established cross-border activity with recurring revenue or active partnerships. Barriers understood with mitigation underway. Cross-border 10–25% of activity. Compliance basics addressed.'},
+  {s:5,l:'Optimised & Scalable',d:'Cross-border is core to the business model (>25% of revenue). Markets validated. Partnerships active. Regulatory requirements met. Scaling plan in place.'}
+]},
+{n:8,name:'Leadership & Execution Capacity',wt:10,tier:'Enabler',mult:0.5,
+ what:'CEO time allocation, commercial delegation, impact evidence, and leadership bandwidth.',
+ qs:['Q8.1 — Where CEO spends most time vs where they should spend more.','Q8.2 — Evidence of social impact that buyers/funders/investors would accept.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'CEO cannot articulate time allocation. No delegation. No impact evidence. Organisation is the CEO.'},
+  {s:1,l:'Minimal Awareness',d:'CEO aware they are overstretched but no plan to address it. Time consumed by delivery. No impact data. Delegation non-existent.'},
+  {s:2,l:'Emerging Structure',d:'CEO can identify where time goes (delivery-heavy). Some awareness of delegation need. Impact evidence anecdotal. Leadership bandwidth limits growth.'},
+  {s:3,l:'Defined Model',d:'CEO actively managing time allocation with intent to shift toward strategy/sales. Some delegation. Impact data collected in some form. Can articulate what needs to change.'},
+  {s:4,l:'Structured & Evidenced',d:'CEO spending meaningful time on strategy. Delegation working for core operations. Impact evidence structured and presentable. Team supports execution.'},
+  {s:5,l:'Optimised & Scalable',d:'CEO operates as commercial leader with strategic focus. Strong delegation. Impact evidence robust, data-driven, investment-ready. Organisation not dependent on CEO for day-to-day.'}
+]},
+{n:9,name:'Organisational Readiness',wt:5,tier:'Enabler',mult:0.5,
+ what:'Governance structure, commercial oversight, risk awareness, systems, and compliance readiness.',
+ qs:['Q9.1 — Governance structure, review frequency, who approves major decisions.','Q9.2 — Top 2–3 commercial risks; regulatory/procurement requirements that could block growth.'],
+ anchors:[
+  {s:0,l:'No Evidence',d:'No governance structure. No risk register. No commercial oversight. No systems. Compliance position unknown.'},
+  {s:1,l:'Minimal Awareness',d:'Nominal governance (board exists on paper). No regular commercial review. Risks not documented. Systems absent or manual.'},
+  {s:2,l:'Emerging Structure',d:'Governance exists but commercial oversight limited. Board meets but does not review commercial performance data. Top risks informally known. Basic systems (spreadsheets).'},
+  {s:3,l:'Defined Model',d:'Board/advisory group meets regularly with some commercial agenda. Performance reviewed at least quarterly. Top 2–3 risks identified. Basic KPI tracking. Key compliance requirements known.'},
+  {s:4,l:'Structured & Evidenced',d:'Active governance with regular commercial oversight. Board challenges commercial strategy. Risk register maintained. KPIs tracked. Compliance met. Decision rights clear.'},
+  {s:5,l:'Optimised & Scalable',d:'Strong governance providing genuine commercial challenge. Board has commercial expertise. Risk actively managed. Full MIS. Procurement-ready. Data-led decision-making culture.'}
+]}
+];
+
+var CK = [
+  {phase:'CEO INPUT (PRE-WORK)',items:['CEO pre-work issued (assessment sent, deadline set, meeting date scheduled)','CEO pre-work returned (assessment completed, supporting docs received)','CEO submission logged and saved to organisation folder']},
+  {phase:'INTERNAL SCORING (DRAFT BASELINE)',items:['CEO submission read end-to-end (no scoring on first read)','Draft internal scoring completed (one score 0–5 per domain, evidence notes captured)','Draft baseline calculated (weighted scores, overall %, maturity label)','Priority issues identified (bottom 3 weighted domains, red flags noted)']},
+  {phase:'VALIDATION MEETING',items:['Validation meeting held (CEO present, focused on priority domains only)','Assumptions tested (evidence clarified, inconsistencies explored, root constraints identified)','Score adjustments made if required (adjust once only, based on new evidence)']},
+  {phase:'BASELINE LOCK',items:['Final baseline confirmed (scores finalised, overall % and maturity label confirmed)','Baseline locked (file saved, no further edits permitted)']},
+  {phase:'PROGRAMME ALIGNMENT',items:['Priority focus areas agreed internally (2–3 domains, intensity level noted)','CEO summary prepared (maturity level, strengths, constraints, focus areas stated)','CEO summary issued (sent within 48 hours, clear next steps outlined)']},
+  {phase:'ONGOING USE & EVALUATION',items:['Baseline referenced in programme delivery','Endline scheduled']}
+];
+
+var VS = [
+  {num:1,title:'Test Accuracy of Self-Assessment',purpose:'Whether the CEO\u2019s self-completion reflects reality today.',qs:['What felt most accurate when you completed the assessment?','What felt uncomfortable or exposed?','What surprised you?']},
+  {num:2,title:'Identify the Real Commercial Constraints',purpose:'Which issues are symptoms versus root constraints.',qs:['Where does ambition currently exceed capacity?','What breaks first when activity increases?','Which part of the model feels most fragile?']},
+  {num:3,title:'Stress-Test Resilience Under Pressure',purpose:'How the organisation performs under growth or shock.',qs:['What would fail first if income dropped by 20%?','What assumptions underpin current delivery or pricing?','Which risk feels under-discussed?']},
+  {num:4,title:'Assess Governance & Decision-Making',purpose:'Whether governance supports or constrains commercial progress.',qs:['What is the board\u2019s role in commercial decisions?','When was the last time the board challenged a commercial plan?','Who would take over if you stepped back for 6 months?']},
+  {num:5,title:'Probe the Commercial Problem Statement',purpose:'Whether the CEO can articulate the core constraint clearly.',qs:['If you could only fix one thing in the next 12 months, what would it be?','What has stopped you fixing it before now?','What would change if this constraint were removed?']}
+];
+
+/* ════════════════════════════════════════════
+   AUTH
+   ════════════════════════════════════════════ */
+function doAuth(){
+  var pw=document.getElementById('authPw').value;
+  if(pw==='SELECT2026'){
+    AT.setAuth(pw);
+    document.getElementById('authOverlay').classList.add('hidden');
+    // Load from Airtable (async) then render
+    AT.loadData(function(data){
+      showDash();
+    });
+    // Also show dash immediately with cache while Airtable loads
+    showDash();
+    return;
+  }
+  document.getElementById('authErr').style.display='block';
+}
+
+/* ════════════════════════════════════════════
+   DASHBOARD
+   ════════════════════════════════════════════ */
+function showDash(){
+  document.getElementById('dashView').style.display='block';
+  document.getElementById('orgView').style.display='none';
+  currentOrg=null;
+  renderOrgGrid();
+}
+
+function renderOrgGrid(){
+  var data=loadData();var grid=document.getElementById('orgGrid');
+  if(!data.orgs||!data.orgs.length){
+    grid.innerHTML='<p style="color:var(--ts);font-size:14px;grid-column:1/-1">No organisations found. Add them in the <a href="/tracker" style="color:var(--teal)">SMART Tracker</a> first.</p>';
+    return;
+  }
+  var html='';
+  data.orgs.forEach(function(o){
+    var locked=o.baselineLocked;
+    var score=calcScore(o);
+    var progress=getStepProgress(o);
+    html+='<div class="org-card" onclick="openOrg(\''+o.code+'\')">';
+    html+='<h3>'+esc(o.name)+'</h3>';
+    html+='<div class="oc-ceo">'+esc(o.ceo)+' · '+(o.kpi&&o.kpi.jurisdiction?o.kpi.jurisdiction:'')+'</div>';
+    html+='<span class="oc-status '+(locked?'os-locked':'os-pending')+'">'+(locked?'Baseline Locked':'Pending')+'</span>';
+    if(o.intensity) html+=' <span class="oc-status" style="background:var(--navy-light);color:var(--navy)">'+o.intensity+'</span>';
+    html+='<div class="oc-score">'+score.score+' <span>'+score.pct+' · '+score.label+'</span></div>';
+    // Progress dots for the 5 steps
+    html+='<div class="oc-progress">';
+    for(var i=1;i<=5;i++){
+      var cls='oc-dot';
+      if(progress[i]==='done') cls+=' done';
+      else if(progress[i]==='active') cls+=' active';
+      html+='<div class="'+cls+'" title="Step '+i+'"></div>';
+    }
+    html+='</div>';
+    html+='</div>';
+  });
+  grid.innerHTML=html;
+}
+
+function calcScore(org){
+  if(!org.baseline) return{score:'—',pct:'—',label:'Not scored'};
+  var totalWtd=0,totalWt=0,allScored=true;
+  D.forEach(function(d,i){
+    var b=org.baseline[i];
+    if(!b||b.score===''||b.score===undefined){allScored=false;return;}
+    var v=parseFloat(b.score);
+    var wtd=v*(d.wt/100)*d.mult;
+    totalWtd+=wtd;totalWt+=d.wt/100*d.mult;
+  });
+  if(!allScored) return{score:'—',pct:'—',label:'Incomplete'};
+  var overall=totalWtd/totalWt;
+  var pct=(overall/5*100);
+  var label=pct>=90?'Optimised':pct>=75?'Embedded':pct>=60?'Defined':pct>=40?'Emerging':'Fragile';
+  return{score:overall.toFixed(2),pct:pct.toFixed(1)+'%',label:label};
+}
+
+/* ════════════════════════════════════════════
+   STEP PROGRESS — determines which steps are done/active
+   ════════════════════════════════════════════ */
+function getStepProgress(org){
+  var p={1:'',2:'',3:'',4:'',5:''};
+  var a=org.assessor||{};
+  var ck=a.checklist||{};
+
+  // Step 1: checklist items 0-2 (CEO INPUT phase) done?
+  var step1Done=(ck.ck0&&ck.ck1&&ck.ck2);
+
+  // Step 2: all 9 domains scored?
+  var allScored=true;
+  if(org.baseline){
+    D.forEach(function(d,i){
+      if(!org.baseline[i]||org.baseline[i].score===''||org.baseline[i].score===undefined) allScored=false;
+    });
+  }else{allScored=false;}
+
+  // Step 3: validation meeting checkbox (ck7) + at least one note
+  var vd=a.validation||{};
+  var hasNotes=false;
+  VS.forEach(function(v){if(vd['vn'+v.num]) hasNotes=true;});
+  var step3Done=!!ck.ck7&&hasNotes;
+
+  // Step 4: problem statement filled + at least 1 goal
+  var g=a.goals||{};
+  var step4Done=!!(g.g_problem&&(g.g_goal1||g.g_goal2||g.g_goal3));
+
+  // Step 5: locked
+  var step5Done=!!org.baselineLocked;
+
+  // Set states
+  if(step5Done){p[1]='done';p[2]='done';p[3]='done';p[4]='done';p[5]='done';}
+  else if(step4Done){p[1]='done';p[2]='done';p[3]='done';p[4]='done';p[5]='active';}
+  else if(step3Done){p[1]='done';p[2]='done';p[3]='done';p[4]='active';}
+  else if(allScored){p[1]='done';p[2]='done';p[3]='active';}
+  else if(step1Done){p[1]='done';p[2]='active';}
+  else{p[1]='active';}
+
+  return p;
+}
+
+/* ════════════════════════════════════════════
+   OPEN ORG — show step workflow
+   ════════════════════════════════════════════ */
+function openOrg(code){
+  var org=getOrg(code);if(!org) return;
+  currentOrg=code;
+  document.getElementById('dashView').style.display='none';
+  document.getElementById('orgView').style.display='block';
+  document.getElementById('ovName').textContent=org.name;
+  document.getElementById('ovMeta').textContent='CEO: '+org.ceo+' · '+org.code+(org.kpi?' · '+(org.kpi.jurisdiction||''):'')+(org.intensity?' · '+org.intensity:'');
+
+  // Ensure baseline array
+  if(!org.baseline||org.baseline.length!==9){
+    org.baseline=D.map(function(d){return{domain:d.name,score:'',evidence:''};});
+  }
+  if(!org.assessor) org.assessor={checklist:{},validation:{},goals:{},lock:{}};
+
+  updateStepUI(org);
+}
+
+function updateStepUI(org){
+  var progress=getStepProgress(org);
+  var locked=org.baselineLocked;
+
+  for(var i=1;i<=5;i++){
+    var sn=document.getElementById('sn'+i);
+    var ss=document.getElementById('ss'+i);
+    sn.className='step-num';
+
+    if(progress[i]==='done'){
+      sn.classList.add('done');
+      sn.innerHTML='✓';
+      ss.style.display='inline-flex';
+    }else if(progress[i]==='active'){
+      sn.classList.add('active');
+      sn.innerHTML=i;
+      ss.style.display='none';
+    }else{
+      sn.classList.add('available');
+      sn.innerHTML=i;
+      ss.style.display='none';
+    }
+  }
+
+  // Show handoff card if locked
+  document.getElementById('handoffCard').style.display=locked?'block':'none';
+}
+
+/* ════════════════════════════════════════════
+   PANEL SYSTEM — slide-over panels
+   ════════════════════════════════════════════ */
+function openPanel(type){
+  if(!currentOrg) return;
+  currentPanel=type;
+  var org=getOrg(currentOrg);if(!org) return;
+  if(!org.assessor) org.assessor={checklist:{},validation:{},goals:{},lock:{}};
+  if(!org.baseline||org.baseline.length!==9){
+    org.baseline=D.map(function(d){return{domain:d.name,score:'',evidence:''};});
+  }
+
+  var titles={checklist:'Process Checklist',matrix:'Rating Matrix',validation:'Validation Meeting',goals:'Problem & Goals',lock:'Baseline Lock',scoring:'Scoring Reference Guide'};
+  var steps={checklist:'1',matrix:'2',validation:'3',goals:'4',lock:'5',scoring:'⚙'};
+
+  document.getElementById('panelStepNum').textContent=steps[type]||'';
+  document.getElementById('panelTitleText').textContent=titles[type]||type;
+
+  var body=document.getElementById('panelBody');
+  body.innerHTML='';
+
+  switch(type){
+    case 'checklist': buildChecklistPanel(body,org); break;
+    case 'matrix': buildMatrixPanel(body,org); break;
+    case 'validation': buildValidationPanel(body,org); break;
+    case 'goals': buildGoalsPanel(body,org); break;
+    case 'lock': buildLockPanel(body,org); break;
+    case 'scoring': buildScoringPanel(body); break;
+  }
+
+  document.getElementById('panelOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closePanel(){
+  // Auto-save on close
+  if(currentOrg&&currentPanel&&currentPanel!=='scoring'){
+    saveOrg();
+  }
+  document.getElementById('panelOverlay').classList.remove('open');
+  document.body.style.overflow='';
+  currentPanel=null;
+
+  // Refresh step UI
+  if(currentOrg){
+    var org=getOrg(currentOrg);
+    if(org) updateStepUI(org);
+  }
+}
+
+// Close on overlay click (not panel itself)
+document.getElementById('panelOverlay').addEventListener('click',function(e){
+  if(e.target===this) closePanel();
+});
+
+/* ════════════════════════════════════════════
+   BUILD PANELS
+   ════════════════════════════════════════════ */
+
+/* --- CHECKLIST --- */
+function buildChecklistPanel(body,org){
+  var a=org.assessor||{};var ck=a.checklist||{};
+  var h='<h3 class="sh">Process Checklist</h3>';
+  h+='<p style="font-size:13px;color:var(--ts);margin-bottom:16px">Track each phase of the baseline process. Timestamps are recorded automatically.</p>';
+  h+='<div class="card" id="checklistCard">';
+  var idx=0;
+  CK.forEach(function(phase){
+    h+='<div class="sh3">'+phase.phase+'</div>';
+    phase.items.forEach(function(item){
+      var checked=ck['ck'+idx]?'checked':'';
+      var ts=ck['ck'+idx+'_ts']||'';
+      var tsDisplay='';
+      if(ts){var d=new Date(ts);tsDisplay=d.toLocaleDateString('en-IE',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-IE',{hour:'2-digit',minute:'2-digit'});}
+      h+='<div class="check-row"><input type="checkbox" id="ck'+idx+'" '+checked+' onchange="stampCheck('+idx+',this.checked)"><label for="ck'+idx+'">'+item+'</label><span class="ck-time" id="ckt'+idx+'"'+(ts?' data-ts="'+ts+'"':'')+'>'+tsDisplay+'</span></div>';
+      idx++;
+    });
+  });
+  h+='</div>';
+  h+='<div class="panel-actions"><button class="step-btn step-btn-teal" onclick="saveOrg();showToast(\'Checklist saved\')">Save</button><button class="step-btn step-btn-primary" onclick="saveOrg();closePanel();setTimeout(function(){openPanel(\'matrix\')},300)">Save & Next: Rating Matrix →</button></div>';
+  body.innerHTML=h;
+}
+
+function stampCheck(idx,checked){
+  var el=document.getElementById('ckt'+idx);
+  if(checked){var now=new Date();el.textContent=now.toLocaleDateString('en-IE',{day:'numeric',month:'short'})+' '+now.toLocaleTimeString('en-IE',{hour:'2-digit',minute:'2-digit'});el.dataset.ts=now.toISOString();}
+  else{el.textContent='';el.dataset.ts='';}
+}
+
+/* --- MATRIX --- */
+function buildMatrixPanel(body,org){
+  var h='<h3 class="sh">Rating Matrix</h3>';
+  h+='<div class="tier-legend"><span class="tier-pill found">Foundation ×1.5 — D1–3</span><span class="tier-pill engine">Engine ×1.0 — D4–7</span><span class="tier-pill enabler">Enabler ×0.5 — D8–9</span></div>';
+  h+='<p style="font-size:12px;color:var(--ts);margin-bottom:12px">Score each domain 0–5. Evidence notes are required. <a href="#" onclick="event.preventDefault();closePanel();setTimeout(function(){openPanel(\'scoring\')},300)" style="color:var(--teal);font-weight:600">Open Scoring Guide</a></p>';
+  h+='<table class="matrix-table"><thead><tr><th>#</th><th>Domain</th><th>Tier</th><th>Score</th><th>Wtd</th><th style="width:38%">Evidence</th></tr></thead><tbody id="matrixBody">';
+
+  D.forEach(function(d,i){
+    var tc=d.tier==='Foundation'?'found':d.tier==='Engine'?'engine':'enabler';
+    var score=org.baseline[i]?org.baseline[i].score:'';
+    var evidence=org.baseline[i]?org.baseline[i].evidence||'':'';
+    h+='<tr id="mrow'+d.n+'">';
+    h+='<td style="font-weight:700">'+d.n+'</td><td>'+d.name+'</td>';
+    h+='<td><span class="tier-badge badge-'+tc+'">'+d.tier+'</span></td>';
+    h+='<td><select id="ms'+d.n+'" onchange="calcMatrix()"><option value="">-</option>';
+    for(var s=0;s<=5;s++) h+='<option value="'+s+'"'+(score!==''&&parseInt(score)===s?' selected':'')+'>'+s+'</option>';
+    h+='</select></td>';
+    h+='<td id="mw'+d.n+'" style="font-weight:700;text-align:center">—</td>';
+    h+='<td><textarea id="me'+d.n+'" placeholder="Evidence…">'+esc(evidence)+'</textarea></td>';
+    h+='</tr>';
+  });
+
+  h+='</tbody></table>';
+  h+='<div class="summary-row"><div class="summary-box"><div class="val" id="sumScore">—</div><div class="lbl">Score (/5)</div></div><div class="summary-box"><div class="val" id="sumPct">—</div><div class="lbl">Percentage</div></div><div class="summary-box"><div class="val" id="sumLabel">—</div><div class="lbl">Maturity</div></div></div>';
+  h+='<div class="sh3">Weak Domains</div><div class="weak-chips" id="weakChips"><span style="font-size:12px;color:var(--tt)">Score all domains first</span></div>';
+  h+='<div class="panel-actions"><button class="step-btn step-btn-teal" onclick="saveOrg();showToast(\'Matrix saved\')">Save</button><button class="step-btn step-btn-primary" onclick="saveOrg();closePanel();setTimeout(function(){openPanel(\'validation\')},300)">Save & Next: Validation →</button></div>';
+  body.innerHTML=h;
+  calcMatrix();
+}
+
+function calcMatrix(){
+  var totalWtd=0,totalWt=0,allScored=true;var scores=[];
+  D.forEach(function(d){
+    var sel=document.getElementById('ms'+d.n);if(!sel)return;
+    var v=sel.value;
+    var row=document.getElementById('mrow'+d.n);
+    if(row) row.className='';
+    if(v===''){allScored=false;var wc=document.getElementById('mw'+d.n);if(wc)wc.textContent='—';scores.push({n:d.n,name:d.name,score:null});return;}
+    v=parseInt(v);if(row)row.className='heat-'+v;
+    var wtd=v*(d.wt/100)*d.mult;totalWtd+=wtd;totalWt+=d.wt/100*d.mult;
+    var wc=document.getElementById('mw'+d.n);if(wc)wc.textContent=wtd.toFixed(2);
+    scores.push({n:d.n,name:d.name,score:v,wtd:wtd});
+  });
+  var ss=document.getElementById('sumScore'),sp=document.getElementById('sumPct'),sl=document.getElementById('sumLabel');
+  if(!allScored){if(ss)ss.textContent='—';if(sp)sp.textContent='—';if(sl)sl.textContent='—';var wk=document.getElementById('weakChips');if(wk)wk.innerHTML='<span style="font-size:12px;color:var(--tt)">Score all domains first</span>';return;}
+  var overall=totalWtd/totalWt;var pct=(overall/5*100);
+  if(ss)ss.textContent=overall.toFixed(2);
+  if(sp)sp.textContent=pct.toFixed(1)+'%';
+  var label=pct>=90?'Optimised':pct>=75?'Embedded':pct>=60?'Defined':pct>=40?'Emerging':'Fragile';
+  if(sl)sl.textContent=label;
+  scores.sort(function(a,b){return(a.wtd||0)-(b.wtd||0)});
+  var wh='';scores.forEach(function(s,i){if(s.score!==null&&(i<3||s.score<=2))wh+='<span class="weak-chip">D'+s.n+': '+s.name+' ('+s.score+')</span>';});
+  var wk=document.getElementById('weakChips');
+  if(wk) wk.innerHTML=wh||'<span style="font-size:12px;color:var(--teal)">No weak domains</span>';
+}
+
+/* --- VALIDATION --- */
+function buildValidationPanel(body,org){
+  var a=org.assessor||{};var vd=a.validation||{};
+  var h='<h3 class="sh">Validation Meeting</h3>';
+  h+='<p style="font-size:13px;color:var(--ts);margin-bottom:16px">2–3 hours with CEO. Questions drawn from pre-work. Focus on priority domains — no full walkthrough.</p>';
+  h+='<div id="validationSections">';
+  VS.forEach(function(v){
+    h+='<div class="val-section"><div class="val-section-head" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'"><div class="num">'+v.num+'</div><div class="title">'+v.title+'</div></div>';
+    h+='<div class="val-section-body" style="display:none">';
+    h+='<p style="font-size:12px;color:var(--ts);margin-bottom:10px"><strong>Purpose:</strong> '+v.purpose+'</p>';
+    v.qs.forEach(function(q){h+='<p style="font-size:13px;color:var(--ts2);margin-bottom:6px;padding-left:10px;border-left:2px solid var(--teal)">• '+q+'</p>';});
+    h+='<label class="field-label" style="margin-top:12px">Notes:</label>';
+    h+='<textarea id="vn'+v.num+'">'+(vd['vn'+v.num]||'')+'</textarea>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  h+='<div class="panel-actions"><button class="step-btn step-btn-teal" onclick="saveOrg();showToast(\'Validation notes saved\')">Save</button><button class="step-btn step-btn-primary" onclick="saveOrg();closePanel();setTimeout(function(){openPanel(\'goals\')},300)">Save & Next: Goals →</button></div>';
+  body.innerHTML=h;
+}
+
+/* --- GOALS --- */
+function buildGoalsPanel(body,org){
+  var a=org.assessor||{};var g=a.goals||{};
+  var h='<h3 class="sh">Problem · Goals · SMART Objectives</h3>';
+
+  // Problem statement
+  h+='<div class="card"><div class="card-header"><h3>Commercial Problem Statement</h3></div>';
+  h+='<label class="field-label">In one sentence: the core commercial problem.</label>';
+  h+='<textarea id="g_problem">'+(g.g_problem||'')+'</textarea>';
+  h+='<label class="field-label" style="margin-top:10px">Why now? Consequence if not addressed?</label>';
+  h+='<textarea id="g_problem_why">'+(g.g_problem_why||'')+'</textarea></div>';
+
+  // Goals
+  h+='<div class="card"><div class="card-header"><h3>Commercial Goals</h3></div>';
+  h+='<div class="goal-row"><div class="num">1</div><textarea id="g_goal1" placeholder="Goal 1">'+(g.g_goal1||'')+'</textarea></div>';
+  h+='<div class="goal-row"><div class="num">2</div><textarea id="g_goal2" placeholder="Goal 2">'+(g.g_goal2||'')+'</textarea></div>';
+  h+='<div class="goal-row"><div class="num">3</div><textarea id="g_goal3" placeholder="Goal 3">'+(g.g_goal3||'')+'</textarea></div></div>';
+
+  // SMART
+  h+='<div class="card"><div class="card-header"><h3>SMART Objectives</h3></div>';
+  h+='<div class="goal-row"><div class="num">1</div><textarea id="g_smart1" placeholder="Objective 1">'+(g.g_smart1||'')+'</textarea></div>';
+  h+='<div class="goal-row"><div class="num">2</div><textarea id="g_smart2" placeholder="Objective 2">'+(g.g_smart2||'')+'</textarea></div>';
+  h+='<div class="goal-row"><div class="num">3</div><textarea id="g_smart3" placeholder="Objective 3">'+(g.g_smart3||'')+'</textarea></div></div>';
+
+  // Priority & intensity
+  h+='<div class="card"><div class="card-header"><h3>Priority Focus & Intensity</h3></div>';
+  h+='<div class="priority-grid" id="priorityGrid">';
+  var prio=a.priorities||[];
+  D.forEach(function(d){
+    var val='D'+d.n;
+    var sel=prio.indexOf(val)>-1?' selected':'';
+    h+='<div class="priority-item'+sel+'" onclick="togglePriority(this)"><input type="checkbox" value="'+val+'"'+(sel?' checked':'')+'> D'+d.n+': '+d.name+'</div>';
+  });
+  h+='</div>';
+  h+='<div class="sh3" style="margin-top:16px">Programme Intensity</div>';
+  h+='<div class="radio-pills" id="intensityPills">';
+  ['Stabilise','Strengthen','Scale'].forEach(function(level){
+    h+='<div class="radio-pill'+(org.intensity===level?' selected':'')+'" onclick="selIntensity(this,\''+level+'\')">'+level+'</div>';
+  });
+  h+='</div></div>';
+
+  h+='<div class="panel-actions"><button class="step-btn step-btn-teal" onclick="saveOrg();showToast(\'Goals saved\')">Save</button><button class="step-btn step-btn-primary" onclick="saveOrg();closePanel();setTimeout(function(){openPanel(\'lock\')},300)">Save & Next: Lock →</button></div>';
+  body.innerHTML=h;
+  selectedIntensity=org.intensity||'';
+}
+
+function togglePriority(el){el.classList.toggle('selected');el.querySelector('input').checked=el.classList.contains('selected');}
+function selIntensity(el,val){
+  document.querySelectorAll('#intensityPills .radio-pill').forEach(function(p){p.classList.remove('selected')});
+  el.classList.add('selected');selectedIntensity=val;
+}
+
+/* --- LOCK --- */
+function buildLockPanel(body,org){
+  var a=org.assessor||{};var lk=a.lock||{};
+  var locked=org.baselineLocked;
+  var h='<h3 class="sh">Baseline Lock</h3>';
+  if(locked){
+    h+='<div style="background:var(--teal-light);padding:16px;border-radius:var(--r2);margin-bottom:16px;text-align:center"><span style="font-size:14px;font-weight:700;color:var(--teal)">✓ Baseline is locked</span><br><span style="font-size:12px;color:var(--ts)">Scores are fixed. Data is synced to the SMART Tracker.</span></div>';
+  }
+  h+='<div class="card"><div class="card-header"><h3>Lock Confirmation</h3></div>';
+  h+='<div class="lock-check"><input type="checkbox" id="lk1"'+(lk.lk1?' checked':'')+'><label for="lk1">Validation meeting completed</label></div>';
+  h+='<div class="lock-check"><input type="checkbox" id="lk2"'+(lk.lk2?' checked':'')+'><label for="lk2">Score adjustments documented</label></div>';
+  h+='<div class="lock-check"><input type="checkbox" id="lk3"'+(lk.lk3?' checked':'')+'><label for="lk3">Overall score and maturity confirmed</label></div>';
+  h+='<div class="lock-check"><input type="checkbox" id="lk4"'+(lk.lk4?' checked':'')+'><label for="lk4">CEO Feedback to be issued within 48 hours</label></div>';
+  h+='<label class="field-label" style="margin-top:16px">Led by:</label>';
+  h+='<input type="text" id="lk_led" value="'+(lk.lk_led||'')+'" style="width:50%">';
+  h+='<div style="display:flex;gap:12px;margin-top:10px"><div style="flex:1"><label class="field-label">Session date:</label><input type="date" id="lk_session_date" value="'+(lk.lk_session_date||'')+'"></div><div style="flex:1"><label class="field-label">Lock date:</label><input type="date" id="lk_lock_date" value="'+(lk.lk_lock_date||'')+'"></div></div>';
+  h+='<button class="lock-btn" id="lockBtn" onclick="lockBaseline()"'+(locked?' disabled':'')+'>'+(locked?'Baseline is locked':'Lock Baseline — cannot be undone')+'</button>';
+  h+='</div>';
+  h+='<div class="panel-actions"><button class="step-btn step-btn-teal" onclick="saveOrg();showToast(\'Saved\')">Save</button></div>';
+  body.innerHTML=h;
+}
+
+/* --- SCORING GUIDE --- */
+function buildScoringPanel(body){
+  var h='<h3 class="sh">Scoring Reference Guide</h3>';
+  h+='<p style="font-size:12px;color:var(--teal);font-weight:600;margin-bottom:16px">Reference — use alongside Rating Matrix when scoring.</p>';
+  h+='<div id="scoringDomains">';
+  D.forEach(function(d){
+    var tc=d.tier==='Foundation'?'found':d.tier==='Engine'?'engine':'enabler';
+    h+='<div class="sg-domain" onclick="this.classList.toggle(\'open\')">';
+    h+='<div class="sg-domain-head"><h3><span class="tier-badge badge-'+tc+'" style="margin-right:8px">'+d.tier+'</span>D'+d.n+': '+d.name+'</h3><span class="meta">'+d.wt+'% · ×'+d.mult+'</span></div>';
+    h+='<div class="sg-domain-body" onclick="event.stopPropagation()">';
+    h+='<div class="sg-what">'+d.what+'</div>';
+    h+='<table class="anchor-table"><thead><tr><th>Score</th><th>Level</th><th>Anchor</th></tr></thead><tbody>';
+    d.anchors.forEach(function(a){h+='<tr><td class="score-cell score-'+a.s+'">'+a.s+'</td><td class="level-cell score-'+a.s+'">'+a.l+'</td><td>'+a.d+'</td></tr>';});
+    h+='</tbody></table></div></div>';
+  });
+  h+='</div>';
+  body.innerHTML=h;
+}
+
+/* ════════════════════════════════════════════
+   SAVE ORG — writes to shared localStorage
+   ════════════════════════════════════════════ */
+function saveOrg(){
+  if(!currentOrg) return;
+  var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org) return;
+  if(!org.assessor) org.assessor={};
+
+  // Only save fields that exist in the current panel
+  // Baseline scores + evidence
+  var hasMatrix=!!document.getElementById('ms1');
+  if(hasMatrix){
+    D.forEach(function(d,i){
+      if(!org.baseline[i]) org.baseline[i]={domain:d.name,score:'',evidence:''};
+      var sv=document.getElementById('ms'+d.n);
+      if(sv){
+        org.baseline[i].score=sv.value!==''?parseInt(sv.value):'';
+      }
+      var ev=document.getElementById('me'+d.n);
+      if(ev) org.baseline[i].evidence=ev.value;
+    });
+  }
+
+  // Checklist with timestamps
+  var hasCk=!!document.getElementById('ck0');
+  if(hasCk){
+    var ck={};
+    document.querySelectorAll('[id^="ck"]').forEach(function(el){
+      if(el.type==='checkbox'&&el.id.match(/^ck\d+$/)){
+        ck[el.id]=el.checked;
+        var ts=document.getElementById('ckt'+el.id.replace('ck',''));
+        if(ts&&ts.dataset.ts) ck[el.id+'_ts']=ts.dataset.ts;
+      }
+    });
+    org.assessor.checklist=ck;
+  }
+
+  // Validation notes
+  var hasVal=!!document.getElementById('vn1');
+  if(hasVal){
+    var vd={};
+    VS.forEach(function(v){var el=document.getElementById('vn'+v.num);if(el)vd['vn'+v.num]=el.value;});
+    org.assessor.validation=vd;
+  }
+
+  // Goals
+  var hasGoals=!!document.getElementById('g_problem');
+  if(hasGoals){
+    var goals={};
+    ['g_problem','g_problem_why','g_goal1','g_goal2','g_goal3','g_smart1','g_smart2','g_smart3'].forEach(function(id){
+      var el=document.getElementById(id);if(el) goals[id]=el.value;
+    });
+    org.assessor.goals=goals;
+
+    // Write to tracker diagnosis fields
+    org.diagnosis=org.diagnosis||{};
+    org.diagnosis.problemStatement=goals.g_problem||'';
+    org.diagnosis.scenario=goals.g_problem_why||'';
+
+    // SMART objectives into tracker format
+    org.smart=[];
+    ['g_smart1','g_smart2','g_smart3'].forEach(function(id){
+      var v=goals[id];if(v) org.smart.push({objective:v,target:'',timeline:'',owner:'',status:''});
+    });
+
+    // Priorities
+    var prio=[];
+    document.querySelectorAll('#priorityGrid .priority-item.selected').forEach(function(el){prio.push(el.querySelector('input').value);});
+    org.assessor.priorities=prio;
+    org.diagnosis.constraints=prio.slice(0,3);
+
+    // Intensity
+    org.intensity=selectedIntensity;
+  }
+
+  // Lock fields
+  var hasLock=!!document.getElementById('lk1');
+  if(hasLock){
+    var lk={};
+    ['lk1','lk2','lk3','lk4'].forEach(function(id){var el=document.getElementById(id);if(el)lk[id]=el.checked;});
+    ['lk_led','lk_session_date','lk_lock_date'].forEach(function(id){var el=document.getElementById(id);if(el)lk[id]=el.value;});
+    org.assessor.lock=lk;
+  }
+
+  // Assessor name
+  var asel=document.getElementById('assessorSelect');
+  if(asel) org.assessor.assessor=asel.value;
+
+  saveData(data);
+}
+
+function lockBaseline(){
+  if(!confirm('This will permanently lock the baseline for this organisation. Continue?')) return;
+  saveOrg();
+  var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org) return;
+  org.baselineLocked=true;
+  saveData(data);
+  var btn=document.getElementById('lockBtn');
+  if(btn){btn.disabled=true;btn.textContent='Baseline is locked';}
+  showToast('Baseline locked for '+org.name);
+  // Refresh step UI after brief delay
+  setTimeout(function(){
+    closePanel();
+    var org2=getOrg(currentOrg);
+    if(org2) updateStepUI(org2);
+  },600);
+}
+
+/* ════════════════════════════════════════════
+   EXPORT / IMPORT
+   ════════════════════════════════════════════ */
+function exportData(){
+  var data=loadData();data._exportedAt=new Date().toISOString();
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='select_data_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  showToast('Data exported');
+}
+function importData(event){
+  var file=event.target.files[0];if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var imported=JSON.parse(e.target.result);
+      if(!imported.orgs){alert('Invalid file.');return;}
+      if(!confirm('Replace all current data with imported file ('+imported.orgs.length+' orgs)? Export first as a backup.')) return;
+      saveData(imported);
+      if(currentOrg) showDash();
+      else renderOrgGrid();
+      showToast('Imported '+imported.orgs.length+' organisations');
+    }catch(err){alert('Could not read file.');}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500);}
+
+/* ════════════════════════════════════════════
+   DEMO DATA — 3 orgs at different stages
+   Seeds on first load if localStorage is empty.
+   Matches tracker.html data structure exactly.
+   ════════════════════════════════════════════ */
+function seedDemoData(){
+  var data=loadData();
+  if(data.orgs&&data.orgs.length>0) return; // already has data
+
+  // ── ORG 1: Green Threads CIC — FULLY LOCKED ──
+  var org1={
+    name:'Green Threads CIC',ceo:'Sarah Murphy',code:'green-threads',password:'demo-gt',intensity:'Strengthen',
+    kpi:{jurisdiction:'ROI',newToITI:'Yes',firstTimeCB:'Yes',firstTimeExp:'No',sector:'Social Enterprise / Circular Economy',email:'sarah@greenthreads.ie'},
+    app:{turnover:'\u20ac380,000',employees:'12',tradedPct:'65%',crossBorderPct:'5%',priorITI:'No',crossBorderTarget:'15% by Dec 2026'},
+    baseline:[
+      {domain:'Business Model & Revenue Mix',score:2,evidence:'60% from single HSE contract. Remaining 40% split across retail (25%) and workshops (15%). Heavy concentration risk. Recurring income ~30%. Forward visibility 3 months max.'},
+      {domain:'Products & Unit Economics',score:3,evidence:'5 product lines documented. Pricing is cost-plus but not validated against market. Margins estimated at 20\u201335% but not formally tracked. Know which lines break even but no portfolio review process.'},
+      {domain:'Financial Management & Cash',score:3,evidence:'Quarterly management accounts via external accountant. Annual budget in place. Cashflow tracked monthly on spreadsheet. 4\u20135 months runway. No rolling forecast.'},
+      {domain:'Commercial Strategy & Market Focus',score:2,evidence:'12-month commercial goals discussed but not documented. Broad sense of target customer but no segment prioritisation. Demand evidence is anecdotal. No competitor mapping.'},
+      {domain:'Go-To-Market & Sales',score:1,evidence:'Sales entirely founder-led. No pipeline tracking. Basic social media presence (Instagram, Facebook) but no conversion tracking. Repeat rate unknown. No CRM.'},
+      {domain:'Operations & Delivery Capacity',score:3,evidence:'Delivery model understood by team. Two staff can deliver core service. Key-person risk acknowledged \u2014 3-month CEO absence would cause disruption but not collapse. Bottleneck is sales, not delivery.'},
+      {domain:'Cross-Border Readiness',score:1,evidence:'One NI retailer trialled 2024. No systematic cross-border activity. Regulatory barriers unclear. Interest but no plan.'},
+      {domain:'Leadership & Execution Capacity',score:2,evidence:'CEO spends 70% on delivery. Should be on strategy/sales. Impact evidence is anecdotal \u2014 case studies but no aggregated data. Delegation minimal.'},
+      {domain:'Organisational Readiness',score:2,evidence:'Advisory board meets quarterly. No commercial agenda. Top risks: contract dependency, key-person, no succession plan. Basic spreadsheet systems only.'}
+    ],
+    endline:[
+      {domain:'1. Business Model & Revenue Mix',score:''},
+      {domain:'2. Products & Unit Economics',score:''},
+      {domain:'3. Financial Management & Cash',score:''},
+      {domain:'4. Commercial Strategy & Market Focus',score:''},
+      {domain:'5. Go-To-Market & Sales',score:''},
+      {domain:'6. Operations & Delivery Capacity',score:''},
+      {domain:'7. Cross-Border Readiness',score:''},
+      {domain:'8. Leadership & Execution Capacity',score:''},
+      {domain:'9. Organisational Readiness',score:''}
+    ],
+    diagnosis:{
+      problemStatement:'Over-reliance on a single HSE contract combined with founder-dependency in sales and delivery means the organisation cannot grow traded income without structural change.',
+      scenario:'If the HSE contract is not renewed in 2027, the organisation loses 60% of income with no pipeline to replace it.',
+      constraints:['D1','D5','D7'],
+      observation:'Strong mission alignment and product quality. The commercial constraint is structural, not motivational.'
+    },
+    smart:[
+      {objective:'Reduce HSE contract dependency from 60% to below 40% of total revenue by securing 3 new B2B accounts',target:'40% dependency / 3 new accounts',timeline:'December 2026',owner:'Sarah Murphy',status:''},
+      {objective:'Implement monthly management accounts and margin tracking across all 5 product lines',target:'Monthly accounts live',timeline:'August 2026',owner:'Sarah Murphy + bookkeeper',status:''},
+      {objective:'Document and delegate the sales process so at least one team member can convert leads independently',target:'Documented process + 1 trained delegate',timeline:'October 2026',owner:'Sarah Murphy',status:''}
+    ],
+    progress:[],consulting:[],coaching:[],
+    notes:[
+      {type:'session',date:'23 Apr 2026',text:'Group Session #1. Engaged well. Asked good questions about pricing methodology.'},
+      {type:'consult',date:'8 May 2026',text:'Validation meeting completed. Strong self-awareness. Agreed problem statement and 3 SMART objectives. Intensity: Strengthen.'}
+    ],
+    assessor:{
+      checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-28T14:30:00Z','ck2':true,'ck2_ts':'2026-04-28T14:35:00Z','ck3':true,'ck3_ts':'2026-04-29T09:00:00Z','ck4':true,'ck4_ts':'2026-04-30T11:00:00Z','ck5':true,'ck5_ts':'2026-04-30T11:30:00Z','ck6':true,'ck6_ts':'2026-04-30T12:00:00Z','ck7':true,'ck7_ts':'2026-05-08T10:00:00Z','ck8':true,'ck8_ts':'2026-05-08T13:00:00Z','ck9':true,'ck9_ts':'2026-05-08T15:00:00Z','ck10':true,'ck10_ts':'2026-05-09T10:00:00Z','ck11':true,'ck11_ts':'2026-05-09T10:30:00Z','ck12':true,'ck12_ts':'2026-05-09T11:00:00Z','ck13':true,'ck13_ts':'2026-05-10T09:00:00Z','ck14':true,'ck14_ts':'2026-05-10T10:00:00Z'},
+      validation:{'vn1':'CEO view largely accurate. Slight optimism on sales capability \u2014 she acknowledged no pipeline exists.','vn2':'Root constraint is single-contract dependency combined with founder-led sales. Everything else is a symptom.','vn3':'20% income drop would require immediate cost cuts. Pricing assumptions untested against market.','vn4':'Board is advisory only. No commercial challenge. No succession plan.','vn5':'Clear articulation: "I am the bottleneck and the safety net."'},
+      goals:{g_problem:'Over-reliance on a single HSE contract combined with founder-dependency in sales and delivery means the organisation cannot grow traded income without structural change.',g_problem_why:'If the HSE contract is not renewed in 2027, the organisation loses 60% of income with no pipeline to replace it.',g_goal1:'Diversify revenue beyond HSE dependency',g_goal2:'Build a repeatable, delegable sales process',g_goal3:'Establish management accounts and margin visibility',g_smart1:'Reduce HSE contract dependency from 60% to below 40% of total revenue by securing 3 new B2B accounts',g_smart2:'Implement monthly management accounts and margin tracking across all 5 product lines',g_smart3:'Document and delegate the sales process so at least one team member can convert leads independently'},
+      priorities:['D1','D5','D7'],
+      lock:{lk1:true,lk2:true,lk3:true,lk4:true,lk_led:'Fiona',lk_session_date:'2026-05-08',lk_lock_date:'2026-05-09'},
+      assessor:'Fiona'
+    },
+    sop:{},baselineLocked:true,
+    crossBorder:{baselinePct:'5%',endlinePct:'',target:'15%'}
+  };
+
+  // ── ORG 2: Harbour Social Enterprise — MID-PROCESS (4 of 9 scored, validation not done) ──
+  var org2={
+    name:'Harbour Social Enterprise',ceo:'Declan O\u2019Brien',code:'harbour-se',password:'demo-hse',intensity:'',
+    kpi:{jurisdiction:'NI',newToITI:'No',firstTimeCB:'Yes',firstTimeExp:'Yes',sector:'Food / Hospitality',email:'declan@harbourse.org'},
+    app:{turnover:'\u00a3420,000',employees:'14',tradedPct:'70%',crossBorderPct:'0%',priorITI:'Yes',crossBorderTarget:'10% by Dec 2026'},
+    baseline:[
+      {domain:'Business Model & Revenue Mix',score:4,evidence:'4 revenue streams. Caf\u00e9 (45%), catering contracts (25%), training fees (20%), grants (10%). Good diversification. Recurring contracts ~40%.'},
+      {domain:'Products & Unit Economics',score:3,evidence:'Caf\u00e9 margins known (~35%). Catering margins estimated but not tracked per contract. Training is break-even. No formal portfolio review.'},
+      {domain:'Financial Management & Cash',score:3,evidence:'Monthly management accounts via accountant. Budget in place. Cashflow tracked. ~6 months runway. Forecasting is annual, not rolling.'},
+      {domain:'Commercial Strategy & Market Focus',score:2,evidence:'Ambition to grow catering but no documented strategy. Market opportunity assumed not evidenced. Competitors not mapped.'},
+      {domain:'Go-To-Market & Sales',score:'',evidence:''},
+      {domain:'Operations & Delivery Capacity',score:'',evidence:''},
+      {domain:'Cross-Border Readiness',score:'',evidence:''},
+      {domain:'Leadership & Execution Capacity',score:'',evidence:''},
+      {domain:'Organisational Readiness',score:'',evidence:''}
+    ],
+    endline:[
+      {domain:'1. Business Model & Revenue Mix',score:''},
+      {domain:'2. Products & Unit Economics',score:''},
+      {domain:'3. Financial Management & Cash',score:''},
+      {domain:'4. Commercial Strategy & Market Focus',score:''},
+      {domain:'5. Go-To-Market & Sales',score:''},
+      {domain:'6. Operations & Delivery Capacity',score:''},
+      {domain:'7. Cross-Border Readiness',score:''},
+      {domain:'8. Leadership & Execution Capacity',score:''},
+      {domain:'9. Organisational Readiness',score:''}
+    ],
+    diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
+    smart:[],progress:[],consulting:[],coaching:[],
+    notes:[{type:'session',date:'23 Apr 2026',text:'Group Session #1. Quiet but engaged. Follow up on catering pipeline.'}],
+    assessor:{
+      checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-27T16:00:00Z','ck2':true,'ck2_ts':'2026-04-27T16:05:00Z','ck3':true,'ck3_ts':'2026-04-29T09:00:00Z','ck4':true,'ck4_ts':'2026-04-30T11:00:00Z','ck5':true,'ck5_ts':'2026-04-30T11:30:00Z','ck6':true,'ck6_ts':'2026-04-30T12:00:00Z'},
+      validation:{},goals:{},priorities:[],lock:{},assessor:'Clodagh'
+    },
+    sop:{},baselineLocked:false,
+    crossBorder:{baselinePct:'0%',endlinePct:'',target:'10%'}
+  };
+
+  // ── ORG 3: Bright Futures CLG — JUST STARTED (pre-work received only) ──
+  var org3={
+    name:'Bright Futures CLG',ceo:'Aoife Brennan',code:'bright-futures',password:'demo-bf',intensity:'',
+    kpi:{jurisdiction:'ROI',newToITI:'Yes',firstTimeCB:'Yes',firstTimeExp:'Yes',sector:'Education / Youth Services',email:'aoife@brightfutures.ie'},
+    app:{turnover:'\u20ac150,000',employees:'5',tradedPct:'30%',crossBorderPct:'0%',priorITI:'No',crossBorderTarget:''},
+    baseline:[
+      {domain:'Business Model & Revenue Mix',score:'',evidence:''},
+      {domain:'Products & Unit Economics',score:'',evidence:''},
+      {domain:'Financial Management & Cash',score:'',evidence:''},
+      {domain:'Commercial Strategy & Market Focus',score:'',evidence:''},
+      {domain:'Go-To-Market & Sales',score:'',evidence:''},
+      {domain:'Operations & Delivery Capacity',score:'',evidence:''},
+      {domain:'Cross-Border Readiness',score:'',evidence:''},
+      {domain:'Leadership & Execution Capacity',score:'',evidence:''},
+      {domain:'Organisational Readiness',score:'',evidence:''}
+    ],
+    endline:[
+      {domain:'1. Business Model & Revenue Mix',score:''},
+      {domain:'2. Products & Unit Economics',score:''},
+      {domain:'3. Financial Management & Cash',score:''},
+      {domain:'4. Commercial Strategy & Market Focus',score:''},
+      {domain:'5. Go-To-Market & Sales',score:''},
+      {domain:'6. Operations & Delivery Capacity',score:''},
+      {domain:'7. Cross-Border Readiness',score:''},
+      {domain:'8. Leadership & Execution Capacity',score:''},
+      {domain:'9. Organisational Readiness',score:''}
+    ],
+    diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
+    smart:[],progress:[],consulting:[],coaching:[],
+    notes:[],
+    assessor:{
+      checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-28T09:00:00Z','ck2':true,'ck2_ts':'2026-04-28T09:05:00Z'},
+      validation:{},goals:{},priorities:[],lock:{},assessor:''
+    },
+    sop:{},baselineLocked:false,
+    crossBorder:{baselinePct:'0%',endlinePct:'',target:''}
+  };
+
+  data.orgs=[org1,org2,org3];
+  saveData(data);
+}
+
+/* Boot — wait for auth. Demo data seeding is handled by tracker.html only. */
+/* No auto-seeding in assessor — it reads from Airtable / shared cache. */
+</script>
+</body>
+</html>

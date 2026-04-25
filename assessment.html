@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SELECT — Commercial Baseline Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+--bg:#faf9f7;--bg2:#f0efeb;--bg3:#e4e3de;--card:#ffffff;
+--tp:#111;--ts2:#2d2d2a;--ts:#5a5a55;--tt:#8a8a82;
+--tb:rgba(0,0,0,0.07);--tb2:rgba(0,0,0,0.12);
+--navy:#0f2b4c;--navy-light:#e8edf3;--navy-mid:#1a3d6b;
+--teal:#0a6b5a;--teal-light:#e5f4f0;
+--coral:#c44b2b;--coral-light:#fdf0ec;
+--gold:#b8860b;
+--r:6px;--r2:10px;--r3:14px;
+--serif:'Playfair Display',Georgia,serif;
+--sans:'Source Sans 3',-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--tp);max-width:720px;margin:0 auto;padding:0 20px 40px;line-height:1.7;font-size:15.5px;-webkit-font-smoothing:antialiased}
+
+.header{background:var(--navy);padding:28px 32px 24px;margin:0 -20px;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--gold),var(--coral))}
+.header h1{font-family:var(--serif);font-size:24px;color:#fff;font-weight:600}
+.header p{font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px}
+
+.progress-wrap{padding:16px 0;border-bottom:1px solid var(--tb);margin-bottom:24px}
+.progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s ease}
+.progress-text{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--tt)}
+.progress-text b{color:var(--tp)}
+
+.domain-nav{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px}
+.domain-dot{height:28px;border-radius:14px;border:2px solid var(--tb2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--tt);cursor:pointer;transition:all .2s;padding:0 10px;gap:4px;white-space:nowrap}
+.domain-dot .dot-label{display:none;font-size:10px;font-weight:600}
+.domain-dot:hover{border-color:var(--navy);color:var(--navy)}
+.domain-dot.active{background:var(--navy);color:#fff;border-color:var(--navy);padding:0 12px}
+.domain-dot.active .dot-label{display:inline}
+.domain-dot.done{background:var(--teal);color:#fff;border-color:var(--teal)}
+@media(min-width:640px){.domain-dot{min-width:28px}}
+@media(max-width:639px){.domain-dot{width:28px;min-width:28px;padding:0;border-radius:50%}.domain-dot.active{width:auto;min-width:28px;padding:0 10px;border-radius:14px}}
+
+.page{display:none}
+.page.active{display:block}
+
+.domain-header{background:var(--navy);padding:14px 20px;border-radius:var(--r2) var(--r2) 0 0;display:flex;align-items:center;gap:12px}
+.domain-num{font-family:var(--serif);font-size:24px;color:#fff;font-weight:700;min-width:32px}
+.domain-name{font-family:var(--serif);font-size:18px;color:#fff;font-weight:600}
+.domain-feed{padding:10px 20px;background:var(--teal-light);border-left:3px solid var(--teal);font-size:12px;color:var(--teal);font-style:italic}
+.domain-body{background:var(--card);border:1px solid var(--tb2);border-top:none;border-radius:0 0 var(--r2) var(--r2);padding:24px 20px}
+
+.q-block{margin-bottom:24px}
+.q-label{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px;display:flex;gap:8px;align-items:flex-start}
+.q-num{background:var(--teal);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-top:1px}
+.q-text{flex:1;line-height:1.5}
+
+textarea{width:100%;min-height:100px;padding:12px 14px;border:1px solid var(--tb2);border-radius:var(--r);font-family:var(--sans);font-size:14px;color:var(--tp);background:var(--bg);resize:vertical;transition:border-color .2s}
+textarea:focus{outline:none;border-color:var(--teal);background:#fff}
+input[type="text"],input[type="number"]{width:100%;padding:10px 14px;border:1px solid var(--tb2);border-radius:var(--r);font-family:var(--sans);font-size:14px;color:var(--tp);background:var(--bg)}
+input:focus{outline:none;border-color:var(--teal);background:#fff}
+
+.check-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.check-item{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--tb2);border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--ts2);transition:all .2s;user-select:none}
+.check-item:hover{border-color:var(--navy);color:var(--navy)}
+.check-item.selected{background:var(--navy-light);border-color:var(--navy);color:var(--navy);font-weight:600}
+.check-item input{display:none}
+
+.radio-group{display:flex;gap:8px;margin-bottom:8px}
+.radio-item{padding:8px 16px;border:1px solid var(--tb2);border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--ts2);transition:all .2s;user-select:none}
+.radio-item:hover{border-color:var(--navy)}
+.radio-item.selected{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+.pct-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.pct-row label{min-width:120px;font-size:13px;color:var(--ts2)}
+.pct-row input{width:80px;text-align:center}
+.pct-total{font-size:12px;font-weight:600;margin-top:4px}
+.pct-total.ok{color:var(--teal)}.pct-total.err{color:var(--coral)}
+
+.btn-row{display:flex;gap:12px;margin-top:24px;justify-content:space-between}
+.btn{padding:10px 24px;border:none;border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-mid)}
+.btn-secondary{background:var(--bg2);color:var(--ts2);border:1px solid var(--tb2)}.btn-secondary:hover{background:var(--bg3)}
+.btn-save{background:var(--teal);color:#fff}.btn-save:hover{opacity:.9}
+.btn-coral{background:var(--coral);color:#fff}.btn-coral:hover{opacity:.9}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.saved-msg{padding:10px 16px;background:var(--teal-light);border:1px solid var(--teal);border-radius:var(--r);font-size:13px;color:var(--teal);margin-top:12px;display:none}
+
+/* Device warning */
+.device-warn{padding:10px 16px;background:var(--gold-light);border:1px solid rgba(184,134,11,0.15);border-radius:var(--r);font-size:12px;color:var(--gold);margin-top:12px;text-align:center}
+
+/* Pct validation bar */
+.pct-bar{height:4px;background:var(--bg3);border-radius:2px;margin-top:6px;overflow:hidden}
+.pct-bar-fill{height:100%;border-radius:2px;transition:width .3s,background .3s}
+.pct-bar-fill.ok{background:var(--teal)}.pct-bar-fill.err{background:var(--coral)}.pct-bar-fill.partial{background:var(--gold)}
+
+/* Back to hub */
+.back-hub{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ts);text-decoration:none;padding:12px 0 8px;transition:color .2s}
+.back-hub:hover{color:var(--navy)}
+
+/* Submit error */
+.submit-error{padding:14px 16px;background:var(--coral-light);border:1px solid rgba(196,75,43,0.2);border-radius:var(--r);font-size:13px;color:var(--coral);margin-top:12px;display:none}
+.submit-error button{background:var(--coral);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;margin-top:8px}
+
+/* Consent highlight pulse */
+.consent-box.highlight{animation:pulse-consent .6s ease 2;border-color:var(--coral)}
+@keyframes pulse-consent{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(196,75,43,0.15)}}
+
+/* WELCOME PAGE */
+.welcome{text-align:center;padding:40px 0}
+.welcome h2{font-family:var(--serif);font-size:28px;color:var(--navy);margin-bottom:12px}
+.welcome p{color:var(--ts2);max-width:500px;margin:0 auto 16px;font-size:15px}
+.welcome .stats{display:flex;gap:20px;justify-content:center;margin:24px 0}
+.welcome .stat{text-align:center}
+.welcome .stat-num{font-family:var(--serif);font-size:32px;color:var(--navy);font-weight:700}
+.welcome .stat-label{font-size:11px;color:var(--tt);text-transform:uppercase;letter-spacing:.5px}
+.org-fields{max-width:400px;margin:24px auto;text-align:left}
+.org-fields label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin:12px 0 4px}
+
+/* REVIEW PAGE */
+.review-domain{margin-bottom:20px;border:1px solid var(--tb);border-radius:var(--r2);overflow:hidden}
+.review-domain-hdr{padding:10px 16px;background:var(--navy-light);font-weight:600;color:var(--navy);font-size:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.review-domain-hdr:hover{background:var(--bg3)}
+.review-domain-body{padding:12px 16px;font-size:13px;color:var(--ts2);display:block}
+.review-domain.collapsed .review-domain-body{display:none}
+.review-q{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--tb)}
+.review-q:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.review-q-label{font-size:11px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.review-q-answer{color:var(--tp);white-space:pre-wrap}
+.review-q-empty{color:var(--coral);font-style:italic}
+
+.consent-box{padding:16px;background:var(--bg2);border:1px solid var(--tb2);border-radius:var(--r2);margin:20px 0}
+.consent-box label{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ts2);cursor:pointer}
+.consent-box input[type="checkbox"]{margin-top:3px;width:18px;height:18px;accent-color:var(--navy)}
+
+.submit-success{text-align:center;padding:60px 20px}
+.submit-success h2{font-family:var(--serif);font-size:28px;color:var(--teal);margin-bottom:12px}
+.submit-success p{color:var(--ts2);margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<a class="back-hub" href="/" style="display:inline-flex;padding:12px 20px 0;font-size:12px;color:var(--ts);text-decoration:none">&larr; Back to Programme Hub</a>
+
+<div class="header">
+<h1>Commercial Baseline Assessment</h1>
+<p>SELECT · Built to Scale · InterTradeIreland · 2026</p>
+</div>
+
+<div class="progress-wrap">
+<div class="progress-bar"><div class="progress-fill" id="pbar" style="width:0%"></div></div>
+<div class="progress-text"><span id="ptext">Welcome</span><span><b id="ppct">0%</b></span></div>
+</div>
+
+<div class="domain-nav" id="dnav"></div>
+
+<!-- WELCOME -->
+<div class="page active" id="page-welcome">
+<div class="welcome">
+<h2>Your Commercial Baseline</h2>
+<p>An honest picture of where your organisation operates commercially today — so that SELECT support can be targeted precisely where it will make the most difference.</p>
+<p>This is not a test. Your answers feed directly into each programme module.</p>
+<div class="stats">
+<div class="stat"><div class="stat-num">9</div><div class="stat-label">Domains</div></div>
+<div class="stat"><div class="stat-num">18</div><div class="stat-label">Questions</div></div>
+<div class="stat"><div class="stat-num">30–40</div><div class="stat-label">Minutes</div></div>
+</div>
+<p style="font-size:13px;color:var(--tt)">You can save your progress and come back at any time.</p>
+<div class="org-fields">
+<label>Organisation name</label>
+<input type="text" id="org-name" placeholder="Your organisation name">
+<label>CEO name</label>
+<input type="text" id="ceo-name" placeholder="Your full name">
+</div>
+<div style="margin-top:24px"><button class="btn btn-primary" onclick="startAssessment()">Start assessment →</button></div>
+<div id="resume-msg" style="display:none;margin-top:16px">
+<p style="font-size:13px;color:var(--teal);font-weight:600">You have saved progress. <a href="#" onclick="loadSaved();return false" style="color:var(--teal)">Resume where you left off →</a></p>
+</div>
+</div>
+</div>
+
+<!-- DOMAIN PAGES (generated by JS) -->
+<div id="domain-pages"></div>
+
+<!-- REVIEW -->
+<div class="page" id="page-review">
+<h2 style="font-family:var(--serif);font-size:24px;color:var(--navy);margin-bottom:8px">Review your responses</h2>
+<p style="color:var(--ts);margin-bottom:20px;font-size:14px">All your responses are shown below. Click any domain header to collapse or expand. Go back to edit if needed.</p>
+<div id="review-content"></div>
+<div class="consent-box" id="consentBox">
+<label><input type="checkbox" id="consent-check"> I consent to my responses being shared with the SELECT assessment team (Fiona Descoteaux and Dr Clodagh O'Reilly) for the purpose of scoring my commercial baseline and tailoring programme support. My data will be handled in accordance with GDPR and will not be shared with other programme participants without my permission.</label>
+</div>
+<div class="btn-row">
+<button class="btn btn-secondary" onclick="goTo(8)">&larr; Back to Domain 9</button>
+<div style="display:flex;gap:8px">
+<button class="btn btn-save" onclick="downloadPDF()">Download PDF</button>
+<button class="btn btn-primary" id="submit-btn" onclick="submitForm()" disabled>Submit to assessors &rarr;</button>
+</div>
+</div>
+<div class="submit-error" id="submitError">
+<strong>Submission failed.</strong> Your answers have been saved locally but could not be sent. Please check your internet connection and try again.
+<br><button onclick="submitForm()">Retry submission</button>
+</div>
+</div>
+
+<!-- SUCCESS -->
+<div class="page" id="page-success">
+<div class="submit-success">
+<h2>Assessment submitted</h2>
+<p>Your responses have been sent to Fiona and Clodagh. They will review them ahead of your validation meeting.</p>
+<p style="font-size:14px;color:var(--ts)">You can also download a PDF copy for your records.</p>
+<button class="btn btn-save" onclick="downloadPDF()" style="margin-top:12px">Download PDF copy</button>
+<p style="margin-top:24px;font-size:13px;color:var(--tt)">Questions? Contact Fiona (087 194 7757) or Clodagh (086 776 6212)</p>
+</div>
+</div>
+
+<script>
+var FORMSPREE = 'https://formspree.io/f/xyknvdgk';
+
+var domains = [
+{id:1,name:'Business Model & Revenue Mix',tier:'Foundation',feed:'M1 (June) and M2 (July) — opportunity sizing and revenue model design',
+questions:[
+{id:'1.1',text:'Estimate % of income from: Trading/sales, Contracts, Grants/donations, Other. Which source, if lost tomorrow, would cause the greatest risk?',type:'combo',
+subparts:[{id:'1.1a',label:'Income split',type:'pct',options:['Trading/sales','Contracts','Grants/donations','Other']},{id:'1.1b',label:'Greatest risk if lost:',type:'textarea'}]},
+{id:'1.2',text:'Which income streams are recurring and predictable? Which are one-off or uncertain?',type:'textarea'}
+]},
+{id:2,name:'Products & Unit Economics',tier:'Foundation',feed:'M2 (July) and M4 (September) — scale/fix/stop decisions and pricing model',
+questions:[
+{id:'2.1',text:'List your active products/services and how prices are set.',type:'combo',
+subparts:[{id:'2.1a',label:'Products/services:',type:'textarea'},{id:'2.1b',label:'Pricing method:',type:'check',options:['Cost-based','Market-based','Subsidised','Other']}]},
+{id:'2.2',text:'Which offerings make money, break even, or lose money? (Estimates are fine.)',type:'textarea'}
+]},
+{id:3,name:'Financial Management & Cash',tier:'Foundation',feed:'M4 (September) and M7 (December) — financial model and investment readiness',
+questions:[
+{id:'3.1',text:'What financial tools do you use? Do you track cashflow? Approximate months of runway?',type:'combo',
+subparts:[{id:'3.1a',label:'Tools in use:',type:'check',options:['Annual accounts','Management accounts','Budgets','Forecasts']},{id:'3.1b',label:'Track cashflow?',type:'radio',options:['Yes','No']},{id:'3.1c',label:'Months of runway:',type:'short'}]},
+{id:'3.2',text:'How confident are you in your current financial forecasts?',type:'radio',options:['Low','Medium','High']}
+]},
+{id:4,name:'Commercial Strategy & Market Focus',tier:'Engine',feed:'M1 (June) and M3 (August) — commercial direction and market validation',
+questions:[
+{id:'4.1',text:'What does commercial success look like in 12 months and 2–3 years?',type:'textarea'},
+{id:'4.2',text:'Who pays for your product or service? What is your strongest evidence of demand?',type:'combo',
+subparts:[{id:'4.2a',label:'Who pays:',type:'textarea'},{id:'4.2b',label:'Evidence of demand:',type:'check',options:['Paying customers','Pilots','Contracts','Pipeline']}]}
+]},
+{id:5,name:'Go-To-Market & Sales',tier:'Engine',feed:'M3 (August) and M6 (November) — sales engine and systemisation',
+questions:[
+{id:'5.1',text:'How do customers find, engage with, and buy from you? Who leads sales — founder-led, shared, or systemised? Is there a documented process someone else could follow?',type:'textarea'},
+{id:'5.2',text:'What digital channels are you using? What % of revenue comes from repeat customers?',type:'combo',
+subparts:[{id:'5.2a',label:'Digital channels:',type:'check',options:['Website','Social media','Email marketing','E-commerce','CRM','None']},{id:'5.2b',label:'% from repeat customers:',type:'short'}]}
+]},
+{id:6,name:'Operations & Delivery Capacity',tier:'Engine',feed:'M5 (October) and M6 (November) — operational change and scaling',
+questions:[
+{id:'6.1',text:'What currently limits your ability to deliver more?',type:'check',options:['People','Cash','Systems','Space','Compliance','Other']},
+{id:'6.2',text:'If you stepped away for 3 months, what would stop? Who else can sell, deliver, and make commercial decisions?',type:'textarea'}
+]},
+{id:7,name:'Cross-Border Readiness',tier:'Engine',feed:'M3 (August) and M7 (December) — cross-border channels and compliance',
+questions:[
+{id:'7.1',text:'Do you sell or deliver across the border (NI ↔ ROI)? Describe current activity, opportunity, and any partnerships or pilots explored.',type:'textarea'},
+{id:'7.2',text:'What barriers exist to cross-border trade?',type:'check',options:['Regulatory','Logistics','Market knowledge','Pricing','None identified']}
+]},
+{id:8,name:'Leadership & Execution Capacity',tier:'Enabler',feed:'M1 (June), M5 (October) and M7 (December) — commercial ownership, delegation, succession',
+questions:[
+{id:'8.1',text:'Where do you spend most of your time? Where should you be spending more?',type:'combo',
+subparts:[{id:'8.1a',label:'Current time:',type:'check',options:['Delivery','Sales','Strategy','Administration','Fundraising','Other']},{id:'8.1b',label:'Should spend more on:',type:'short'}]},
+{id:'8.2',text:'Can you evidence the social impact your trading funds? Do you have data that buyers, funders or investors would accept?',type:'textarea'}
+]},
+{id:9,name:'Organisational Readiness',tier:'Enabler',feed:'M5 (October), M6 (November) and M7 (December) — governance, systems, investment readiness',
+questions:[
+{id:'9.1',text:'Governance structure? How often is commercial performance reviewed? Who approves major commercial decisions?',type:'combo',
+subparts:[{id:'9.1a',label:'Structure:',type:'radio',options:['Full board','Advisory group','No formal governance']},{id:'9.1b',label:'Review frequency and decision-making:',type:'textarea'}]},
+{id:'9.2',text:'What are your top 2–3 commercial risks? Any regulatory or procurement requirements that could block growth?',type:'textarea'}
+]}
+];
+
+var answers = {};
+var currentPage = -1; // -1=welcome, 0-8=domains, 9=review, 10=success
+
+function init(){
+  renderDomainNav();
+  renderDomainPages();
+  // Check for saved progress
+  var saved = localStorage.getItem('select_baseline');
+  if(saved){
+    var data = JSON.parse(saved);
+    answers = data.answers || {};
+    if(data.org) document.getElementById('org-name').value = data.org;
+    if(data.ceo) document.getElementById('ceo-name').value = data.ceo;
+    document.getElementById('resume-msg').style.display = 'block';
+  }
+  document.getElementById('consent-check').addEventListener('change',function(){
+    document.getElementById('submit-btn').disabled = !this.checked;
+  });
+}
+
+function renderDomainNav(){
+  var shortNames=['Revenue','Products','Finance','Strategy','Sales','Ops','Cross-Border','Leadership','Readiness'];
+  var h='';
+  domains.forEach(function(d,i){
+    h+='<div class="domain-dot" id="dot-'+i+'" onclick="goTo('+i+')" title="'+d.name+'">'+d.id+'<span class="dot-label">'+shortNames[i]+'</span></div>';
+  });
+  document.getElementById('dnav').innerHTML=h;
+}
+
+function renderDomainPages(){
+  var h='';
+  domains.forEach(function(d,di){
+    h+='<div class="page" id="page-'+di+'">';
+    h+='<div class="domain-header"><span class="domain-num">'+d.id+'</span><span class="domain-name">'+d.name+'</span></div>';
+    h+='<div class="domain-feed">→ Feeds into '+d.feed+'</div>';
+    h+='<div class="domain-body">';
+    d.questions.forEach(function(q){
+      h+=renderQuestion(q,d.id);
+    });
+    h+='<div class="btn-row">';
+    if(di>0) h+='<button class="btn btn-secondary" onclick="goTo('+(di-1)+')">← Previous</button>';
+    else h+='<button class="btn btn-secondary" onclick="goTo(-1)">← Back</button>';
+    h+='<div style="display:flex;gap:8px">';
+    h+='<button class="btn btn-save" onclick="saveProgress()">Save progress</button>';
+    if(di<8) h+='<button class="btn btn-primary" onclick="goTo('+(di+1)+')">Next →</button>';
+    else h+='<button class="btn btn-primary" onclick="goTo(9)">Review & submit →</button>';
+    h+='</div></div>';
+    h+='<div class="saved-msg" id="saved-'+di+'">Progress saved to this browser. You can close this page and return later.</div>';
+    h+='<div class="device-warn" id="devwarn-'+di+'" style="display:none">Your progress is saved to <strong>this browser only</strong>. Please complete the assessment on this same device.</div>';
+    h+='</div></div>';
+  });
+  document.getElementById('domain-pages').innerHTML=h;
+}
+
+/* Contextual placeholder hints per question */
+var PLACEHOLDERS={
+'1.1b':'e.g. "If we lost our HSE contract, we would lose 40% of income overnight"',
+'1.2':'e.g. "Monthly subscriptions (recurring), annual grant (predictable but not guaranteed), event income (seasonal/one-off)"',
+'2.1a':'e.g. "Training programmes, consultancy, retail sales, room hire..."',
+'2.2':'e.g. "Training makes money (~30% margin), retail breaks even, room hire loses money after overheads"',
+'3.1c':'e.g. "6 months" or "unclear"',
+'4.1':'e.g. "In 12 months: 3 new B2B clients. In 2-3 years: cross-border service established, grant dependency below 30%"',
+'4.2a':'e.g. "Local authorities, SMEs via direct sales, individual consumers online"',
+'5.1':'e.g. "All sales are founder-led. No documented process. Customers find us through word of mouth and our website"',
+'5.2b':'e.g. "60%" or "unknown"',
+'6.2':'e.g. "Everything would stop. I am the only person who sells, delivers, and manages client relationships"',
+'7.1':'e.g. "We have one client in NI via a personal connection but no systematic cross-border activity"',
+'8.1b':'e.g. "Strategy and sales development"',
+'8.2':'e.g. "We have case studies but no aggregated data. Funders accept our annual report but investors would want more"',
+'9.1b':'e.g. "Board meets quarterly. CEO makes all commercial decisions day-to-day. Board approves anything over €10k"',
+'9.2':'e.g. "1) Over-reliance on one contract. 2) No succession plan. 3) Procurement requirements we can\'t yet meet"'
+};
+
+function renderQuestion(q, domId){
+  var h='<div class="q-block">';
+  h+='<div class="q-label"><span class="q-num">'+q.id+'</span><span class="q-text">'+q.text+'</span></div>';
+  if(q.type==='textarea'){
+    var ph=PLACEHOLDERS[q.id]||'Type your answer here...';
+    h+='<textarea id="q-'+q.id+'" onchange="saveAnswer(\''+q.id+'\',this.value)" placeholder="'+ph+'"></textarea>';
+  } else if(q.type==='radio'){
+    h+='<div class="radio-group" id="q-'+q.id+'">';
+    q.options.forEach(function(o){
+      h+='<div class="radio-item" onclick="selectRadio(\''+q.id+'\',\''+o+'\',this)">'+o+'</div>';
+    });
+    h+='</div>';
+  } else if(q.type==='check'){
+    h+='<div class="check-group" id="q-'+q.id+'">';
+    q.options.forEach(function(o){
+      h+='<div class="check-item" onclick="toggleCheck(\''+q.id+'\',\''+o+'\',this)">'+o+'</div>';
+    });
+    h+='</div>';
+  } else if(q.type==='combo'){
+    q.subparts.forEach(function(sp){
+      h+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--ts);margin-bottom:4px">'+sp.label+'</div>';
+      if(sp.type==='textarea'){
+        var ph=PLACEHOLDERS[sp.id]||'Type your answer...';
+        h+='<textarea id="q-'+sp.id+'" onchange="saveAnswer(\''+sp.id+'\',this.value)" placeholder="'+ph+'" style="min-height:70px"></textarea>';
+      } else if(sp.type==='short'){
+        var ph=PLACEHOLDERS[sp.id]||'...';
+        h+='<input type="text" id="q-'+sp.id+'" onchange="saveAnswer(\''+sp.id+'\',this.value)" placeholder="'+ph+'">';
+      } else if(sp.type==='radio'){
+        h+='<div class="radio-group" id="q-'+sp.id+'">';
+        sp.options.forEach(function(o){
+          h+='<div class="radio-item" onclick="selectRadio(\''+sp.id+'\',\''+o+'\',this)">'+o+'</div>';
+        });
+        h+='</div>';
+      } else if(sp.type==='check'){
+        h+='<div class="check-group" id="q-'+sp.id+'">';
+        sp.options.forEach(function(o){
+          h+='<div class="check-item" onclick="toggleCheck(\''+sp.id+'\',\''+o+'\',this)">'+o+'</div>';
+        });
+        h+='</div>';
+      } else if(sp.type==='pct'){
+        sp.options.forEach(function(o){
+          h+='<div class="pct-row"><label>'+o+'</label><input type="number" min="0" max="100" id="q-'+sp.id+'-'+o.replace(/[^a-zA-Z]/g,'')+'" onchange="updatePct(\''+sp.id+'\')" placeholder="%"></div>';
+        });
+        h+='<div class="pct-bar" id="pct-bar-'+sp.id+'"><div class="pct-bar-fill" id="pct-bar-fill-'+sp.id+'" style="width:0%"></div></div>';
+        h+='<div class="pct-total" id="pct-total-'+sp.id+'">Total: 0%</div>';
+      }
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+  return h;
+}
+
+function saveAnswer(id, val){ answers[id]=val; }
+
+function selectRadio(id, val, el){
+  answers[id]=val;
+  el.parentNode.querySelectorAll('.radio-item').forEach(function(r){r.classList.remove('selected')});
+  el.classList.add('selected');
+}
+
+function toggleCheck(id, val, el){
+  if(!answers[id]) answers[id]=[];
+  var idx=answers[id].indexOf(val);
+  if(idx>-1){answers[id].splice(idx,1);el.classList.remove('selected')}
+  else{answers[id].push(val);el.classList.add('selected')}
+}
+
+function updatePct(id){
+  var total=0;
+  var parts=document.querySelectorAll('[id^="q-'+id+'-"]');
+  var vals={};
+  parts.forEach(function(p){
+    var v=parseInt(p.value)||0;
+    total+=v;
+    var key=p.id.replace('q-'+id+'-','');
+    vals[key]=v;
+  });
+  answers[id]=vals;
+  var el=document.getElementById('pct-total-'+id);
+  el.textContent='Total: '+total+'%';
+  el.className='pct-total '+(total===100?'ok':'err');
+  // Update visual bar
+  var bar=document.getElementById('pct-bar-fill-'+id);
+  if(bar){
+    bar.style.width=Math.min(total,100)+'%';
+    bar.className='pct-bar-fill '+(total===100?'ok':total>100?'err':'partial');
+  }
+}
+
+function goTo(pageIdx){
+  // Save current answers from DOM
+  collectAnswers();
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  // Update dots
+  document.querySelectorAll('.domain-dot').forEach(function(d,i){
+    d.classList.remove('active');
+    if(hasDomainAnswers(i)) d.classList.add('done');
+    else d.classList.remove('done');
+  });
+
+  if(pageIdx===-1){
+    document.getElementById('page-welcome').classList.add('active');
+    currentPage=-1;
+    updateProgress();
+  } else if(pageIdx===9){
+    renderReview();
+    document.getElementById('page-review').classList.add('active');
+    currentPage=9;
+    updateProgress();
+  } else if(pageIdx===10){
+    document.getElementById('page-success').classList.add('active');
+    currentPage=10;
+  } else {
+    document.getElementById('page-'+pageIdx).classList.add('active');
+    document.getElementById('dot-'+pageIdx).classList.add('active');
+    currentPage=pageIdx;
+    restoreAnswers(pageIdx);
+    updateProgress();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+function collectAnswers(){
+  document.querySelectorAll('textarea, input[type="text"], input[type="number"]').forEach(function(el){
+    if(el.id && el.id.startsWith('q-') && el.value){
+      answers[el.id.replace('q-','')]=el.value;
+    }
+  });
+}
+
+function restoreAnswers(di){
+  var d=domains[di];
+  d.questions.forEach(function(q){
+    if(q.type==='textarea'||q.type==='short'){
+      var el=document.getElementById('q-'+q.id);
+      if(el&&answers[q.id]) el.value=answers[q.id];
+    } else if(q.type==='radio'){
+      if(answers[q.id]){
+        var items=document.querySelectorAll('#q-'+q.id.replace(/\./g,'\\.')+' .radio-item');
+        items.forEach(function(r){if(r.textContent===answers[q.id])r.classList.add('selected')});
+      }
+    } else if(q.type==='check'){
+      if(answers[q.id]&&Array.isArray(answers[q.id])){
+        var items=document.querySelectorAll('#q-'+q.id.replace(/\./g,'\\.')+' .check-item');
+        items.forEach(function(r){if(answers[q.id].indexOf(r.textContent)>-1)r.classList.add('selected')});
+      }
+    } else if(q.type==='combo'){
+      q.subparts.forEach(function(sp){
+        if(sp.type==='textarea'||sp.type==='short'){
+          var el=document.getElementById('q-'+sp.id);
+          if(el&&answers[sp.id]) el.value=answers[sp.id];
+        } else if(sp.type==='radio'&&answers[sp.id]){
+          var items=document.querySelectorAll('#q-'+sp.id.replace(/\./g,'\\.')+' .radio-item');
+          items.forEach(function(r){if(r.textContent===answers[sp.id])r.classList.add('selected')});
+        } else if(sp.type==='check'&&answers[sp.id]&&Array.isArray(answers[sp.id])){
+          var items=document.querySelectorAll('#q-'+sp.id.replace(/\./g,'\\.')+' .check-item');
+          items.forEach(function(r){if(answers[sp.id].indexOf(r.textContent)>-1)r.classList.add('selected')});
+        } else if(sp.type==='pct'&&answers[sp.id]){
+          var vals=answers[sp.id];
+          Object.keys(vals).forEach(function(k){
+            var el=document.getElementById('q-'+sp.id+'-'+k);
+            if(el) el.value=vals[k];
+          });
+          updatePct(sp.id);
+        }
+      });
+    }
+  });
+}
+
+function hasDomainAnswers(di){
+  var d=domains[di];
+  var count=0;
+  d.questions.forEach(function(q){
+    if(q.type==='combo'){
+      q.subparts.forEach(function(sp){if(answers[sp.id]) count++});
+    } else {
+      if(answers[q.id]) count++;
+    }
+  });
+  return count>0;
+}
+
+function updateProgress(){
+  var total=0,filled=0;
+  domains.forEach(function(d){
+    d.questions.forEach(function(q){
+      if(q.type==='combo'){q.subparts.forEach(function(sp){total++;if(answers[sp.id])filled++})}
+      else{total++;if(answers[q.id])filled++}
+    });
+  });
+  var pct=Math.round((filled/total)*100);
+  document.getElementById('pbar').style.width=pct+'%';
+  document.getElementById('ppct').textContent=pct+'%';
+  if(currentPage===-1) document.getElementById('ptext').textContent='Welcome';
+  else if(currentPage===9) document.getElementById('ptext').textContent='Review & Submit';
+  else if(currentPage===10) document.getElementById('ptext').textContent='Submitted';
+  else document.getElementById('ptext').textContent='Domain '+(currentPage+1)+' of 9: '+domains[currentPage].name;
+}
+
+function saveProgress(){
+  collectAnswers();
+  var data={answers:answers,org:document.getElementById('org-name').value,ceo:document.getElementById('ceo-name').value,saved:new Date().toISOString()};
+  localStorage.setItem('select_baseline',JSON.stringify(data));
+  if(currentPage>=0&&currentPage<9){
+    var msg=document.getElementById('saved-'+currentPage);
+    msg.style.display='block';
+    setTimeout(function(){msg.style.display='none'},4000);
+    // Show device warning once
+    if(!window._deviceWarnShown){
+      var dw=document.getElementById('devwarn-'+currentPage);
+      if(dw){dw.style.display='block';setTimeout(function(){dw.style.display='none'},6000)}
+      window._deviceWarnShown=true;
+    }
+  }
+}
+
+function loadSaved(){
+  var saved=localStorage.getItem('select_baseline');
+  if(saved){
+    var data=JSON.parse(saved);
+    answers=data.answers||{};
+    if(data.org) document.getElementById('org-name').value=data.org;
+    if(data.ceo) document.getElementById('ceo-name').value=data.ceo;
+    // Find first incomplete domain
+    for(var i=0;i<9;i++){if(!hasDomainAnswers(i)){goTo(i);return}}
+    goTo(9); // all done, go to review
+  }
+}
+
+function startAssessment(){
+  var org=document.getElementById('org-name').value.trim();
+  var ceo=document.getElementById('ceo-name').value.trim();
+  if(!org||!ceo){alert('Please enter your organisation name and your name.');return}
+  goTo(0);
+}
+
+function renderReview(){
+  var h='';
+  var unansweredCount=0;
+  domains.forEach(function(d,di){
+    var domainHasEmpty=false;
+    // Check for unanswered questions in this domain
+    d.questions.forEach(function(q){
+      if(q.type==='combo'){q.subparts.forEach(function(sp){if(!answers[sp.id])domainHasEmpty=true})}
+      else{if(!answers[q.id])domainHasEmpty=true}
+    });
+    if(domainHasEmpty) unansweredCount++;
+    var statusIcon=domainHasEmpty?'<span style="color:var(--coral);font-size:11px;font-weight:700">Incomplete</span>':'<span style="color:var(--teal);font-size:11px;font-weight:700">\u2713 Complete</span>';
+    h+='<div class="review-domain" onclick="this.classList.toggle(\'collapsed\')">';
+    h+='<div class="review-domain-hdr"><span>'+d.id+'. '+d.name+'</span>'+statusIcon+'</div>';
+    h+='<div class="review-domain-body">';
+    d.questions.forEach(function(q){
+      if(q.type==='combo'){
+        q.subparts.forEach(function(sp){
+          h+='<div class="review-q"><div class="review-q-label">'+sp.label+'</div>';
+          var v=answers[sp.id];
+          if(v){
+            if(Array.isArray(v)) h+='<div class="review-q-answer">'+v.join(', ')+'</div>';
+            else if(typeof v==='object') h+='<div class="review-q-answer">'+Object.entries(v).map(function(e){return e[0]+': '+e[1]+'%'}).join(', ')+'</div>';
+            else h+='<div class="review-q-answer">'+v+'</div>';
+          } else h+='<div class="review-q-empty">Not answered</div>';
+          h+='</div>';
+        });
+      } else {
+        h+='<div class="review-q"><div class="review-q-label">'+q.id+' '+q.text.substring(0,80)+'...</div>';
+        var v=answers[q.id];
+        if(v){
+          if(Array.isArray(v)) h+='<div class="review-q-answer">'+v.join(', ')+'</div>';
+          else h+='<div class="review-q-answer">'+v+'</div>';
+        } else h+='<div class="review-q-empty">Not answered</div>';
+        h+='</div>';
+      }
+    });
+    h+='<div style="margin-top:8px"><button class="btn btn-secondary" onclick="event.stopPropagation();goTo('+di+')" style="font-size:12px;padding:4px 12px">Edit domain '+d.id+' \u2192</button></div>';
+    h+='</div></div>';
+  });
+  if(unansweredCount>0){
+    h='<div style="padding:10px 14px;background:var(--gold-light);border:1px solid rgba(184,134,11,0.15);border-radius:6px;margin-bottom:16px;font-size:13px;color:var(--gold)"><strong>'+unansweredCount+' domain'+(unansweredCount>1?'s':'')+' incomplete.</strong> You can still submit, but fuller responses help your assessor prepare for your validation meeting.</div>'+h;
+  }
+  document.getElementById('review-content').innerHTML=h;
+  // Auto-scroll consent into view after a moment
+  setTimeout(function(){
+    var cb=document.getElementById('consentBox');
+    if(cb){cb.scrollIntoView({behavior:'smooth',block:'center'})}
+  },600);
+}
+
+function submitForm(){
+  collectAnswers();
+  var org=document.getElementById('org-name').value;
+  var ceo=document.getElementById('ceo-name').value;
+
+  // Build formatted submission
+  var body='ORGANISATION: '+org+'\nCEO: '+ceo+'\nSUBMITTED: '+new Date().toLocaleString()+'\n\n';
+  domains.forEach(function(d){
+    body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body+='DOMAIN '+d.id+': '+d.name.toUpperCase()+' ('+d.tier+')\n';
+    body+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    d.questions.forEach(function(q){
+      if(q.type==='combo'){
+        q.subparts.forEach(function(sp){
+          body+=sp.label+'\n';
+          var v=answers[sp.id];
+          if(v){
+            if(Array.isArray(v)) body+=v.join(', ')+'\n';
+            else if(typeof v==='object') body+=Object.entries(v).map(function(e){return e[0]+': '+e[1]+'%'}).join(', ')+'\n';
+            else body+=v+'\n';
+          } else body+='[Not answered]\n';
+          body+='\n';
+        });
+      } else {
+        body+=q.id+': '+q.text+'\n';
+        var v=answers[q.id];
+        if(v){
+          if(Array.isArray(v)) body+=v.join(', ')+'\n';
+          else body+=v+'\n';
+        } else body+='[Not answered]\n';
+        body+='\n';
+      }
+    });
+    body+='\n';
+  });
+
+  // Disable button during submission
+  var btn=document.getElementById('submit-btn');
+  btn.disabled=true;btn.textContent='Submitting\u2026';
+  document.getElementById('submitError').style.display='none';
+
+  // Submit via Formspree
+  fetch(FORMSPREE,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({
+      _subject:'SELECT Baseline: '+org+' ('+ceo+')',
+      organisation:org,
+      ceo:ceo,
+      submitted:new Date().toISOString(),
+      assessment:body
+    })
+  }).then(function(r){
+    if(r.ok){
+      // Mark as submitted in localStorage so hub page can detect it
+      var saved=JSON.parse(localStorage.getItem('select_baseline')||'{}');
+      saved.submitted=true;
+      localStorage.setItem('select_baseline',JSON.stringify(saved));
+      goTo(10);
+    } else {
+      btn.disabled=false;btn.textContent='Submit to assessors \u2192';
+      document.getElementById('submitError').style.display='block';
+    }
+  }).catch(function(){
+    btn.disabled=false;btn.textContent='Submit to assessors \u2192';
+    document.getElementById('submitError').style.display='block';
+  });
+}
+
+function downloadPDF(){
+  collectAnswers();
+  var doc=new jspdf.jsPDF();
+  var org=document.getElementById('org-name').value;
+  var ceo=document.getElementById('ceo-name').value;
+  var y=20;
+  var lm=20;
+  var pw=170;
+
+  doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(15,43,76);
+  doc.text('SELECT — Commercial Baseline Assessment',lm,y);y+=10;
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(90,90,85);
+  doc.text('Organisation: '+org+'    CEO: '+ceo+'    Date: '+new Date().toLocaleDateString(),lm,y);y+=12;
+  doc.setDrawColor(10,107,90);doc.setLineWidth(0.5);doc.line(lm,y,190,y);y+=10;
+
+  domains.forEach(function(d){
+    if(y>250){doc.addPage();y=20}
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(15,43,76);
+    doc.text(d.id+'. '+d.name+' ('+d.tier+')',lm,y);y+=8;
+
+    d.questions.forEach(function(q){
+      if(q.type==='combo'){
+        q.subparts.forEach(function(sp){
+          if(y>270){doc.addPage();y=20}
+          doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(90,90,85);
+          doc.text(sp.label,lm,y);y+=5;
+          doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(45,45,42);
+          var v=answers[sp.id];
+          var txt='[Not answered]';
+          if(v){
+            if(Array.isArray(v)) txt=v.join(', ');
+            else if(typeof v==='object') txt=Object.entries(v).map(function(e){return e[0]+': '+e[1]+'%'}).join(', ');
+            else txt=v;
+          }
+          var lines=doc.splitTextToSize(txt,pw);
+          doc.text(lines,lm,y);y+=lines.length*5+4;
+        });
+      } else {
+        if(y>270){doc.addPage();y=20}
+        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(10,107,90);
+        var qlabel=doc.splitTextToSize(q.id+': '+q.text,pw);
+        doc.text(qlabel,lm,y);y+=qlabel.length*4+3;
+        doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(45,45,42);
+        var v=answers[q.id];
+        var txt='[Not answered]';
+        if(v){if(Array.isArray(v))txt=v.join(', ');else txt=v}
+        var lines=doc.splitTextToSize(txt,pw);
+        doc.text(lines,lm,y);y+=lines.length*5+4;
+      }
+    });
+    y+=6;
+  });
+
+  doc.save('SELECT_Baseline_'+org.replace(/[^a-zA-Z0-9]/g,'_')+'.pdf');
+}
+
+init();
+</script>
+</body>
+</html>
