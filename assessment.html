@@ -679,20 +679,33 @@ function submitForm(){
   btn.disabled=true;btn.textContent='Submitting\u2026';
   document.getElementById('submitError').style.display='none';
 
-  // Submit via Formspree
-  fetch(FORMSPREE,{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify({
-      _subject:'SELECT Baseline: '+org+' ('+ceo+')',
-      organisation:org,
-      ceo:ceo,
-      submitted:new Date().toISOString(),
-      assessment:body
+  // Submit to BOTH Formspree (email) and Airtable sync (tracker) in parallel
+  var payload = {
+    _subject:'SELECT Baseline: '+org+' ('+ceo+')',
+    organisation:org,
+    ceo:ceo,
+    submitted:new Date().toISOString(),
+    assessment:body,
+    tradedPct:(answers['1.1a']&&answers['1.1a']['Trading/sales'])||'',
+    repeatPct:answers['5.2b']||''
+  };
+
+  Promise.allSettled([
+    fetch(FORMSPREE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(payload)
+    }),
+    fetch('/api/submit-baseline',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
     })
-  }).then(function(r){
-    if(r.ok){
-      // Mark as submitted in localStorage so hub page can detect it
+  ]).then(function(results){
+    var formspreeOk = results[0].status==='fulfilled' && results[0].value.ok;
+    var airtableOk = results[1].status==='fulfilled' && results[1].value.ok;
+    console.log('[SELECT] Submission:',{formspreeOk:formspreeOk,airtableOk:airtableOk});
+    if(formspreeOk || airtableOk){
       var saved=JSON.parse(localStorage.getItem('select_baseline')||'{}');
       saved.submitted=true;
       localStorage.setItem('select_baseline',JSON.stringify(saved));
@@ -701,9 +714,6 @@ function submitForm(){
       btn.disabled=false;btn.textContent='Submit to assessors \u2192';
       document.getElementById('submitError').style.display='block';
     }
-  }).catch(function(){
-    btn.disabled=false;btn.textContent='Submit to assessors \u2192';
-    document.getElementById('submitError').style.display='block';
   });
 }
 
