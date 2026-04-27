@@ -70,7 +70,8 @@ function jsonResponse(statusCode, body) {
 }
 
 async function airtableFetch(path, options = {}) {
-  const url = `${AIRTABLE_API}/${process.env.AIRTABLE_BASE_ID}/${path}`;
+  const sep = path.includes("?") ? "&" : "?";
+  const url = `${AIRTABLE_API}/${process.env.AIRTABLE_BASE_ID}/${path}${sep}returnFieldsByFieldId=true`;
   const res = await fetch(url, {
     ...options,
     headers: {
