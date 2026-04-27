@@ -134,9 +134,9 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes) {
     return { domain: d, score: row ? row.fields[F.ES_SCORE] ?? "" : "", _rid: row ? row.id : null };
   });
 
-  const progressItems = noteRows
-    .filter((r) => r.fields[F.N_TYPE] === "Progress")
-    .map((r) => ({ month: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
+  const generalNotes = noteRows
+    .filter((r) => r.fields[F.N_TYPE] === "Consulting" || r.fields[F.N_TYPE] === "Coaching" || r.fields[F.N_TYPE] === "Form Submission")
+    .map((r) => ({ type: r.fields[F.N_TYPE], date: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
   const generalNotes = noteRows
     .filter((r) => r.fields[F.N_TYPE] === "Consulting" || r.fields[F.N_TYPE] === "Coaching")
     .map((r) => ({ type: r.fields[F.N_TYPE], date: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
