@@ -1,9 +1,18 @@
 [build]
   functions = "netlify/functions"
+  publish = "."
 
-# No build command needed — static site + functions
 [functions]
   node_bundler = "esbuild"
 
-# Environment variables are set in Netlify dashboard:
-# AIRTABLE_PAT = your_personal_access_token
+[[redirects]]
+  from = "/api/airtable"
+  to = "/.netlify/functions/airtable-api"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/submit-baseline"
+  to = "/.netlify/functions/submit-baseline"
+  status = 200
+  force = true
