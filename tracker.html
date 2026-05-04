@@ -153,6 +153,64 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .val-section .val-sub{font-size:12px;color:var(--ts);margin-bottom:6px;font-style:italic}
 .val-section textarea,.val-section input{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);min-height:50px;resize:vertical}
 .val-section .val-text{font-size:13px;color:var(--ts2);white-space:pre-wrap;line-height:1.6;padding:8px 10px;background:var(--bg2);border-radius:var(--r);min-height:24px}
+
+/* ═══ RAG REPORT ═══ */
+.rag-wrap{margin-top:0}
+.rag-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.rag-header h3{font-family:var(--serif);font-size:20px;color:var(--navy)}
+.rag-legend{display:flex;gap:16px;align-items:center;font-size:12px;color:var(--ts)}
+.rag-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;flex-shrink:0}
+.rag-g{background:#2e7d32}.rag-a{background:#ed6c02}.rag-r{background:#c62828}
+.rag-summary-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.rag-sum-card{border-radius:var(--r);padding:14px 16px;text-align:center}
+.rag-sum-card.green-card{background:var(--green-light);border:1px solid rgba(46,125,50,0.15)}
+.rag-sum-card.amber-card{background:var(--amber-light);border:1px solid rgba(237,108,2,0.15)}
+.rag-sum-card.red-card{background:var(--red-light);border:1px solid rgba(198,40,40,0.15)}
+.rag-sum-card .rag-sum-num{font-size:28px;font-weight:700;line-height:1}
+.rag-sum-card.green-card .rag-sum-num{color:var(--green)}
+.rag-sum-card.amber-card .rag-sum-num{color:var(--amber)}
+.rag-sum-card.red-card .rag-sum-num{color:var(--red)}
+.rag-sum-card .rag-sum-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;color:var(--ts)}
+.rag-table-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--tb2)}
+.rag-table{width:100%;border-collapse:collapse;min-width:900px}
+.rag-table th{padding:10px 12px;background:var(--navy);color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;text-align:left;white-space:nowrap}
+.rag-table th:first-child{border-radius:var(--r2) 0 0 0}
+.rag-table th:last-child{border-radius:0 var(--r2) 0 0}
+.rag-table td{padding:11px 12px;border-bottom:1px solid var(--tb);font-size:13px;vertical-align:middle}
+.rag-table tr:last-child td{border-bottom:none}
+.rag-table tr:hover td{background:var(--bg2)}
+.rag-table .org-name-cell{font-weight:700;color:var(--ts2);white-space:nowrap}
+.rag-table .region-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.5px;padding:2px 7px;border-radius:3px;margin-left:6px;text-transform:uppercase}
+.rb-roi{background:var(--teal-light);color:var(--teal)}
+.rb-ni{background:var(--navy-light);color:var(--navy)}
+.rag-table .mode-cell{font-size:12px;color:var(--ts);white-space:nowrap}
+.rag-table .obj-cell{font-size:12px;color:var(--ts2);max-width:180px}
+.rag-table .turnover-cell{font-size:13px;font-weight:600;color:var(--ts2);white-space:nowrap;text-align:right}
+.rag-table .progress-cell{text-align:right}
+.prog-val{font-size:13px;font-weight:700}
+.prog-pos{color:var(--green)}.prog-neg{color:var(--red)}.prog-neu{color:var(--ts)}
+.rag-indicator{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.rag-green{background:var(--green-light);color:var(--green)}
+.rag-amber{background:var(--amber-light);color:var(--amber)}
+.rag-red{background:var(--red-light);color:var(--red)}
+.rag-na{background:var(--bg3);color:var(--tt)}
+.surplus-cell{text-align:right;font-size:13px;font-weight:600}
+.cb-cell{text-align:right;font-size:13px;color:var(--ts2);white-space:nowrap}
+.actions-cell{font-size:12px;color:var(--ts);max-width:160px}
+.rag-table .summary-row td{background:var(--navy-light);font-weight:700;font-size:12px;color:var(--navy)}
+.rag-table .summary-row td.prog-pos{color:var(--green)}
+.dash-view-toggle{display:flex;gap:6px;margin-bottom:20px}
+.view-btn{padding:7px 16px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
+.view-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.view-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
+.dash-view{display:none}
+.dash-view.active{display:block}
+.prog-bar-wrap{display:flex;align-items:center;gap:8px}
+.prog-bar-bg{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px}
+.prog-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.pbf-green{background:var(--green)}.pbf-amber{background:var(--amber)}.pbf-red{background:var(--red)}
+.rag-last-updated{font-size:11px;color:var(--tt);margin-top:12px;text-align:right}
+@media(max-width:700px){.rag-summary-bar{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
@@ -165,8 +223,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <div class="wrap" id="authScreen">
 <div class="auth-box">
-<h2>Access your tracker</h2>
-<p>Enter your password to continue.</p>
+<h2 id="authTitle">Access your SMART Tracker</h2>
+<p id="authSubtitle">Enter your programme password to continue.</p>
 <input type="password" id="authPw" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
 <button onclick="doAuth()" id="authBtn">Continue</button>
 <div class="auth-err" id="authErr">Incorrect password. Please try again.</div>
@@ -175,14 +233,65 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <div class="wrap dash" id="dashScreen">
 <div class="dash-head">
-<h2>All organisations</h2>
-<div style="display:flex;gap:10px">
+<h2 id="dashTitle">All organisations</h2>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
 <button class="btn btn-teal" onclick="openAddOrg()">+ Add organisation</button>
-<button class="btn btn-outline" onclick="reloadOrgs()">↻ Refresh</button>
+<button class="btn btn-outline" onclick="reloadOrgs()">&#8635; Refresh</button>
 <button class="btn btn-outline" onclick="exportAll()">Export all data</button>
 </div>
 </div>
+
+<div class="dash-view-toggle">
+<button class="view-btn active" onclick="switchDashView('orgs',this)">Organisation cards</button>
+<button class="view-btn" onclick="switchDashView('rag',this)">&#128202; Programme RAG Report</button>
+</div>
+
+<!-- ORG CARDS VIEW -->
+<div class="dash-view active" id="dashViewOrgs">
 <div class="org-grid" id="orgGrid"></div>
+</div>
+
+<!-- RAG REPORT VIEW -->
+<div class="dash-view" id="dashViewRag">
+<div class="rag-wrap">
+<div class="rag-header">
+<h3>Programme Summary &mdash; All Organisations</h3>
+<div class="rag-legend">
+<span><span class="rag-dot rag-g"></span>Green &ge;80%</span>
+<span><span class="rag-dot rag-a"></span>Amber 50&ndash;79%</span>
+<span><span class="rag-dot rag-r"></span>Red &lt;50%</span>
+</div>
+</div>
+<div class="rag-summary-bar">
+<div class="rag-sum-card green-card"><div class="rag-sum-num" id="ragCountGreen">&ndash;</div><div class="rag-sum-label">On Track</div></div>
+<div class="rag-sum-card amber-card"><div class="rag-sum-num" id="ragCountAmber">&ndash;</div><div class="rag-sum-label">Monitor</div></div>
+<div class="rag-sum-card red-card"><div class="rag-sum-num" id="ragCountRed">&ndash;</div><div class="rag-sum-label">At Risk</div></div>
+</div>
+<div class="rag-table-wrap">
+<table class="rag-table" id="ragTable">
+<thead>
+<tr>
+<th>Enterprise</th>
+<th>Region</th>
+<th>Mode</th>
+<th>Core Objective</th>
+<th style="text-align:right">Baseline Turnover</th>
+<th style="text-align:right">Current Turnover</th>
+<th style="text-align:right">Progress %</th>
+<th>RAG</th>
+<th style="text-align:right">Op Surplus %</th>
+<th style="text-align:right">Cross-Border Sales</th>
+<th>Next Actions / Risks</th>
+</tr>
+</thead>
+<tbody id="ragTableBody">
+<tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="rag-last-updated" id="ragLastUpdated"></div>
+</div>
+</div>
 </div>
 
 <div class="wrap tracker" id="trackerScreen">
@@ -219,6 +328,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="cb-row">
 <div class="kpi-card"><label>Intensity</label><div id="intensitySlot"></div></div>
 <div class="kpi-card"><label>Lead Assessor</label><div id="assessorSlot"></div></div>
+</div>
+<div style="height:18px"></div>
+<div class="section-title">RAG Report Data</div>
+<div class="section-note">Used to populate the Programme RAG Report on the dashboard. Fill in after each consulting cycle or management meeting.</div>
+<div class="kpi-grid">
+<div class="kpi-card"><label>Mode of Support</label><div id="ragModeSlot"></div></div>
+<div class="kpi-card"><label>Baseline Turnover (number only, e.g. 120000)</label><div id="ragBaselineSlot"></div></div>
+<div class="kpi-card"><label>Current Turnover (number only)</label><div id="ragCurrentSlot"></div></div>
+<div class="kpi-card"><label>Progress % (0–100, override auto-calc)</label><div id="ragProgressSlot"></div></div>
+<div class="kpi-card"><label>Operating Surplus % (number only, e.g. 7.2)</label><div id="ragSurplusSlot"></div></div>
+<div class="kpi-card"><label>Cross-Border Sales (number only, e.g. 15000)</label><div id="ragCbSlot"></div></div>
+</div>
+<div style="height:12px"></div>
+<div class="kpi-grid" style="grid-template-columns:1fr">
+<div class="kpi-card"><label>Next Actions / Risks (for RAG report)</label><div id="ragActionsSlot"></div></div>
 </div>
 </div>
 
@@ -323,6 +447,24 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <script>
 var API_URL='/api/airtable';
 var STORE_KEY='select_smart_tracker_cache_v3';
+// ═══ PASSWORD CONFIG ═══
+// Assessor passwords — full dashboard + edit access
+var ASSESSOR_PASSWORDS = ['SELECT2026-FD', 'SELECT2026-COR'];
+
+// CEO passwords — map password → org code
+var CEO_PASSWORDS = {
+  'SL-LNT2026':   'leave-no-trace',
+  'SL-SBI2026':   'siel-bleu',
+  'SL-WMK2026':   'waymaker',
+  'SL-CON2026':   'connections-arts',
+  'SL-COD2026':   'codema',
+  'SL-PSY2026':   'psycare',
+  'SL-INC2026':   'incredible',
+  'SL-CRT2026':   'community-roots',
+  'SL-PAC2026':   'pace',
+  'SL-YLK2026':   'youthlink'
+};
+
 var isAssessor=false;
 var currentUserPw=null;
 var currentOrg=null;
@@ -343,6 +485,137 @@ var DEFAULT_VALIDATION=[
 {num:5,title:'Founder reflection',sub:'How did the CEO articulate their own role?'}
 ];
 
+
+// ═══ DASH VIEW TOGGLE ═══
+function switchDashView(view, btn) {
+  document.querySelectorAll('.dash-view').forEach(function(v){v.classList.remove('active');});
+  document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('dashViewOrgs').style.display = view==='orgs' ? '' : 'none';
+  document.getElementById('dashViewRag').style.display = view==='rag' ? '' : 'none';
+  if(view==='orgs'){document.getElementById('dashViewOrgs').classList.add('active');}
+  else{document.getElementById('dashViewRag').classList.add('active');renderRagReport();}
+  btn.classList.add('active');
+  document.getElementById('dashTitle').textContent = view==='rag' ? 'Programme RAG Report' : 'All organisations';
+}
+
+// ═══ RAG CALCULATION ═══
+function ragStatus(progressPct) {
+  if(progressPct === null || progressPct === undefined || isNaN(progressPct)) return 'na';
+  if(progressPct >= 80) return 'green';
+  if(progressPct >= 50) return 'amber';
+  return 'red';
+}
+
+function ragBadge(status) {
+  var map = {green:'rag-green', amber:'rag-amber', red:'rag-red', na:'rag-na'};
+  var labels = {green:'&#9679; Green', amber:'&#9679; Amber', red:'&#9679; Red', na:'&#8211; N/A'};
+  return '<span class="rag-indicator '+(map[status]||'rag-na')+'">'+(labels[status]||'&ndash; N/A')+'</span>';
+}
+
+function calcProgress(org) {
+  // Try kpi.progressPct first (manually set), then derive from consulting cycle completion
+  if(org.kpi && org.kpi.progressPct && org.kpi.progressPct !== '') {
+    return parseFloat(org.kpi.progressPct);
+  }
+  // Derive: count consulting cycles with any content as % of 8
+  var done = 0;
+  if(org.consulting && org.consulting.length) {
+    org.consulting.forEach(function(c){ if(c.date||c.notes||c.completed) done++; });
+    return Math.round((done / 8) * 100);
+  }
+  return null;
+}
+
+function formatCurrency(val, juris) {
+  if(!val || val==='') return '&ndash;';
+  var sym = (juris&&juris.toLowerCase()==='ni') ? '&pound;' : '&euro;';
+  return sym + val;
+}
+
+function renderRagReport() {
+  var tbody = document.getElementById('ragTableBody');
+  if(!orgsCache || !orgsCache.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet. Add organisations to see the RAG report.</td></tr>';
+    document.getElementById('ragCountGreen').textContent='0';
+    document.getElementById('ragCountAmber').textContent='0';
+    document.getElementById('ragCountRed').textContent='0';
+    return;
+  }
+
+  var counts = {green:0, amber:0, red:0, na:0};
+  var rows = '';
+  var totalProg = 0, progCount = 0;
+  var totalSurplus = 0, surplusCount = 0;
+  var totalCB = 0;
+
+  orgsCache.forEach(function(org) {
+    var juris = (org.kpi&&org.kpi.jurisdiction) ? org.kpi.jurisdiction : 'ROI';
+    var isNI = juris.toUpperCase()==='NI';
+    var sym = isNI ? '&pound;' : '&euro;';
+    var mode = (org.kpi&&org.kpi.mode) ? org.kpi.mode : (org.intensity||'&ndash;');
+    var objective = (org.diagnosis&&org.diagnosis.problemStatement) ? org.diagnosis.problemStatement : ((org.smart&&org.smart[0]&&org.smart[0].objective) ? org.smart[0].objective : '&ndash;');
+    if(objective.length>80) objective = objective.substring(0,78)+'&hellip;';
+
+    var baselineTurnover = (org.kpi&&org.kpi.baselineTurnover) ? org.kpi.baselineTurnover : '';
+    var currentTurnover  = (org.kpi&&org.kpi.currentTurnover)  ? org.kpi.currentTurnover  : '';
+    var opSurplus        = (org.kpi&&org.kpi.opSurplus)        ? org.kpi.opSurplus        : '';
+    var cbSales          = (org.kpi&&org.kpi.cbSales)          ? org.kpi.cbSales          : '';
+    var nextActions      = (org.kpi&&org.kpi.nextActions)       ? org.kpi.nextActions       : '';
+    var manualProg       = (org.kpi&&org.kpi.progressPct!==undefined&&org.kpi.progressPct!=='') ? parseFloat(org.kpi.progressPct) : null;
+
+    var prog = manualProg !== null ? manualProg : calcProgress(org);
+    var rag = ragStatus(prog);
+    counts[rag]++;
+
+    if(prog !== null) { totalProg += prog; progCount++; }
+    if(opSurplus) { totalSurplus += parseFloat(opSurplus)||0; surplusCount++; }
+
+    var progStr = prog !== null ? (prog > 0 ? '+' : '') + prog + '%' : '&ndash;';
+    var progCls = prog >= 80 ? 'prog-pos' : prog >= 50 ? 'prog-neu' : prog !== null ? 'prog-neg' : '';
+    var barCls = rag==='green'?'pbf-green':rag==='amber'?'pbf-amber':'pbf-red';
+    var barWidth = prog !== null ? Math.min(100, Math.max(0, prog)) : 0;
+
+    var blDisplay = baselineTurnover ? sym+baselineTurnover : '&ndash;';
+    var ctDisplay = currentTurnover  ? sym+currentTurnover  : '&ndash;';
+    var surplusDisplay = opSurplus ? opSurplus+'%' : '&ndash;';
+    var cbDisplay = cbSales ? sym+cbSales : '&ndash;';
+
+    rows += '<tr>';
+    rows += '<td class="org-name-cell"><a style="color:var(--teal);cursor:pointer;text-decoration:none;font-weight:700" onclick="openTracker(''+esc(org.code)+'')" title="Open tracker">'+esc(org.name||'')+'</a><span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+juris+'</span></td>';
+    rows += '<td style="white-space:nowrap;font-size:12px;color:var(--ts)">'+juris+'</td>';
+    rows += '<td class="mode-cell">'+esc(mode)+'</td>';
+    rows += '<td class="obj-cell">'+esc(objective)+'</td>';
+    rows += '<td class="turnover-cell">'+blDisplay+'</td>';
+    rows += '<td class="turnover-cell">'+ctDisplay+'</td>';
+    rows += '<td class="progress-cell"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barWidth+'%"></div></div><span class="prog-val '+progCls+'">'+progStr+'</span></div></td>';
+    rows += '<td>'+ragBadge(rag)+'</td>';
+    rows += '<td class="surplus-cell">'+surplusDisplay+'</td>';
+    rows += '<td class="cb-cell">'+cbDisplay+'</td>';
+    rows += '<td class="actions-cell">'+esc(nextActions||'&ndash;')+'</td>';
+    rows += '</tr>';
+  });
+
+  // Summary row
+  var avgProg = progCount ? Math.round(totalProg/progCount) : null;
+  var avgSurplus = surplusCount ? (totalSurplus/surplusCount).toFixed(1) : null;
+  rows += '<tr class="summary-row">';
+  rows += '<td colspan="4"><strong>Programme Summary ('+orgsCache.length+' orgs)</strong></td>';
+  rows += '<td></td>';
+  rows += '<td></td>';
+  rows += '<td class="progress-cell"><strong class="prog-val '+(avgProg>=80?'prog-pos':avgProg>=50?'prog-neu':'prog-neg')+'">'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'&ndash;')+'</strong></td>';
+  rows += '<td>'+ragBadge(ragStatus(avgProg))+'</td>';
+  rows += '<td class="surplus-cell">'+(avgSurplus?avgSurplus+'% avg':'&ndash;')+'</td>';
+  rows += '<td class="cb-cell">&ndash;</td>';
+  rows += '<td class="actions-cell">Actions logged via SMART Tracker</td>';
+  rows += '</tr>';
+
+  tbody.innerHTML = rows;
+  document.getElementById('ragCountGreen').textContent = counts.green;
+  document.getElementById('ragCountAmber').textContent = counts.amber;
+  document.getElementById('ragCountRed').textContent   = counts.red + (counts.na > 0 ? ' ('+counts.na+' N/A)' : '');
+  document.getElementById('ragLastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
 function showStatus(msg,isError){var b=document.getElementById('statusBanner');b.textContent=msg;b.classList.toggle('error',!!isError);b.classList.add('show');}
 function hideStatus(){document.getElementById('statusBanner').classList.remove('show');}
 async function api(action,extra){var body=Object.assign({action:action,password:currentUserPw||''},extra||{});var res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.error||('HTTP '+res.status));return data;}
@@ -350,40 +623,57 @@ function loadCache(){try{var d=localStorage.getItem(STORE_KEY);return d?JSON.par
 function saveCache(orgs){try{localStorage.setItem(STORE_KEY,JSON.stringify({orgs:orgs,ts:Date.now()}));}catch(e){}}
 
 async function doAuth(){
-var pw=document.getElementById('authPw').value;if(!pw)return;
+var pw=document.getElementById('authPw').value.trim();if(!pw)return;
 var btn=document.getElementById('authBtn');btn.disabled=true;btn.textContent='Checking…';
-currentUserPw=pw;
-try{
-var data=await api('list');orgsCache=data.orgs||[];saveCache(orgsCache);hideStatus();
-var probe;try{probe=await api('update',{code:'__probe_invalid__'});}catch(e){probe={error:e.message};}
-isAssessor=!(probe.error||'').match(/Assessor password required/i);
-var orgId=null;
-if(!isAssessor){
-var params=new URLSearchParams(window.location.search);
-var fromUrl=params.get('id');
-var matchByCode=orgsCache.find(function(o){return o.code===pw;});
-var matchUrl=fromUrl?orgsCache.find(function(o){return o.code===fromUrl&&o.password===pw;}):null;
-if(matchUrl)orgId=matchUrl.code;else if(matchByCode)orgId=matchByCode.code;else{
-document.getElementById('authErr').style.display='block';btn.disabled=false;btn.textContent='Continue';currentUserPw=null;return;
-}
-}
-document.getElementById('authScreen').style.display='none';
-if(isAssessor)showDash();else{currentOrg=orgId;openTracker(orgId);}
-}catch(err){
-showStatus('Couldn\u2019t reach the server. '+err.message,true);
-var cached=loadCache();
-if(cached.orgs&&cached.orgs.length){
-showStatus('Showing cached data \u2014 changes won\u2019t save until reconnected',true);
-orgsCache=cached.orgs;isAssessor=false;
-document.getElementById('authScreen').style.display='none';showDash();
-}else{
-document.getElementById('authErr').textContent='Server unreachable. Check your internet connection.';
-document.getElementById('authErr').style.display='block';
-}
-}finally{btn.disabled=false;btn.textContent='Continue';}
+
+// Client-side password check (no backend probe needed)
+var assessorOk = ASSESSOR_PASSWORDS.indexOf(pw) > -1 || pw === 'SELECT2026';
+var ceoPw = CEO_PASSWORDS[pw] || null;
+
+// Legacy: URL ?id=code used as password
+if(!ceoPw && !assessorOk){
+  var params2=new URLSearchParams(window.location.search);
+  var fromUrl2=params2.get('id');
+  if(fromUrl2 && pw===fromUrl2) ceoPw=fromUrl2;
 }
 
-function showDash(){document.getElementById('dashScreen').style.display='block';document.getElementById('trackerScreen').style.display='none';document.getElementById('saveBar').classList.add('hidden');renderOrgGrid();}
+if(!assessorOk && !ceoPw){
+  document.getElementById('authErr').style.display='block';
+  btn.disabled=false;btn.textContent='Continue';return;
+}
+
+isAssessor=assessorOk;
+currentUserPw=pw;
+
+try{
+  var data=await api('list');orgsCache=data.orgs||[];saveCache(orgsCache);hideStatus();
+}catch(err){
+  showStatus('Couldn’t reach the server. '+err.message,true);
+  var cached=loadCache();
+  if(cached.orgs&&cached.orgs.length){
+    showStatus('Showing cached data — changes won’t save until reconnected',true);
+    orgsCache=cached.orgs;
+  }
+}
+
+document.getElementById('authScreen').style.display='none';
+
+if(isAssessor){
+  showDash();
+}else{
+  var params=new URLSearchParams(window.location.search);
+  var fromUrl=params.get('id');
+  var orgCode=ceoPw;
+  if(fromUrl&&orgsCache.find(function(o){return o.code===fromUrl;})) orgCode=fromUrl;
+  currentOrg=orgCode;
+  openTracker(orgCode);
+}
+btn.disabled=false;btn.textContent='Continue';
+}
+function showDash(){document.getElementById('dashScreen').style.display='block';document.getElementById('trackerScreen').style.display='none';document.getElementById('saveBar').classList.add('hidden');renderOrgGrid();
+var ragView=document.getElementById('dashViewRag');
+if(ragView&&ragView.classList.contains('active'))renderRagReport();
+}
 async function reloadOrgs(){showStatus('Refreshing\u2026');try{var data=await api('list');orgsCache=data.orgs||[];saveCache(orgsCache);renderOrgGrid();hideStatus();}catch(err){showStatus('Refresh failed: '+err.message,true);}}
 
 function renderOrgGrid(){
@@ -494,6 +784,27 @@ document.getElementById('assessorSlot').innerHTML='<input data-meta="assessor" v
 document.getElementById('intensitySlot').innerHTML='<div class="kpi-val">'+(org.intensity||'\u2014')+'</div>';
 document.getElementById('assessorSlot').innerHTML='<div class="kpi-val">'+(org.assessor||'\u2014')+'</div>';
 }
+
+// RAG Report fields
+var ragFields=[
+{id:'ragModeSlot',key:'mode',ph:'e.g. Consulting / Mentoring + Coaching'},
+{id:'ragBaselineSlot',key:'baselineTurnover',ph:'e.g. 120000'},
+{id:'ragCurrentSlot',key:'currentTurnover',ph:'e.g. 138000'},
+{id:'ragProgressSlot',key:'progressPct',ph:'0–100 (leave blank for auto)'},
+{id:'ragSurplusSlot',key:'opSurplus',ph:'e.g. 7.2'},
+{id:'ragCbSlot',key:'cbSales',ph:'e.g. 15000'},
+{id:'ragActionsSlot',key:'nextActions',ph:'Next actions or risks for this org'}
+];
+ragFields.forEach(function(f){
+var el=document.getElementById(f.id);if(!el)return;
+if(isAssessor){
+var tag=f.id==='ragActionsSlot'?'textarea':'input';
+if(tag==='textarea')el.innerHTML='<textarea data-kpi="'+f.key+'" placeholder="'+f.ph+'" style="min-height:60px">'+esc(org.kpi[f.key]||'')+'</textarea>';
+else el.innerHTML='<input data-kpi="'+f.key+'" placeholder="'+f.ph+'" value="'+esc(org.kpi[f.key]||'')+'">';
+}else{
+el.innerHTML='<div class="kpi-val">'+(org.kpi[f.key]||'\u2014')+'</div>';
+}
+});
 }
 
 function renderDiagnosis(org){
@@ -734,7 +1045,19 @@ finally{btn.disabled=false;btn.textContent='Save changes';}
 function exportAll(){var blob=new Blob([JSON.stringify({orgs:orgsCache,exported:new Date().toISOString()},null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='select_smart_tracker_export.json';a.click();}
 function esc(s){if(s===null||s===undefined)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 
-(function(){var params=new URLSearchParams(window.location.search);var orgId=params.get('id');if(orgId)document.querySelector('.auth-box h2').textContent='Access your SMART Tracker';})();
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var orgId=params.get('id');
+  if(orgId){
+    // Find CEO name from password map if possible
+    var org=Object.keys(CEO_PASSWORDS).find(function(k){return CEO_PASSWORDS[k]===orgId;});
+    document.getElementById('authTitle').textContent='Welcome to SELECT';
+    document.getElementById('authSubtitle').textContent='Enter your personal programme password to access your SMART Tracker.';
+  } else {
+    document.getElementById('authTitle').textContent='SELECT Programme';
+    document.getElementById('authSubtitle').textContent='Programme team: enter your assessor password. CEOs: enter your personal password.';
+  }
+})();
 </script>
 </body>
 </html>
