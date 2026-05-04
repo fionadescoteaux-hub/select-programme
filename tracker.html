@@ -971,7 +971,12 @@ function saveRagField(key,val){
 
 function renderDiagnosis(org){
 if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
-var d=org.diagnosis;var html='';
+var d=org.diagnosis;
+// Handle field name differences between Airtable API and local storage
+if(!d.problemStatement&&d.problem)d.problemStatement=d.problem;
+if(!d.constraints||!Array.isArray(d.constraints))d.constraints=['','',''];
+while(d.constraints.length<3)d.constraints.push('');
+var html='';
 html+='<div class="problem-card"><div class="pc-label">Commercial Problem Statement</div>';
 if(isAssessor){html+='<textarea data-diag="problemStatement">'+esc(d.problemStatement)+'</textarea>';}
 else{html+='<div class="pc-val">'+(d.problemStatement||'--')+'</div>';}
