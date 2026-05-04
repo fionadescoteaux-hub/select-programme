@@ -441,6 +441,7 @@ var CEO_PASSWORDS={
 'SL-PAC2026':'pace',
 'SL-YLK2026':'youthlink'
 };
+var API_PASSWORD='SELECT2026'; // always sent to backend - never expose CEO pw to Airtable
 var isAssessor=false;
 var currentUserPw=null;
 var currentOrg=null;
@@ -556,7 +557,7 @@ document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date(
 
 function showStatus(msg,isError){var b=document.getElementById('statusBanner');b.textContent=msg;b.classList.toggle('error',!!isError);b.classList.add('show');}
 function hideStatus(){document.getElementById('statusBanner').classList.remove('show');}
-async function api(action,extra){var body=Object.assign({action:action,password:currentUserPw||''},extra||{});var res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.error||('HTTP '+res.status));return data;}
+async function api(action,extra){var body=Object.assign({action:action,password:API_PASSWORD},extra||{});var res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.error||('HTTP '+res.status));return data;}
 function loadCache(){try{var d=localStorage.getItem(STORE_KEY);return d?JSON.parse(d):{orgs:[]};}catch(e){return{orgs:[]};}}
 function saveCache(orgs){try{localStorage.setItem(STORE_KEY,JSON.stringify({orgs:orgs,ts:Date.now()}));}catch(e){}}
 
