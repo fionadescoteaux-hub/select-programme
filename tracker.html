@@ -268,7 +268,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="wrap" id="authScreen">
 <div class="auth-box">
 <h2>Access your tracker</h2>
-<p>Enter your password to continue.</p>
+<p id="authSubtitle">Programme team: enter your assessor password. CEOs: enter your personal password.</p>
 <input type="password" id="authPw" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
 <button onclick="doAuth()">Continue</button>
 <div class="auth-err" id="authErr">Incorrect password. Please try again.</div>
@@ -279,10 +279,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="wrap dash" id="dashScreen">
 <div class="dash-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
 <h2 id="dashTitle" style="font-family:var(--serif);font-size:22px;color:var(--navy)">All organisations</h2>
-<div style="display:flex;gap:8px;flex-wrap:wrap">
+<div style="display:flex;gap:8px;flex-wrap:wrap" id="dashHeadBtns">
 <button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){showDash();})" style="font-size:10px">&#8635; Refresh from Airtable</button>
-<button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px">Migrate local &rarr; Airtable</button>
-<button class="btn btn-teal" onclick="openAddOrg()">+ Add organisation</button>
+<button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px" id="migrateBtn">Migrate local &rarr; Airtable</button>
+<button class="btn btn-teal" onclick="openAddOrg()" id="addOrgBtn">+ Add organisation</button>
 </div>
 </div>
 <div class="cohort-bar" id="cohortBar"></div>
@@ -493,9 +493,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <script src="airtable-data.js"></script>
 <script>
 var MASTER_PW='SELECT2026';
+// Assessor passwords: Fiona = SELECT2026-FD, Clodagh = SELECT2026-COR
 var ASSESSOR_PASSWORDS=['SELECT2026-FD','SELECT2026-COR','SELECT2026'];
+// Viewer passwords: read-only dashboard access (all orgs, no editing)
+// Steven Egan / ITI = SELECT2026-ITI
+var VIEWER_PASSWORDS=['SELECT2026-ITI'];
 var STORE_KEY='select_tracker_v4';
 var isAssessor=false;
+var isViewer=false; // ITI read-only dashboard
 var currentOrg=null;
 
 var DOMAINS=[
@@ -641,15 +646,21 @@ var targetOrgId=null; // set from URL param
 function doAuth(){
 var pw=document.getElementById('authPw').value;
 if(ASSESSOR_PASSWORDS.indexOf(pw)>-1){
-isAssessor=true;
+isAssessor=true;isViewer=false;
 pw=MASTER_PW; // always use master for AT calls
 AT.setAuth(pw);
 document.getElementById('authScreen').style.display='none';
-// Load from Airtable async then render
-AT.loadData(function(data){
-  showDash();
-});
-showDash(); // show immediately with cache
+AT.loadData(function(data){showDash();});
+showDash();
+return;
+}
+// Viewer (ITI read-only) login
+if(VIEWER_PASSWORDS.indexOf(pw)>-1){
+isAssessor=false;isViewer=true;
+AT.setAuth(MASTER_PW);
+document.getElementById('authScreen').style.display='none';
+AT.loadData(function(data){showDash();});
+showDash();
 return;
 }
 var data=loadData();
@@ -689,6 +700,10 @@ document.getElementById('dashScreen').style.display='block';
 document.getElementById('trackerScreen').style.display='none';
 document.getElementById('sopScreen').style.display='none';
 document.getElementById('saveBar').classList.add('hidden');
+var addBtn=document.getElementById('addOrgBtn');
+var migBtn=document.getElementById('migrateBtn');
+if(addBtn)addBtn.style.display=isAssessor?'':'none';
+if(migBtn)migBtn.style.display=isAssessor?'':'none';
 renderCohortBar();
 renderOrgGrid();
 }
@@ -734,8 +749,9 @@ html+='<div class="org-ceo">'+esc(o.ceo)+' · '+esc(o.kpi.jurisdiction||'')+'</d
 html+='<span class="org-status os-'+status+'">'+statusLabel+'</span>'+intBadge;
 if(o.kpi.sector)html+='<div class="org-meta-row">'+esc(o.kpi.sector)+'</div>';
 html+='<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--r);font-size:11px;color:var(--tt);word-break:break-all"><b>CEO link:</b> '+esc(ceoLink)+'</div>';
-html+='<div style="font-size:11px;color:var(--tt);margin-top:4px"><b>CEO password:</b> '+esc(o.password)+'</div>';
-html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\')">Copy CEO link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\')">Remove</button></div>';
+if(isAssessor)html+='<div style="font-size:11px;color:var(--tt);margin-top:4px"><b>CEO password:</b> '+esc(o.password)+'</div>';
+if(isAssessor)html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\'">Copy CEO link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\'")>Remove</button></div>';
+else if(isViewer)html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\'">Copy link</button></div>';
 html+='</div>';
 });
 grid.innerHTML=html;

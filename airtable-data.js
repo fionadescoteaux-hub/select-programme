@@ -8,7 +8,7 @@
 var AT = (function() {
   'use strict';
 
-  var API = '/.netlify/functions/airtable';
+  var API = '/api/airtable';
   var CACHE_KEY = 'select_tracker_v4';      // same key as before — backward compatible
   var SYNC_KEY = 'select_sync_ts';
   var authToken = '';                        // set after login
