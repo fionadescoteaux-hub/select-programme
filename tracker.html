@@ -651,21 +651,7 @@ isAssessor=true;isViewer=false;
 pw=MASTER_PW;
 AT.setAuth(pw);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(data){
-  showDash();
-  // Seed consulting+coaching for any orgs that don't have them
-  if(data.orgs){
-    data.orgs.forEach(function(o){
-      fetch('/api/airtable',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'seed',code:o.code,password:MASTER_PW})
-      }).then(function(r){return r.json();}).then(function(res){
-        if(res.seeded)console.log('[SELECT] Seeded consulting/coaching for',o.code);
-      }).catch(function(e){console.warn('Seed failed for',o.code,e.message);});
-    });
-  }
-});
+AT.loadData(function(data){showDash();});
 showDash();
 return;
 }
