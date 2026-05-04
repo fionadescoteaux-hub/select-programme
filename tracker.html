@@ -448,10 +448,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 var API_URL='/api/airtable';
 var STORE_KEY='select_smart_tracker_cache_v3';
 // ═══ PASSWORD CONFIG ═══
-// Assessor passwords — full dashboard + edit access
+// Assessor passwords -- full dashboard + edit access
 var ASSESSOR_PASSWORDS = ['SELECT2026-FD', 'SELECT2026-COR'];
 
-// CEO passwords — map password → org code
+// CEO passwords -- map password → org code
 var CEO_PASSWORDS = {
   'SL-LNT2026':   'leave-no-trace',
   'SL-SBI2026':   'siel-bleu',
@@ -581,7 +581,7 @@ function renderRagReport() {
     var cbDisplay = cbSales ? sym+cbSales : '&ndash;';
 
     rows += '<tr>';
-    rows += '<td class="org-name-cell"><a style="color:var(--teal);cursor:pointer;text-decoration:none;font-weight:700" onclick="openTracker(''+esc(org.code)+'')" title="Open tracker">'+esc(org.name||'')+'</a><span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+juris+'</span></td>';
+    rows += '<td class="org-name-cell"><a style="color:var(--teal);cursor:pointer;text-decoration:none;font-weight:700" onclick="openTracker(\'' + esc(org.code) + '\')" title="Open tracker">' + esc(org.name||'') + '</a><span class="region-badge ' + (isNI?'rb-ni':'rb-roi') + '">' + juris + '</span></td>';
     rows += '<td style="white-space:nowrap;font-size:12px;color:var(--ts)">'+juris+'</td>';
     rows += '<td class="mode-cell">'+esc(mode)+'</td>';
     rows += '<td class="obj-cell">'+esc(objective)+'</td>';
@@ -624,7 +624,7 @@ function saveCache(orgs){try{localStorage.setItem(STORE_KEY,JSON.stringify({orgs
 
 async function doAuth(){
 var pw=document.getElementById('authPw').value.trim();if(!pw)return;
-var btn=document.getElementById('authBtn');btn.disabled=true;btn.textContent='Checking…';
+var btn=document.getElementById('authBtn');btn.disabled=true;btn.textContent='Checking...';
 
 // Client-side password check (no backend probe needed)
 var assessorOk = ASSESSOR_PASSWORDS.indexOf(pw) > -1 || pw === 'SELECT2026';
@@ -648,10 +648,10 @@ currentUserPw=pw;
 try{
   var data=await api('list');orgsCache=data.orgs||[];saveCache(orgsCache);hideStatus();
 }catch(err){
-  showStatus('Couldn’t reach the server. '+err.message,true);
+  showStatus('Couldn\'t reach the server. '+err.message,true);
   var cached=loadCache();
   if(cached.orgs&&cached.orgs.length){
-    showStatus('Showing cached data — changes won’t save until reconnected',true);
+    showStatus('Showing cached data -- changes won\'t save until reconnected',true);
     orgsCache=cached.orgs;
   }
 }
@@ -790,7 +790,7 @@ var ragFields=[
 {id:'ragModeSlot',key:'mode',ph:'e.g. Consulting / Mentoring + Coaching'},
 {id:'ragBaselineSlot',key:'baselineTurnover',ph:'e.g. 120000'},
 {id:'ragCurrentSlot',key:'currentTurnover',ph:'e.g. 138000'},
-{id:'ragProgressSlot',key:'progressPct',ph:'0–100 (leave blank for auto)'},
+{id:'ragProgressSlot',key:'progressPct',ph:'0-100 (leave blank for auto)'},
 {id:'ragSurplusSlot',key:'opSurplus',ph:'e.g. 7.2'},
 {id:'ragCbSlot',key:'cbSales',ph:'e.g. 15000'},
 {id:'ragActionsSlot',key:'nextActions',ph:'Next actions or risks for this org'}
@@ -818,7 +818,7 @@ return '<input data-diag="'+key+'" placeholder="'+placeholder+'" value="'+esc(t)
 return '<div class="diag-val">'+(t||'\u2014')+'</div>';
 }
 document.getElementById('diagProblem').innerHTML=cell('p','problem','Single sentence describing the core commercial constraint',true);
-document.getElementById('diagObs').innerHTML=cell('o','observation','Assessor observation — strengths/risks not in scores',true);
+document.getElementById('diagObs').innerHTML=cell('o','observation','Assessor observation -- strengths/risks not in scores',true);
 document.getElementById('diagPri').innerHTML=cell('pri','priorities','e.g. D1, D5, D7',false);
 document.getElementById('diagG1').innerHTML=cell('g1','goal1','First strategic goal',true);
 document.getElementById('diagG2').innerHTML=cell('g2','goal2','Second strategic goal',true);
