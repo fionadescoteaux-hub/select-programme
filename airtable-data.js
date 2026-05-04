@@ -83,7 +83,7 @@ var AT = (function() {
   function loadData(callback) {
     setStatus('Syncing…', 'info');
 
-    request('GET', null, null)
+    request('POST', null, {action:'list'})
       .then(function(data) {
         _online = true;
         // Merge _recordId into each org and cache
@@ -152,7 +152,7 @@ var AT = (function() {
     var cleanOrg = JSON.parse(JSON.stringify(org));
     delete cleanOrg._recordId;
 
-    request('POST', null, { org: cleanOrg })
+    request('POST', null, { action: org._recordId ? 'update' : 'create', org: cleanOrg })
       .then(function(res) {
         setStatus('Saved ✓', 'ok');
         setTimeout(function() { setStatus('', 'ok'); }, 2000);
@@ -172,7 +172,7 @@ var AT = (function() {
       return;
     }
 
-    request('DELETE', { code: org.code }, null)
+    request('POST', null, {action:'remove', code:org.code})
       .then(function() {
         if (callback) callback(true);
       })
