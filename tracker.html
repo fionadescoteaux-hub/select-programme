@@ -6,17 +6,39 @@
 <title>SELECT — SMART Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#faf9f7;--bg2:#f0efeb;--bg3:#e4e3de;--card:#ffffff;--tp:#111111;--ts2:#2d2d2a;--ts:#5a5a55;--tt:#8a8a82;--tb:rgba(0,0,0,0.07);--tb2:rgba(0,0,0,0.12);--navy:#0f2b4c;--navy-light:#e8edf3;--navy-mid:#1a3d6b;--teal:#0a6b5a;--teal-light:#e5f4f0;--teal-mid:#087a66;--coral:#c44b2b;--coral-light:#fdf0ec;--gold:#b8860b;--gold-light:#fdf6e3;--green:#2e7d32;--green-light:#e8f5e9;--amber:#ed6c02;--amber-light:#fff4e5;--red:#c62828;--red-light:#fdecea;--r:6px;--r2:10px;--r3:14px;--serif:'Playfair Display',Georgia,serif;--sans:'Source Sans 3',-apple-system,BlinkMacSystemFont,sans-serif}
-@media(prefers-color-scheme:dark){:root{--bg:#141413;--bg2:#1c1c1a;--bg3:#262624;--card:#1e1e1c;--tp:#ece9e1;--ts2:#c5c2b8;--ts:#8f8d84;--tt:#666560;--tb:rgba(255,255,255,0.06);--tb2:rgba(255,255,255,0.12);--navy:#7aaad4;--navy-light:#162538;--navy-mid:#4d82b5;--teal:#5cc4a8;--teal-light:#0d2a23;--teal-mid:#4db899;--coral:#e87a5e;--coral-light:#2e1a14;--gold:#d4a84b;--gold-light:#2a2010;--green:#7cb87f;--green-light:#15291a;--amber:#f0a44e;--amber-light:#2a1f10;--red:#e57373;--red-light:#2a1414}}
+:root{
+--bg:#faf9f7;--bg2:#f0efeb;--bg3:#e4e3de;--card:#ffffff;
+--tp:#111111;--ts2:#2d2d2a;--ts:#5a5a55;--tt:#8a8a82;
+--tb:rgba(0,0,0,0.07);--tb2:rgba(0,0,0,0.12);
+--navy:#0f2b4c;--navy-light:#e8edf3;--navy-mid:#1a3d6b;
+--teal:#0a6b5a;--teal-light:#e5f4f0;--teal-mid:#087a66;
+--coral:#c44b2b;--coral-light:#fdf0ec;
+--gold:#b8860b;--gold-light:#fdf6e3;
+--r:6px;--r2:10px;--r3:14px;
+--serif:'Playfair Display',Georgia,serif;
+--sans:'Source Sans 3',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+--bg:#141413;--bg2:#1c1c1a;--bg3:#262624;--card:#1e1e1c;
+--tp:#ece9e1;--ts2:#c5c2b8;--ts:#8f8d84;--tt:#666560;
+--tb:rgba(255,255,255,0.06);--tb2:rgba(255,255,255,0.12);
+--navy:#7aaad4;--navy-light:#162538;--navy-mid:#4d82b5;
+--teal:#5cc4a8;--teal-light:#0d2a23;--teal-mid:#4db899;
+--coral:#e87a5e;--coral-light:#2e1a14;
+--gold:#d4a84b;--gold-light:#2a2010;
+}}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+
 .header{background:var(--navy);padding:28px 32px;position:relative}
 .header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--gold),var(--coral))}
 .header h1{font-family:var(--serif);font-size:28px;color:#fff;font-weight:600}
 .header .sub{font-size:13px;color:rgba(255,255,255,0.5);margin-top:2px}
 .header .back{position:absolute;right:32px;top:50%;transform:translateY(-50%);font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:var(--r);transition:all .2s}
 .header .back:hover{color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.3)}
-.wrap{max-width:1080px;margin:0 auto;padding:32px 24px 60px}
+
+.wrap{max-width:1040px;margin:0 auto;padding:32px 24px 60px}
+
 .auth-box{max-width:400px;margin:80px auto;text-align:center}
 .auth-box h2{font-family:var(--serif);font-size:24px;color:var(--navy);margin-bottom:8px}
 .auth-box p{font-size:14px;color:var(--ts);margin-bottom:24px}
@@ -24,9 +46,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .auth-box button{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
 .auth-box button:hover{background:var(--navy-mid)}
 .auth-err{color:var(--coral);font-size:13px;margin-top:8px;display:none}
-.status-banner{display:none;background:var(--gold-light);color:var(--gold);font-size:12px;font-weight:600;text-align:center;padding:6px 12px;border-bottom:1px solid rgba(184,134,11,0.2)}
-.status-banner.show{display:block}
-.status-banner.error{background:var(--coral-light);color:var(--coral);border-bottom-color:rgba(196,75,43,0.2)}
+
 .dash{display:none}
 .dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
 .dash-head h2{font-family:var(--serif);font-size:22px;color:var(--navy)}
@@ -36,27 +56,41 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .btn-outline{background:transparent;border:1px solid var(--tb2);color:var(--ts2)}.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
 .btn-coral{background:var(--coral);color:#fff}.btn-coral:hover{opacity:0.9}
 .btn-sm{padding:5px 12px;font-size:11px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Cohort summary bar */
+.cohort-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.cohort-stat{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:14px;text-align:center}
+.cohort-stat .stat-val{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy)}
+.cohort-stat .stat-lbl{font-size:10px;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+
 .org-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .org-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:20px;cursor:pointer;transition:all .2s;position:relative}
 .org-card:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(10,107,90,0.08);transform:translateY(-1px)}
 .org-card h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:2px}
 .org-card .org-ceo{font-size:13px;color:var(--ts);margin-bottom:8px}
-.org-card .org-status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;margin-right:4px}
+.org-card .org-status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;margin-right:6px}
 .os-active{background:var(--teal-light);color:var(--teal)}
 .os-pending{background:var(--gold-light);color:var(--gold)}
-.os-intensity{background:var(--navy-light);color:var(--navy)}
-.org-card .org-link{font-size:11px;color:var(--tt);margin-top:10px;word-break:break-all}
-.org-card .org-actions{margin-top:12px;display:flex;gap:8px}
+.os-stabilise{background:var(--coral-light);color:var(--coral)}
+.os-strengthen{background:var(--gold-light);color:var(--gold)}
+.os-scale{background:var(--teal-light);color:var(--teal)}
+.org-card .org-meta-row{font-size:11px;color:var(--tt);margin-top:4px}
+.org-card .org-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--card);border-radius:var(--r2);padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto}
+.modal{background:var(--card);border-radius:var(--r2);padding:32px;max-width:560px;width:90%;max-height:90vh;overflow-y:auto}
 .modal h3{font-family:var(--serif);font-size:20px;color:var(--navy);margin-bottom:16px}
 .form-row{margin-bottom:14px}
 .form-row label{display:block;font-size:12px;font-weight:600;color:var(--ts);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
 .form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)}
 .form-row textarea{min-height:80px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:500px){.form-grid{grid-template-columns:1fr}}
 .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.form-divider{border-top:1px solid var(--tb);margin:18px 0 14px;font-size:11px;font-weight:700;color:var(--tt);text-transform:uppercase;letter-spacing:1px;padding-top:14px}
+
+/* Tracker view */
 .tracker{display:none}
 .tracker-head{margin-bottom:28px}
 .tracker-head h2{font-family:var(--serif);font-size:24px;color:var(--navy)}
@@ -64,177 +98,194 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .tracker-head .tracker-nav{display:flex;gap:6px;margin-top:16px;flex-wrap:wrap}
 .tracker-head .back-dash{font-size:13px;color:var(--teal);text-decoration:none;cursor:pointer;margin-bottom:8px;display:inline-block}
 .tracker-head .back-dash:hover{text-decoration:underline}
-.tab-btn{padding:7px 12px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
+
+/* Phase ribbon */
+.phase-ribbon{display:flex;gap:2px;border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.phase-ribbon .ph{flex:1;padding:10px 6px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#fff;opacity:0.5;transition:opacity .2s}
+.phase-ribbon .ph.current{opacity:1;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.ph-diag{background:var(--teal)}.ph-trans{background:var(--navy-mid)}.ph-str{background:var(--navy)}.ph-sust{background:var(--gold)}
+
+.tab-btn{padding:8px 14px;border-radius:var(--r);font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
 .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .tab-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
-.tab-panel{display:none}
-.tab-panel.active{display:block}
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:600px){.kpi-grid{grid-template-columns:1fr}}
-.kpi-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px}
-.kpi-card label{font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px}
-.kpi-card .kpi-val{font-size:18px;font-weight:700;color:var(--navy)}
-.kpi-card select,.kpi-card input{margin-top:4px;width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.kpi-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.kpi-grid{grid-template-columns:1fr}}
+.kpi-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:14px}
+.kpi-card label{font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px}
+.kpi-card .kpi-val{font-size:17px;font-weight:700;color:var(--navy)}
+.kpi-card select,.kpi-card input{margin-top:4px;width:100%;padding:7px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)}
+
 .score-table{width:100%;border-collapse:collapse;margin-top:12px}
 .score-table th{text-align:left;padding:10px 12px;background:var(--bg2);font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--tb2)}
 .score-table td{padding:10px 12px;border-bottom:1px solid var(--tb);font-size:14px;vertical-align:top}
 .score-table input[type=number]{width:60px;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;text-align:center;font-family:var(--sans);background:var(--card);color:var(--tp)}
-.score-table textarea{width:100%;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);min-height:50px;resize:vertical;margin-top:4px}
+.score-table textarea{width:100%;min-height:40px;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);resize:vertical;background:var(--card);color:var(--tp)}
 .score-table .domain-name{font-weight:600;color:var(--ts2)}
-.score-bar{height:6px;border-radius:3px;background:var(--bg3);margin-top:6px;overflow:hidden}
+.score-table .wt{font-size:12px;color:var(--tt);white-space:nowrap}
+.score-bar{height:6px;border-radius:3px;background:var(--bg3);margin-top:6px;overflow:hidden;min-width:60px}
 .score-bar-fill{height:100%;border-radius:3px;background:var(--teal);transition:width .3s}
+
+/* Cluster badges */
+.cluster-label{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;color:#fff;letter-spacing:0.3px;text-transform:uppercase;vertical-align:middle;margin-left:6px}
+.cl-found{background:var(--teal)}.cl-engine{background:var(--navy-mid)}.cl-enable{background:var(--coral)}
+
 .smart-obj{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .smart-obj .obj-num{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
 .smart-obj textarea,.smart-obj input{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;background:var(--card);color:var(--tp)}
-.smart-obj .obj-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
-@media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr}}
+.smart-obj .obj-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:8px}
+@media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr 1fr}}
 .smart-obj label{font-size:10px;font-weight:600;color:var(--tt);text-transform:uppercase;letter-spacing:0.3px}
+
 .log-entry{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .log-entry .log-date{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px}
 .log-entry textarea{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;min-height:60px;resize:vertical;background:var(--card);color:var(--tp)}
 .log-entry .log-text{font-size:14px;color:var(--ts2);margin-top:6px;line-height:1.6;white-space:pre-wrap}
+
 .note-entry{background:var(--card);border-left:3px solid var(--navy);border-radius:0 var(--r) var(--r) 0;padding:14px 16px;margin-bottom:10px;border-top:1px solid var(--tb);border-right:1px solid var(--tb);border-bottom:1px solid var(--tb)}
 .note-entry .note-meta{font-size:11px;color:var(--tt);margin-bottom:4px}
 .note-entry .note-type{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-right:6px}
 .nt-consult{background:var(--teal-light);color:var(--teal)}
 .nt-coach{background:var(--coral-light);color:var(--coral)}
-.nt-form{background:var(--gold-light);color:var(--gold)}
-.note-entry .log-text{white-space:pre-wrap;font-family:var(--sans);font-size:13px;line-height:1.7;color:var(--ts2);max-height:500px;overflow-y:auto;padding:12px 14px;background:var(--bg2);border-radius:6px;margin-top:8px;border:1px solid var(--tb)}
+.nt-session{background:var(--navy-light);color:var(--navy)}
+
+/* Problem statement card */
+.problem-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:20px;margin-bottom:16px}
+.problem-card .pc-label{font-size:11px;font-weight:700;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.problem-card textarea{width:100%;min-height:60px;padding:8px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);resize:vertical;background:var(--card);color:var(--tp)}
+.problem-card .pc-val{font-size:14px;color:var(--ts2);line-height:1.6;white-space:pre-wrap}
+.constraint-row{display:flex;gap:12px;margin-bottom:10px;align-items:center}
+.constraint-row .c-num{background:var(--coral);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.constraint-row input,.constraint-row select{flex:1;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)}
+
+/* Coaching hours */
+.coaching-summary{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.coaching-stat{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:14px 18px;text-align:center;min-width:120px}
+.coaching-stat .cs-val{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy)}
+.coaching-stat .cs-lbl{font-size:10px;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+
+/* SOP checklist */
+.sop-grid{display:grid;gap:8px}
+.sop-phase{background:var(--navy);color:#fff;padding:10px 14px;border-radius:var(--r);font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-top:8px}
+.sop-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;color:var(--ts2)}
+.sop-item input[type=checkbox]{accent-color:var(--teal);width:16px;height:16px;cursor:pointer}
+.sop-item label{cursor:pointer;flex:1}
+.sop-item .sop-date{font-size:11px;color:var(--tt);min-width:80px;text-align:right}
+
+/* Intensity pills */
+.intensity-pills{display:flex;gap:6px;margin:8px 0}
+.int-pill{padding:8px 16px;border:1px solid var(--tb2);border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;color:var(--ts2);transition:all .2s;user-select:none}
+.int-pill:hover{border-color:var(--navy)}
+.int-pill.selected{color:#fff;border-color:transparent}
+.int-pill.sel-stabilise{background:var(--coral)}
+.int-pill.sel-strengthen{background:var(--gold)}
+.int-pill.sel-scale{background:var(--teal)}
+
+/* Cross-border tracking */
+.cb-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:12px}
+@media(max-width:600px){.cb-row{grid-template-columns:1fr}}
+
 .section-title{font-family:var(--serif);font-size:18px;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--tb)}
 .section-note{font-size:13px;color:var(--ts);margin-bottom:16px;font-style:italic}
+.sub-section{font-size:14px;font-weight:700;color:var(--ts2);margin:20px 0 10px;padding-top:16px;border-top:1px solid var(--tb)}
+
 .readonly-notice{background:var(--gold-light);border:1px solid rgba(184,134,11,0.15);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--gold);margin-bottom:20px}
+
 .save-bar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--tb2);padding:12px 24px;display:flex;justify-content:flex-end;gap:10px;z-index:50;box-shadow:0 -4px 16px rgba(0,0,0,0.06)}
 .save-bar.hidden{display:none}
 .save-msg{font-size:13px;color:var(--teal);font-weight:600;align-self:center;margin-right:auto;opacity:0;transition:opacity .3s}
 .save-msg.show{opacity:1}
-.cycle-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:18px;margin-bottom:14px}
-.cycle-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;flex-wrap:wrap}
-.cycle-code{display:inline-block;background:var(--navy);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:0.5px;margin-right:8px}
-.cycle-code.coach{background:var(--coral)}
-.cycle-title{font-weight:700;color:var(--navy);font-size:15px;display:inline}
-.cycle-meta{font-size:12px;color:var(--ts);margin-top:4px}
-.cycle-phase{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px;margin-left:6px;text-transform:uppercase;letter-spacing:0.5px;background:var(--bg2);color:var(--ts2)}
-.cycle-phase.diagnose{background:#fff4e5;color:#9c5500}
-.cycle-phase.translate{background:#e3f2fd;color:#0d47a1}
-.cycle-phase.strengthen{background:#e8f5e9;color:#2e7d32}
-.cycle-phase.sustain{background:#f3e5f5;color:#6a1b9a}
-.cycle-default{font-size:13px;color:var(--ts);font-style:italic;margin-bottom:12px;padding:8px 12px;background:var(--bg2);border-radius:var(--r)}
-.cycle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
-@media(max-width:700px){.cycle-grid{grid-template-columns:1fr}}
-.cycle-grid label{font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px}
-.cycle-grid input,.cycle-grid select,.cycle-grid textarea{width:100%;padding:7px 9px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)}
-.cycle-grid textarea{min-height:50px;resize:vertical;grid-column:1/-1}
-.cycle-grid .span2{grid-column:1/-1}
-.rag-pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px}
-.rag-G{background:var(--green-light);color:var(--green)}
-.rag-A{background:var(--amber-light);color:var(--amber)}
-.rag-R{background:var(--red-light);color:var(--red)}
-.cycle-done{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ts);margin-top:10px}
-.cycle-done input{width:auto;margin:0}
-.diag-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.diag-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px}
-.diag-card label{font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
-.diag-card textarea,.diag-card input{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)}
-.diag-card textarea{min-height:60px;resize:vertical}
-.diag-card .diag-val{font-size:14px;color:var(--ts2);white-space:pre-wrap;line-height:1.6;min-height:24px}
-.diag-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-@media(max-width:700px){.diag-row{grid-template-columns:1fr}}
-.cb-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
-@media(max-width:700px){.cb-row{grid-template-columns:1fr}}
-.checklist-item{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--r);background:var(--card);border:1px solid var(--tb);margin-bottom:6px}
-.checklist-item input[type=checkbox]{width:18px;height:18px;cursor:pointer}
-.checklist-item.done{background:var(--green-light)}
-.checklist-item .ck-text{flex:1;font-size:13px;color:var(--ts2)}
-.checklist-item .ck-text.done{text-decoration:line-through;color:var(--ts)}
-.checklist-item .ck-when{font-size:11px;color:var(--tt);font-style:italic}
-.checklist-phase{font-family:var(--serif);font-size:14px;color:var(--navy);margin:14px 0 6px;font-weight:600}
-.val-section{margin-bottom:14px}
-.val-section .val-head{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
-.val-section .val-sub{font-size:12px;color:var(--ts);margin-bottom:6px;font-style:italic}
-.val-section textarea,.val-section input{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);min-height:50px;resize:vertical}
-.val-section .val-text{font-size:13px;color:var(--ts2);white-space:pre-wrap;line-height:1.6;padding:8px 10px;background:var(--bg2);border-radius:var(--r);min-height:24px}
+
+/* Data portability */
+.data-bar{display:flex;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--tb);margin-bottom:16px;flex-wrap:wrap}
+.data-bar .data-label{font-size:12px;color:var(--ts);font-weight:600;letter-spacing:0.3px;text-transform:uppercase}
+.data-bar .dbtn{padding:5px 12px;font-size:11px;font-weight:600;border-radius:4px;border:none;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.data-bar .dbtn-exp{background:var(--teal);color:#fff}
+.data-bar .dbtn-imp{background:var(--bg2);color:var(--ts2);border:1px solid var(--tb2)}
+.data-bar .data-warn{font-size:11px;color:var(--tt);font-style:italic;margin-left:auto}
+.data-bar input[type="file"]{display:none}
+
+/* Mobile tab scroll */
+@media(max-width:640px){
+  .tracker-head .tracker-nav{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .tab-btn{white-space:nowrap;flex-shrink:0}
+}
 
 /* RAG REPORT */
+.dash-view-toggle{display:flex;gap:6px;margin-bottom:20px}
+.view-btn{padding:7px 16px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
+.view-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.view-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
+.dash-view{display:none}.dash-view.active{display:block}
 .rag-wrap{margin-top:0}
 .rag-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .rag-header h3{font-family:var(--serif);font-size:20px;color:var(--navy)}
-.rag-legend{display:flex;gap:16px;align-items:center;font-size:12px;color:var(--ts)}
-.rag-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;flex-shrink:0}
+.rag-legend{display:flex;gap:16px;font-size:12px;color:var(--ts)}
+.rag-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
 .rag-g{background:#2e7d32}.rag-a{background:#ed6c02}.rag-r{background:#c62828}
 .rag-summary-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
 .rag-sum-card{border-radius:var(--r);padding:14px 16px;text-align:center}
-.rag-sum-card.green-card{background:var(--green-light);border:1px solid rgba(46,125,50,0.15)}
-.rag-sum-card.amber-card{background:var(--amber-light);border:1px solid rgba(237,108,2,0.15)}
-.rag-sum-card.red-card{background:var(--red-light);border:1px solid rgba(198,40,40,0.15)}
-.rag-sum-card .rag-sum-num{font-size:28px;font-weight:700;line-height:1}
-.rag-sum-card.green-card .rag-sum-num{color:var(--green)}
-.rag-sum-card.amber-card .rag-sum-num{color:var(--amber)}
-.rag-sum-card.red-card .rag-sum-num{color:var(--red)}
-.rag-sum-card .rag-sum-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;color:var(--ts)}
+.rag-sum-card.green-card{background:#e8f5e9;border:1px solid rgba(46,125,50,0.15)}
+.rag-sum-card.amber-card{background:#fff4e5;border:1px solid rgba(237,108,2,0.15)}
+.rag-sum-card.red-card{background:#fdecea;border:1px solid rgba(198,40,40,0.15)}
+.rag-sum-num{font-size:28px;font-weight:700;line-height:1}
+.green-card .rag-sum-num{color:#2e7d32}.amber-card .rag-sum-num{color:#ed6c02}.red-card .rag-sum-num{color:#c62828}
+.rag-sum-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;color:var(--ts)}
 .rag-table-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--tb2)}
 .rag-table{width:100%;border-collapse:collapse;min-width:900px}
 .rag-table th{padding:10px 12px;background:var(--navy);color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;text-align:left;white-space:nowrap}
 .rag-table td{padding:11px 12px;border-bottom:1px solid var(--tb);font-size:13px;vertical-align:middle}
 .rag-table tr:last-child td{border-bottom:none}
 .rag-table tr:hover td{background:var(--bg2)}
-.rag-table .org-name-link{color:var(--teal);cursor:pointer;font-weight:700;text-decoration:none;background:none;border:none;font-family:var(--sans);font-size:13px;padding:0}
-.rag-table .org-name-link:hover{text-decoration:underline}
+.rag-org-link{color:var(--teal);cursor:pointer;font-weight:700;text-decoration:none;background:none;border:none;font-family:var(--sans);font-size:13px;padding:0}
+.rag-org-link:hover{text-decoration:underline}
 .region-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.5px;padding:2px 7px;border-radius:3px;margin-left:6px;text-transform:uppercase}
-.rb-roi{background:var(--teal-light);color:var(--teal)}
-.rb-ni{background:var(--navy-light);color:var(--navy)}
-.rag-table .turnover-cell{font-size:13px;font-weight:600;color:var(--ts2);white-space:nowrap;text-align:right}
-.rag-table .progress-cell{text-align:right}
-.prog-val{font-size:13px;font-weight:700}
-.prog-pos{color:var(--green)}.prog-neg{color:var(--red)}.prog-neu{color:var(--ts)}
-.rag-indicator{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-.rag-green{background:var(--green-light);color:var(--green)}
-.rag-amber{background:var(--amber-light);color:var(--amber)}
-.rag-red{background:var(--red-light);color:var(--red)}
-.rag-na{background:var(--bg3);color:var(--tt)}
-.surplus-cell{text-align:right;font-size:13px;font-weight:600}
-.cb-cell{text-align:right;font-size:13px;color:var(--ts2);white-space:nowrap}
-.actions-cell{font-size:12px;color:var(--ts);max-width:160px}
-.rag-table .summary-row td{background:var(--navy-light);font-weight:700;font-size:12px;color:var(--navy)}
+.rb-roi{background:var(--teal-light);color:var(--teal)}.rb-ni{background:var(--navy-light);color:var(--navy)}
+.rag-right{text-align:right}
 .prog-bar-wrap{display:flex;align-items:center;gap:8px}
 .prog-bar-bg{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px}
-.prog-bar-fill{height:100%;border-radius:3px;transition:width .4s}
-.pbf-green{background:var(--green)}.pbf-amber{background:var(--amber)}.pbf-red{background:var(--red)}
+.prog-bar-fill{height:100%;border-radius:3px}
+.pbf-green{background:#2e7d32}.pbf-amber{background:#ed6c02}.pbf-red{background:#c62828}
+.prog-pos{color:#2e7d32;font-weight:700}.prog-neg{color:#c62828;font-weight:700}.prog-neu{color:var(--ts);font-weight:700}
+.rag-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.rag-pill.green{background:#e8f5e9;color:#2e7d32}.rag-pill.amber{background:#fff4e5;color:#ed6c02}
+.rag-pill.red{background:#fdecea;color:#c62828}.rag-pill.na{background:var(--bg3);color:var(--tt)}
+.rag-summary-row td{background:var(--navy-light);font-weight:700;font-size:12px;color:var(--navy)}
 .rag-last-updated{font-size:11px;color:var(--tt);margin-top:12px;text-align:right}
-.dash-view-toggle{display:flex;gap:6px;margin-bottom:20px}
-.view-btn{padding:7px 16px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
-.view-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.view-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
-.dash-view{display:none}
-.dash-view.active{display:block}
 </style>
 </head>
 <body>
-<div class="status-banner" id="statusBanner"></div>
+
 <div class="header">
 <h1>SMART Tracker</h1>
-<div class="sub">SELECT Programme 2026–27</div>
+<div class="sub">SELECT Programme 2026–27  ·  Built to Scale  ·  InterTradeIreland</div>
 <a class="back" href="/">← Programme Hub</a>
 </div>
 
+<!-- Auth -->
 <div class="wrap" id="authScreen">
 <div class="auth-box">
 <h2>Access your tracker</h2>
 <p>Enter your password to continue.</p>
 <input type="password" id="authPw" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
-<button onclick="doAuth()" id="authBtn">Continue</button>
+<button onclick="doAuth()">Continue</button>
 <div class="auth-err" id="authErr">Incorrect password. Please try again.</div>
 </div>
 </div>
 
+<!-- Dashboard -->
 <div class="wrap dash" id="dashScreen">
-<div class="dash-head">
-<h2 id="dashTitle">All organisations</h2>
-<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div class="dash-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+<h2 id="dashTitle" style="font-family:var(--serif);font-size:22px;color:var(--navy)">All organisations</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){showDash();})" style="font-size:10px">&#8635; Refresh from Airtable</button>
+<button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px">Migrate local &rarr; Airtable</button>
 <button class="btn btn-teal" onclick="openAddOrg()">+ Add organisation</button>
-<button class="btn btn-outline" onclick="reloadOrgs()">&#8635; Refresh</button>
-<button class="btn btn-outline" onclick="exportAll()">Export all data</button>
 </div>
 </div>
+<div class="cohort-bar" id="cohortBar"></div>
 <div class="dash-view-toggle">
 <button class="view-btn active" onclick="switchDashView('orgs',this)">Organisation cards</button>
 <button class="view-btn" onclick="switchDashView('rag',this)">Programme RAG Report</button>
@@ -261,55 +312,66 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <table class="rag-table">
 <thead><tr>
 <th>Enterprise</th><th>Region</th><th>Mode</th><th>Core Objective</th>
-<th style="text-align:right">Baseline Turnover</th><th style="text-align:right">Current Turnover</th>
-<th style="text-align:right">Progress %</th><th>RAG</th>
-<th style="text-align:right">Op Surplus %</th><th style="text-align:right">Cross-Border Sales</th>
+<th class="rag-right">Baseline Turnover</th><th class="rag-right">Current Turnover</th>
+<th class="rag-right">Progress %</th><th>RAG</th>
+<th class="rag-right">Op Surplus %</th><th class="rag-right">Cross-Border Sales</th>
 <th>Next Actions / Risks</th>
 </tr></thead>
-<tbody id="ragTableBody"><tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No data yet.</td></tr></tbody>
+<tbody id="ragTableBody"><tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
 </table>
 </div>
 <div class="rag-last-updated" id="ragLastUpdated"></div>
 </div>
 </div>
 </div>
+<div class="wrap tracker" id="sopScreen" style="display:none">
+<div class="tracker-head">
+<a class="back-dash" onclick="showDash()">← All organisations</a>
+<h2>Internal SOP Checklist</h2>
+<div class="org-meta">Track 17-step baseline process per organisation</div>
+</div>
+<div id="sopContent"></div>
+</div>
+
+<!-- Tracker -->
 <div class="wrap tracker" id="trackerScreen">
 <div class="tracker-head">
 <a class="back-dash" id="backDash" onclick="showDash()">← All organisations</a>
 <h2 id="trkOrgName"></h2>
 <div class="org-meta" id="trkMeta"></div>
+<div class="phase-ribbon" id="phaseRibbon">
+<div class="ph ph-diag current">① Diagnose<br><span style="font-weight:400;font-size:9px">Apr–May</span></div>
+<div class="ph ph-trans">② Translate<br><span style="font-weight:400;font-size:9px">May–Jun</span></div>
+<div class="ph ph-str">③ Strengthen<br><span style="font-weight:400;font-size:9px">Jun–Nov</span></div>
+<div class="ph ph-sust">④ Sustain<br><span style="font-weight:400;font-size:9px">Dec</span></div>
+</div>
 <div class="tracker-nav">
-<button class="tab-btn active" data-tab="kpi" onclick="switchTab('kpi',this)">KPI</button>
-<button class="tab-btn" data-tab="diagnosis" onclick="switchTab('diagnosis',this)">Diagnosis</button>
+<button class="tab-btn active" data-tab="profile" onclick="switchTab('profile',this)">Profile</button>
 <button class="tab-btn" data-tab="baseline" onclick="switchTab('baseline',this)">Baseline</button>
-<button class="tab-btn" data-tab="smart" onclick="switchTab('smart',this)">SMART</button>
-<button class="tab-btn" data-tab="consulting" onclick="switchTab('consulting',this)">Consulting (8)</button>
-<button class="tab-btn" data-tab="coaching" onclick="switchTab('coaching',this)">Coaching (5)</button>
-<button class="tab-btn" data-tab="progress" onclick="switchTab('progress',this)">Progress</button>
+<button class="tab-btn" data-tab="diagnosis" onclick="switchTab('diagnosis',this)">Diagnosis</button>
+<button class="tab-btn" data-tab="smart" onclick="switchTab('smart',this)">SMART Objectives</button>
+<button class="tab-btn" data-tab="consulting" onclick="switchTab('consulting',this)">1:1 Consulting</button>
+<button class="tab-btn" data-tab="coaching" onclick="switchTab('coaching',this)">Coaching</button>
 <button class="tab-btn" data-tab="endline" onclick="switchTab('endline',this)">Endline</button>
-<button class="tab-btn" data-tab="validation" onclick="switchTab('validation',this)">Validation</button>
 <button class="tab-btn" data-tab="notes" onclick="switchTab('notes',this)">Notes</button>
 </div>
 </div>
-
 <div id="readonlyNotice" class="readonly-notice" style="display:none">You are viewing this tracker in read-only mode. Contact Fiona or Clodagh if anything needs updating.</div>
 
-<div class="tab-panel active" id="tab-kpi">
-<div class="section-title">KPI Classifications</div>
-<div class="section-note">Fixed at programme entry. Used for ITI reporting.</div>
+<!-- PROFILE TAB -->
+<div class="tab-panel active" id="tab-profile">
+<div class="section-title">Organisation Profile & KPI Classifications</div>
+<div class="section-note">Application-stage data and ITI reporting classifications. Fixed at programme entry.</div>
+<div class="sub-section">KPI Classifications</div>
 <div class="kpi-grid" id="kpiGrid"></div>
-<div style="height:18px"></div>
-<div class="section-title">Cross-Border Trade Tracking</div>
-<div class="section-note">Tracked baseline → endline against agreed target.</div>
-<div class="cb-row" id="cbRow"></div>
-<div style="height:18px"></div>
-<div class="section-title">Programme Classification</div>
-<div class="cb-row">
-<div class="kpi-card"><label>Intensity</label><div id="intensitySlot"></div></div>
-<div class="kpi-card"><label>Lead Assessor</label><div id="assessorSlot"></div></div>
-</div>
-<div style="height:18px"></div>
-<div class="section-title">RAG Report Data</div>
+<div class="sub-section">Application-Stage Data</div>
+<div class="kpi-grid" id="appGrid"></div>
+<div class="sub-section">Programme Intensity</div>
+<div class="section-note">Determined after baseline — Stabilise, Strengthen or Scale.</div>
+<div class="intensity-pills" id="intensityPills"></div>
+<div class="sub-section">Cross-Border Tracking</div>
+<div class="cb-row" id="cbGrid"></div>
+<div class="sub-section">RAG Report Data</div>
 <div class="section-note">Populates the Programme RAG Report. Update after each consulting cycle.</div>
 <div class="kpi-grid">
 <div class="kpi-card"><label>Mode of Support</label><div id="ragModeSlot"></div></div>
@@ -320,304 +382,360 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="kpi-card"><label>Cross-Border Sales (number only)</label><div id="ragCbSlot"></div></div>
 </div>
 <div style="height:10px"></div>
-<div style="background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px">
-<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px">Next Actions / Risks (for RAG report)</label>
-<div id="ragActionsSlot"></div>
-</div>
+<div class="kpi-card" style="margin-top:0"><label>Next Actions / Risks (for RAG report)</label><div id="ragActionsSlot"></div></div>
 </div>
 
-<div class="tab-panel" id="tab-diagnosis">
-<div class="section-title">Diagnosis</div>
-<div class="section-note">Captured at validation. Anchors the SMART objectives and consulting plan.</div>
-<div class="diag-grid">
-<div class="diag-card"><label>Problem Statement</label><div id="diagProblem"></div></div>
-<div class="diag-card"><label>Observation</label><div id="diagObs"></div></div>
-<div class="diag-card"><label>Priority Domains</label><div id="diagPri"></div></div>
-</div>
-<div style="height:14px"></div>
-<div class="section-title">Goals</div>
-<div class="diag-row">
-<div class="diag-card"><label>Goal 1</label><div id="diagG1"></div></div>
-<div class="diag-card"><label>Goal 2</label><div id="diagG2"></div></div>
-<div class="diag-card"><label>Goal 3</label><div id="diagG3"></div></div>
-</div>
-</div>
-
+<!-- BASELINE TAB -->
 <div class="tab-panel" id="tab-baseline">
-<div class="section-title">Baseline Scores</div>
-<div class="section-note">Locked after baseline lock. Includes evidence per domain.</div>
+<div class="section-title">Baseline Scores — 10 Domains (Locked 2b)</div>
+<div class="section-note">Scores fixed after baseline lock. 10 domains with percentage weights. Scored 0–5.</div>
 <table class="score-table" id="baselineTable">
-<thead><tr><th>Domain</th><th style="width:80px">Score</th><th>Evidence</th></tr></thead>
+<thead><tr><th>Domain</th><th style="width:55px">Wt.</th><th style="width:70px">Score</th><th style="width:80px">Wtd.</th><th>Evidence</th><th style="min-width:50px">Bar</th></tr></thead>
 <tbody></tbody>
+<tfoot id="baselineFoot"></tfoot>
 </table>
 </div>
 
+<!-- DIAGNOSIS TAB -->
+<div class="tab-panel" id="tab-diagnosis">
+<div class="section-title">Commercial Problem Statement & Root Constraints</div>
+<div class="section-note">Captured at validation meeting. Drives the Scale & Change Plan.</div>
+<div id="diagnosisContent"></div>
+</div>
+
+<!-- SMART TAB -->
 <div class="tab-panel" id="tab-smart">
 <div class="section-title">SMART Objectives</div>
-<div class="section-note">Agreed at validation meeting. These drive programme delivery.</div>
+<div class="section-note">Agreed at validation meeting. Linked to baseline domains.</div>
 <div id="smartList"></div>
 <div id="smartAddWrap" style="margin-top:12px"></div>
 </div>
 
+<!-- CONSULTING TAB -->
 <div class="tab-panel" id="tab-consulting">
-<div class="section-title">Consulting Cycles (OR1–OR8)</div>
-<div class="section-note">Eight prescheduled fortnightly cycles across the programme. Update each cycle as it's delivered.</div>
+<div class="section-title">1:1 Consulting — Outreach Cycles</div>
+<div class="section-note">After each group session, Fiona or Clodagh meets with the CEO to build on their commercial plan for trade. 8 consulting days per enterprise across the programme.</div>
+<div class="coaching-summary" id="consultingSummary"></div>
 <div id="consultingList"></div>
 </div>
 
+<!-- COACHING TAB -->
 <div class="tab-panel" id="tab-coaching">
-<div class="section-title">Coaching Cycles (C1–C5)</div>
-<div class="section-note">Five prescheduled coaching sessions. Capture themes and actions per session.</div>
+<div class="section-title">Executive Coaching Log</div>
+<div class="section-note">Up to 21 hours per enterprise. Sarah / Aoife — focus themes only (content is confidential).</div>
+<div class="coaching-summary" id="coachingSummary"></div>
 <div id="coachingList"></div>
+<div id="coachingAddWrap" style="margin-top:12px"></div>
 </div>
 
-<div class="tab-panel" id="tab-progress">
-<div class="section-title">Monthly Progress</div>
-<div class="section-note">Updated monthly against SMART objectives and milestones.</div>
-<div id="progressList"></div>
-<div id="progressAddWrap" style="margin-top:12px"></div>
-</div>
-
+<!-- ENDLINE TAB -->
 <div class="tab-panel" id="tab-endline">
-<div class="section-title">Endline Scores</div>
-<div class="section-note">Identical assessment re-run at programme end. Compared against locked baseline.</div>
+<div class="section-title">Endline Scores vs. Baseline</div>
+<div class="section-note">Identical 9-domain assessment at programme end. Compared against locked baseline.</div>
 <table class="score-table" id="endlineTable">
-<thead><tr><th>Domain</th><th style="width:80px">Baseline</th><th style="width:80px">Endline</th><th>Change</th></tr></thead>
+<thead><tr><th>Domain</th><th style="width:55px">Wt.</th><th style="width:70px">Baseline</th><th style="width:70px">Endline</th><th style="width:60px">Change</th><th style="min-width:50px">Bar</th></tr></thead>
 <tbody></tbody>
 </table>
 </div>
 
-<div class="tab-panel" id="tab-validation">
-<div class="section-title">Onboarding & Validation Checklist</div>
-<div class="section-note">Process checkpoints with timestamps. Used to evidence ITI compliance.</div>
-<div id="checklistWrap"></div>
-<div style="height:18px"></div>
-<div class="section-title">Validation Notes</div>
-<div class="section-note">Captured during the validation meeting (5 sections).</div>
-<div id="validationWrap"></div>
-</div>
-
+<!-- NOTES TAB -->
 <div class="tab-panel" id="tab-notes">
-<div class="section-title">Consulting &amp; Coaching Notes</div>
-<div class="section-note">Free-text notes per session. Form submissions appear here as read-only audit trail.</div>
+<div class="section-title">Consulting, Coaching & Session Notes</div>
+<div class="section-note">High-level theme and actions from each engagement.</div>
 <div id="notesList"></div>
 <div id="notesAddWrap" style="margin-top:12px"></div>
 </div>
 </div>
 
+<!-- Save bar -->
 <div class="save-bar hidden" id="saveBar">
 <div class="save-msg" id="saveMsg">Saved ✓</div>
-<button class="btn btn-navy" onclick="saveTracker()" id="saveBtn">Save changes</button>
+<button class="btn btn-navy" onclick="saveTracker()">Save changes</button>
 </div>
 
+<!-- Add Org Modal -->
 <div class="modal-overlay" id="addOrgModal">
 <div class="modal">
 <h3>Add organisation</h3>
+<div class="form-grid">
 <div class="form-row"><label>Organisation name</label><input id="newOrgName"></div>
 <div class="form-row"><label>CEO name</label><input id="newCeoName"></div>
-<div class="form-row"><label>Organisation code (used in URL)</label><input id="newOrgCode" placeholder="e.g. acme"></div>
+<div class="form-row"><label>Organisation code (URL slug)</label><input id="newOrgCode" placeholder="e.g. acme"></div>
+<div class="form-row"><label>CEO password (unique)</label><input id="newOrgPw"></div>
+<div class="form-row"><label>Sector</label><input id="newOrgSector"></div>
 <div class="form-row"><label>Jurisdiction</label><select id="newOrgJuris"><option value="ROI">ROI</option><option value="NI">NI</option></select></div>
+</div>
+<div class="form-divider">Application-Stage Data</div>
+<div class="form-grid">
+<div class="form-row"><label>Annual Turnover</label><input id="newTurnover" placeholder="e.g. €250,000"></div>
+<div class="form-row"><label>Employee Count</label><input id="newEmployees" type="number"></div>
+<div class="form-row"><label>Income Split (Traded %)</label><input id="newTradedPct" placeholder="e.g. 60%"></div>
+<div class="form-row"><label>Cross-Border Sales %</label><input id="newCBPct" placeholder="e.g. 15%"></div>
+<div class="form-row"><label>First-Time Exporter?</label><select id="newFirstExp"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+<div class="form-row"><label>Prior ITI Support?</label><select id="newPriorITI"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+</div>
 <div class="form-actions">
 <button class="btn btn-outline" onclick="closeAddOrg()">Cancel</button>
-<button class="btn btn-teal" onclick="addOrg()" id="addOrgBtn">Add</button>
+<button class="btn btn-teal" onclick="addOrg()">Add organisation</button>
 </div>
 </div>
 </div>
 
+<div id="syncStatus" class="sync-status" style="display:none"></div>
+<style>
+.sync-status{position:fixed;top:0;left:50%;transform:translateX(-50%);padding:4px 16px;font-size:11px;font-weight:600;font-family:var(--sans);border-radius:0 0 6px 6px;z-index:300;letter-spacing:0.3px;transition:all .3s}
+.sync-info{background:var(--navy);color:rgba(255,255,255,0.85)}
+.sync-ok{background:var(--teal);color:#fff}
+.sync-warn{background:var(--gold);color:#fff}
+.sync-err{background:var(--coral);color:#fff}
+</style>
+
+<script src="airtable-data.js"></script>
 <script>
-var API_URL='/api/airtable';
-var STORE_KEY='select_smart_tracker_cache_v3';
+var MASTER_PW='SELECT2026';
 var ASSESSOR_PASSWORDS=['SELECT2026-FD','SELECT2026-COR','SELECT2026'];
-var CEO_PASSWORDS={
-'SL-LNT2026':'leave-no-trace',
-'SL-SBI2026':'siel-bleu',
-'SL-WMK2026':'waymaker',
-'SL-CON2026':'connections-arts',
-'SL-COD2026':'codema',
-'SL-PSY2026':'psycare',
-'SL-INC2026':'incredible',
-'SL-CRT2026':'community-roots',
-'SL-PAC2026':'pace',
-'SL-YLK2026':'youthlink'
-};
-var API_PASSWORD='SELECT2026';
+var STORE_KEY='select_tracker_v4';
 var isAssessor=false;
-var currentUserPw=null;
 var currentOrg=null;
-var orgsCache=[];
-var DOMAINS=['Revenue, Pricing & Financial Sustainability','Market Strategy & Cross-Border Trade','Value Proposition & Competitive Positioning','Sales Pipeline & Business Development','Leadership & Governance','Organisational Capacity & Delivery','Financial Management & Systems','Digital Capability & Marketing','Impact Measurement & Reporting'];
-var KPI_FIELDS=[{key:'jurisdiction',label:'Jurisdiction',type:'select',opts:['ROI','NI']},{key:'sector',label:'Sector',type:'text'},{key:'turnoverBand',label:'Turnover Band',type:'text'},{key:'employees',label:'Employees',type:'text'},{key:'tradedPct',label:'Traded Income %',type:'text'},{key:'crossBorderPct',label:'Cross-Border %',type:'text'}];
-var INTENSITY_OPTS=['','Strengthen','Adapt','Transform'];
-var DEFAULT_CHECKLIST=[
-{phase:'Onboarding',items:['Welcome pack sent','CEO link issued','Pre-baseline call held']},
-{phase:'Baseline',items:['Self-assessment received','Assessor 1 review','Assessor 2 review','Moderation complete']},
-{phase:'Validation',items:['Validation meeting scheduled','Validation meeting held','Problem & SMART agreed','Intensity classified','Baseline locked']}
-];
-var DEFAULT_VALIDATION=[
-{num:1,title:'Self-awareness check',sub:'How accurately did the CEO self-describe vs evidence?'},
-{num:2,title:'Root constraint',sub:'What is the single deepest commercial barrier?'},
-{num:3,title:'Stress-test',sub:'How would the org respond to a 20% income drop?'},
-{num:4,title:'Governance signal',sub:'Does the board challenge or rubber-stamp?'},
-{num:5,title:'Founder reflection',sub:'How did the CEO articulate their own role?'}
+
+var DOMAINS=[
+{name:'1. Business Model & Revenue Mix',wt:15,cluster:'Foundation',clCss:'cl-found'},
+{name:'2. Products & Unit Economics',wt:15,cluster:'Foundation',clCss:'cl-found'},
+{name:'3. Financial Management & Cash',wt:15,cluster:'Foundation',clCss:'cl-found'},
+{name:'4. Commercial Strategy & Market Focus',wt:10,cluster:'Engine',clCss:'cl-engine'},
+{name:'5. Go-To-Market & Sales',wt:10,cluster:'Engine',clCss:'cl-engine'},
+{name:'6. Operations & Delivery Capacity',wt:10,cluster:'Engine',clCss:'cl-engine'},
+{name:'7. Cross-Border Readiness',wt:10,cluster:'Engine',clCss:'cl-engine'},
+{name:'8. Leadership & Execution Capacity',wt:10,cluster:'Enabler',clCss:'cl-enable'},
+{name:'9. Organisational Readiness',wt:5,cluster:'Enabler',clCss:'cl-enable'}
 ];
 
+var KPI_FIELDS=[
+{key:'newToITI',label:'New to InterTradeIreland',type:'select',opts:['Yes','No']},
+{key:'firstTimeCB',label:'First-Time Cross-Border',type:'select',opts:['Yes','No']},
+{key:'firstTimeExp',label:'First-Time Exporter',type:'select',opts:['Yes','No']},
+{key:'jurisdiction',label:'Jurisdiction',type:'select',opts:['ROI','NI']},
+{key:'sector',label:'Sector',type:'text'},
+{key:'email',label:'CEO Email',type:'text'}
+];
+
+var APP_FIELDS=[
+{key:'turnover',label:'Annual Turnover',type:'text'},
+{key:'employees',label:'Employee Count',type:'text'},
+{key:'tradedPct',label:'Income Split (Traded %)',type:'text'},
+{key:'crossBorderPct',label:'Cross-Border Sales %',type:'text'},
+{key:'priorITI',label:'Prior ITI Support',type:'select',opts:['Yes','No']},
+{key:'crossBorderTarget',label:'Cross-Border Target',type:'text'}
+];
+
+var SOP_STEPS=[
+{phase:'Phase 1 - CEO Pre-Work',items:['CEO pre-work issued','CEO pre-work returned','CEO submission logged']},
+{phase:'Phase 2 - Internal Scoring',items:['CEO submission read end-to-end','Draft internal scoring completed','Draft baseline calculated','Priority issues identified']},
+{phase:'Phase 3 - Validation Meeting',items:['Validation meeting held','Assumptions tested','Score adjustments (if required)']},
+{phase:'Phase 4 - Baseline Lock-In',items:['Final baseline confirmed','Baseline locked']},
+{phase:'Phase 5 - Programme Alignment',items:['Priority focus areas agreed','CEO summary prepared','CEO summary issued']},
+{phase:'Phase 6 - Ongoing Use',items:['Baseline referenced in delivery','Endline scheduled']}
+];
+
+function loadData(){return AT.loadDataSync();}
+function saveData(d){AT.saveData(d, currentOrg);}
 
 function switchDashView(view,btn){
-document.querySelectorAll('.dash-view').forEach(function(v){v.style.display='none';});
-document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active');});
-document.getElementById(view==='orgs'?'dashViewOrgs':'dashViewRag').style.display='block';
-btn.classList.add('active');
-document.getElementById('dashTitle').textContent=view==='rag'?'Programme RAG Report':'All organisations';
-if(view==='rag')renderRagReport();
+  document.querySelectorAll('.dash-view').forEach(function(v){v.style.display='none';});
+  document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById(view==='orgs'?'dashViewOrgs':'dashViewRag').style.display='block';
+  btn.classList.add('active');
+  document.getElementById('dashTitle').textContent=view==='rag'?'Programme RAG Report':'All organisations';
+  if(view==='rag')renderRagReport();
 }
-function ragStatus(p){if(p===null||p===undefined||isNaN(p))return 'na';if(p>=80)return 'green';if(p>=50)return 'amber';return 'red';}
-function ragBadge(s){
-var map={green:'rag-green',amber:'rag-amber',red:'rag-red',na:'rag-na'};
-var lbl={green:'Green',amber:'Amber',red:'Red',na:'N/A'};
-return '<span class="rag-indicator '+(map[s]||'rag-na')+'">'+(lbl[s]||'N/A')+'</span>';
+
+function ragCalcProgress(org){
+  if(org.kpi&&org.kpi.progressPct&&org.kpi.progressPct!=='')return parseFloat(org.kpi.progressPct);
+  var done=0;
+  if(org.consulting&&org.consulting.length){
+    org.consulting.forEach(function(c){if(c.completed)done++;});
+    return Math.round((done/8)*100);
+  }
+  return null;
 }
-function calcProgress(org){
-if(org.kpi&&org.kpi.progressPct&&org.kpi.progressPct!=='')return parseFloat(org.kpi.progressPct);
-var done=0;
-if(org.consulting&&org.consulting.length){
-org.consulting.forEach(function(c){if(c.date||c.notes||c.completed)done++;});
-return Math.round((done/8)*100);
+
+function ragBadge(p){
+  var s=p===null||isNaN(p)?'na':p>=80?'green':p>=50?'amber':'red';
+  var lbl={green:'Green',amber:'Amber',red:'Red',na:'N/A'};
+  return '<span class="rag-pill '+s+'">'+lbl[s]+'</span>';
 }
-return null;
-}
+
 function renderRagReport(){
-var tbody=document.getElementById('ragTableBody');
-if(!orgsCache||!orgsCache.length){
-tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>';
-document.getElementById('ragCountGreen').textContent='0';
-document.getElementById('ragCountAmber').textContent='0';
-document.getElementById('ragCountRed').textContent='0';
+  var tbody=document.getElementById('ragTableBody');
+  var data=loadData();
+  var orgs=data.orgs||[];
+  if(!orgs.length){
+    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>';
+    ['ragCountGreen','ragCountAmber','ragCountRed'].forEach(function(id){document.getElementById(id).textContent='0';});
+    return;
+  }
+  var counts={green:0,amber:0,red:0,na:0};
+  var rows='';
+  var totalProg=0,progCount=0,totalSurplus=0,surplusCount=0;
+  orgs.forEach(function(org){
+    var juris=(org.kpi&&org.kpi.jurisdiction)?org.kpi.jurisdiction:'ROI';
+    var isNI=juris.toUpperCase()==='NI';
+    var sym=isNI?'&pound;':'&euro;';
+    var mode=(org.kpi&&org.kpi.ragMode)?org.kpi.ragMode:(org.intensity||'-');
+    var obj='';
+    if(org.diagnosis&&org.diagnosis.problem)obj=org.diagnosis.problem;
+    else if(org.smart&&org.smart[0]&&org.smart[0].objective)obj=org.smart[0].objective;
+    if(!obj)obj='-';
+    if(obj.length>70)obj=obj.substring(0,68)+'...';
+    var bt=(org.kpi&&org.kpi.ragBaseline)?org.kpi.ragBaseline:'';
+    var ct=(org.kpi&&org.kpi.ragCurrent)?org.kpi.ragCurrent:'';
+    var ops=(org.kpi&&org.kpi.ragSurplus)?org.kpi.ragSurplus:'';
+    var cbs=(org.kpi&&org.kpi.ragCbSales)?org.kpi.ragCbSales:'';
+    var nxt=(org.kpi&&org.kpi.ragNextActions)?org.kpi.ragNextActions:'';
+    var prog=ragCalcProgress(org);
+    var status=prog===null?'na':prog>=80?'green':prog>=50?'amber':'red';
+    counts[status]++;
+    if(prog!==null){totalProg+=prog;progCount++;}
+    if(ops){totalSurplus+=parseFloat(ops)||0;surplusCount++;}
+    var progStr=prog!==null?(prog>0?'+':'')+prog+'%':'-';
+    var progCls=prog>=80?'prog-pos':prog>=50?'prog-neu':prog!==null?'prog-neg':'';
+    var barCls='pbf-'+(status==='na'?'red':status);
+    var barW=prog!==null?Math.min(100,Math.max(0,prog)):0;
+    rows+='<tr>';
+    rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button>';
+    rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
+    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(juris)+'</td>';
+    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(mode)+'</td>';
+    rows+='<td style="font-size:12px;color:var(--ts2)">'+esc(obj)+'</td>';
+    rows+='<td class="rag-right" style="font-weight:600">'+(bt?sym+bt:'-')+'</td>';
+    rows+='<td class="rag-right" style="font-weight:600">'+(ct?sym+ct:'-')+'</td>';
+    rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
+    rows+='<td>'+ragBadge(prog)+'</td>';
+    rows+='<td class="rag-right">'+(ops?ops+'%':'-')+'</td>';
+    rows+='<td class="rag-right">'+(cbs?sym+cbs:'-')+'</td>';
+    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
+    rows+='</tr>';
+  });
+  var avgProg=progCount?Math.round(totalProg/progCount):null;
+  var avgSurplus=surplusCount?(totalSurplus/surplusCount).toFixed(1):null;
+  rows+='<tr class="rag-summary-row">';
+  rows+='<td colspan="4"><strong>Programme Summary ('+orgs.length+' orgs)</strong></td>';
+  rows+='<td></td><td></td>';
+  rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'-')+'</strong></td>';
+  rows+='<td>'+ragBadge(avgProg)+'</td>';
+  rows+='<td class="rag-right">'+(avgSurplus?avgSurplus+'% avg':'-')+'</td>';
+  rows+='<td class="rag-right">-</td>';
+  rows+='<td style="font-size:12px;color:var(--ts)">Actions logged via SMART Tracker</td>';
+  rows+='</tr>';
+  tbody.innerHTML=rows;
+  document.getElementById('ragCountGreen').textContent=counts.green;
+  document.getElementById('ragCountAmber').textContent=counts.amber;
+  document.getElementById('ragCountRed').textContent=counts.red+(counts.na>0?' ('+counts.na+' N/A)':'');
+  document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+var targetOrgId=null; // set from URL param
+
+function doAuth(){
+var pw=document.getElementById('authPw').value;
+if(ASSESSOR_PASSWORDS.indexOf(pw)>-1){
+isAssessor=true;
+pw=MASTER_PW; // always use master for AT calls
+AT.setAuth(pw);
+document.getElementById('authScreen').style.display='none';
+// Load from Airtable async then render
+AT.loadData(function(data){
+  showDash();
+});
+showDash(); // show immediately with cache
 return;
 }
-var counts={green:0,amber:0,red:0,na:0};
-var rows='';
-var totalProg=0,progCount=0,totalSurplus=0,surplusCount=0;
-orgsCache.forEach(function(org){
-var juris=(org.kpi&&org.kpi.jurisdiction)?org.kpi.jurisdiction:'ROI';
-var isNI=juris.toUpperCase()==='NI';
-var sym=isNI?'&pound;':'&euro;';
-var mode=(org.kpi&&org.kpi.mode)?org.kpi.mode:(org.intensity||'-');
-var obj=(org.diagnosis&&org.diagnosis.problem)?org.diagnosis.problem:((org.smart&&org.smart[0]&&org.smart[0].objective)?org.smart[0].objective:'-');
-if(obj.length>70)obj=obj.substring(0,68)+'...';
-var bt=(org.kpi&&org.kpi.baselineTurnover)?org.kpi.baselineTurnover:'';
-var ct=(org.kpi&&org.kpi.currentTurnover)?org.kpi.currentTurnover:'';
-var ops=(org.kpi&&org.kpi.opSurplus)?org.kpi.opSurplus:'';
-var cbs=(org.kpi&&org.kpi.cbSales)?org.kpi.cbSales:'';
-var nxt=(org.kpi&&org.kpi.nextActions)?org.kpi.nextActions:'';
-var prog=calcProgress(org);
-var rag=ragStatus(prog);
-counts[rag]++;
-if(prog!==null){totalProg+=prog;progCount++;}
-if(ops){totalSurplus+=parseFloat(ops)||0;surplusCount++;}
-var progStr=prog!==null?((prog>0?'+':'')+prog+'%'):'-';
-var progCls=prog>=80?'prog-pos':prog>=50?'prog-neu':prog!==null?'prog-neg':'';
-var barCls=rag==='green'?'pbf-green':rag==='amber'?'pbf-amber':'pbf-red';
-var barW=prog!==null?Math.min(100,Math.max(0,prog)):0;
-rows+='<tr>';
-rows+='<td><button class="org-name-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button><span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
-rows+='<td style="font-size:12px;color:var(--ts)">'+esc(juris)+'</td>';
-rows+='<td style="font-size:12px;color:var(--ts)">'+esc(mode)+'</td>';
-rows+='<td style="font-size:12px;color:var(--ts2);max-width:180px">'+esc(obj)+'</td>';
-rows+='<td class="turnover-cell">'+(bt?sym+bt:'-')+'</td>';
-rows+='<td class="turnover-cell">'+(ct?sym+ct:'-')+'</td>';
-rows+='<td class="progress-cell"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="prog-val '+progCls+'">'+progStr+'</span></div></td>';
-rows+='<td>'+ragBadge(rag)+'</td>';
-rows+='<td class="surplus-cell">'+(ops?ops+'%':'-')+'</td>';
-rows+='<td class="cb-cell">'+(cbs?sym+cbs:'-')+'</td>';
-rows+='<td class="actions-cell">'+esc(nxt||'-')+'</td>';
-rows+='</tr>';
-});
-var avgProg=progCount?Math.round(totalProg/progCount):null;
-var avgSurplus=surplusCount?(totalSurplus/surplusCount).toFixed(1):null;
-rows+='<tr class="summary-row">';
-rows+='<td colspan="4"><strong>Programme Summary ('+orgsCache.length+' orgs)</strong></td>';
-rows+='<td></td><td></td>';
-rows+='<td class="progress-cell"><strong class="prog-val '+(avgProg>=80?'prog-pos':avgProg>=50?'prog-neu':'prog-neg')+'">'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'-')+'</strong></td>';
-rows+='<td>'+ragBadge(ragStatus(avgProg))+'</td>';
-rows+='<td class="surplus-cell">'+(avgSurplus?avgSurplus+'% avg':'-')+'</td>';
-rows+='<td class="cb-cell">-</td>';
-rows+='<td class="actions-cell">Actions logged via SMART Tracker</td>';
-rows+='</tr>';
-tbody.innerHTML=rows;
-document.getElementById('ragCountGreen').textContent=counts.green;
-document.getElementById('ragCountAmber').textContent=counts.amber;
-document.getElementById('ragCountRed').textContent=counts.red+(counts.na>0?' ('+counts.na+' N/A)':'');
-document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-function showStatus(msg,isError){var b=document.getElementById('statusBanner');b.textContent=msg;b.classList.toggle('error',!!isError);b.classList.add('show');}
-function hideStatus(){document.getElementById('statusBanner').classList.remove('show');}
-async function api(action,extra){var body=Object.assign({action:action,password:API_PASSWORD},extra||{});var res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});var data=await res.json();if(!res.ok)throw new Error(data.error||('HTTP '+res.status));return data;}
-function loadCache(){try{var d=localStorage.getItem(STORE_KEY);return d?JSON.parse(d):{orgs:[]};}catch(e){return{orgs:[]};}}
-function saveCache(orgs){try{localStorage.setItem(STORE_KEY,JSON.stringify({orgs:orgs,ts:Date.now()}));}catch(e){}}
-
-async function doAuth(){
-var pw=document.getElementById('authPw').value.trim();
-if(!pw)return;
-var btn=document.getElementById('authBtn');
-btn.disabled=true;btn.textContent='Checking...';
-var assessorOk=ASSESSOR_PASSWORDS.indexOf(pw)>-1;
-var ceoPw=CEO_PASSWORDS[pw]||null;
-if(!ceoPw&&!assessorOk){
-var p2=new URLSearchParams(window.location.search);
-var fu=p2.get('id');
-if(fu&&pw===fu)ceoPw=fu;
-}
-if(!assessorOk&&!ceoPw){
-document.getElementById('authErr').style.display='block';
-btn.disabled=false;btn.textContent='Continue';return;
-}
-isAssessor=assessorOk;
-currentUserPw=pw;
-try{
-var data=await api('list');orgsCache=data.orgs||[];saveCache(orgsCache);hideStatus();
-}catch(err){
-showStatus('Server unreachable. '+err.message,true);
-var cached=loadCache();
-if(cached.orgs&&cached.orgs.length){orgsCache=cached.orgs;}
-}
+var data=loadData();
+// If direct link, only check password for that specific org
+if(targetOrgId){
+var org=data.orgs.find(function(o){return o.code===targetOrgId;});
+if(org&&org.password===pw){
+isAssessor=false;currentOrg=org.code;
+AT.setAuth(pw);
 document.getElementById('authScreen').style.display='none';
-if(isAssessor){
-showDash();
-}else{
-var params=new URLSearchParams(window.location.search);
-var fromUrl=params.get('id');
-var orgCode=ceoPw;
-if(fromUrl&&orgsCache.find(function(o){return o.code===fromUrl;}))orgCode=fromUrl;
-currentOrg=orgCode;
-openTracker(orgCode);
+// Load from Airtable then open tracker
+AT.loadData(function(){
+  openTracker(org.code);
+});
+openTracker(org.code); // show immediately with cache
+return;
 }
-btn.disabled=false;btn.textContent='Continue';
+document.getElementById('authErr').style.display='block';return;
 }
+// Otherwise check all org passwords (assessor can also enter any CEO pw)
+for(var i=0;i<data.orgs.length;i++){
+if(data.orgs[i].password===pw){
+isAssessor=false;currentOrg=data.orgs[i].code;
+AT.setAuth(pw);
+document.getElementById('authScreen').style.display='none';
+AT.loadData(function(){
+  openTracker(data.orgs[i].code);
+});
+openTracker(data.orgs[i].code); // show immediately with cache
+return;}
+}
+document.getElementById('authErr').style.display='block';
+}
+
 function showDash(){
 document.getElementById('dashScreen').style.display='block';
 document.getElementById('trackerScreen').style.display='none';
+document.getElementById('sopScreen').style.display='none';
 document.getElementById('saveBar').classList.add('hidden');
+renderCohortBar();
 renderOrgGrid();
-var rv=document.getElementById('dashViewRag');
-if(rv&&rv.style.display!=='none')renderRagReport();
 }
-async function reloadOrgs(){showStatus('Refreshing\u2026');try{var data=await api('list');orgsCache=data.orgs||[];saveCache(orgsCache);renderOrgGrid();hideStatus();}catch(err){showStatus('Refresh failed: '+err.message,true);}}
+
+function renderCohortBar(){
+var data=loadData();var total=data.orgs.length;
+var locked=data.orgs.filter(function(o){return o.baselineLocked;}).length;
+var roi=data.orgs.filter(function(o){return o.kpi&&o.kpi.jurisdiction==='ROI';}).length;
+var ni=total-roi;
+var html='<div class="cohort-stat"><div class="stat-val">'+total+'</div><div class="stat-lbl">Organisations</div></div>';
+html+='<div class="cohort-stat"><div class="stat-val">'+locked+'</div><div class="stat-lbl">Baselines Locked</div></div>';
+html+='<div class="cohort-stat"><div class="stat-val">'+roi+' / '+ni+'</div><div class="stat-lbl">ROI / NI</div></div>';
+var avgScore=0;var scored=0;
+data.orgs.forEach(function(o){if(o.baselineLocked){var s=calcWeightedScore(o.baseline);if(s>0){avgScore+=s;scored++;}}});
+html+='<div class="cohort-stat"><div class="stat-val">'+(scored?((avgScore/scored).toFixed(1)):'--')+'</div><div class="stat-lbl">Avg Baseline</div></div>';
+document.getElementById('cohortBar').innerHTML=html;
+}
+
+function calcWeightedScore(baseline){
+var total=0;
+if(!baseline)return 0;
+baseline.forEach(function(b,i){
+var score=parseFloat(b.score)||0;
+var wt=DOMAINS[i]?DOMAINS[i].wt/100:0;
+total+=score*wt;
+});
+return total*5;
+}
 
 function renderOrgGrid(){
-var grid=document.getElementById('orgGrid');
-if(!orgsCache.length){grid.innerHTML='<p style="color:var(--ts);font-size:14px;grid-column:1/-1">No organisations yet. Click <b>+ Add organisation</b> to get started.</p>';return;}
+var data=loadData();var grid=document.getElementById('orgGrid');
+if(!data.orgs.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><p style="color:var(--ts);font-size:14px;margin-bottom:16px">No organisations yet. Click <b>+ Add organisation</b> to add your first CEO, or load samples to preview the full system.</p><button class="btn btn-outline" onclick="loadSampleOrg()" style="font-size:13px">Load 3 sample organisations</button></div>';return;}
 var html='';
-orgsCache.forEach(function(o){
+data.orgs.forEach(function(o){
 var status=o.baselineLocked?'active':'pending';
 var statusLabel=o.baselineLocked?'Baseline Locked':'Pending';
-var link=window.location.origin+'/tracker?id='+o.code;
+var intensity=o.intensity||'';
+var intBadge=intensity?'<span class="org-status os-'+intensity.toLowerCase()+'">'+intensity+'</span>':'';
+var ceoLink=window.location.origin+window.location.pathname+'?id='+o.code;
 html+='<div class="org-card" onclick="openTracker(\''+o.code+'\')">';
 html+='<h3>'+esc(o.name)+'</h3>';
-html+='<div class="org-ceo">'+esc(o.ceo)+(o.kpi&&o.kpi.jurisdiction?' \u00b7 '+esc(o.kpi.jurisdiction):'')+'</div>';
-html+='<span class="org-status os-'+status+'">'+statusLabel+'</span>';
-if(o.intensity)html+='<span class="org-status os-intensity">'+esc(o.intensity)+'</span>';
-html+='<div class="org-link">CEO link: '+esc(link)+'</div>';
-if(isAssessor)html+='<div class="org-actions"><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();copyLink(\''+link+'\')">Copy link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\')">Remove</button></div>';
+html+='<div class="org-ceo">'+esc(o.ceo)+' · '+esc(o.kpi.jurisdiction||'')+'</div>';
+html+='<span class="org-status os-'+status+'">'+statusLabel+'</span>'+intBadge;
+if(o.kpi.sector)html+='<div class="org-meta-row">'+esc(o.kpi.sector)+'</div>';
+html+='<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--r);font-size:11px;color:var(--tt);word-break:break-all"><b>CEO link:</b> '+esc(ceoLink)+'</div>';
+html+='<div style="font-size:11px;color:var(--tt);margin-top:4px"><b>CEO password:</b> '+esc(o.password)+'</div>';
+html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\')">Copy CEO link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\')">Remove</button></div>';
 html+='</div>';
 });
 grid.innerHTML=html;
@@ -626,157 +744,233 @@ grid.innerHTML=html;
 function openAddOrg(){document.getElementById('addOrgModal').classList.add('open');}
 function closeAddOrg(){document.getElementById('addOrgModal').classList.remove('open');}
 
-async function addOrg(){
+function addOrg(){
 var name=document.getElementById('newOrgName').value.trim();
 var ceo=document.getElementById('newCeoName').value.trim();
 var code=document.getElementById('newOrgCode').value.trim().toLowerCase().replace(/[^a-z0-9\-]/g,'');
-var juris=document.getElementById('newOrgJuris').value;
-if(!name||!ceo||!code){alert('Please complete name, CEO and code.');return;}
-if(orgsCache.find(function(o){return o.code===code;})){alert('Organisation code already exists.');return;}
-var btn=document.getElementById('addOrgBtn');btn.disabled=true;btn.textContent='Saving\u2026';
-try{
-await api('create',{name:name,ceo:ceo,code:code,jurisdiction:juris});
+var pw=document.getElementById('newOrgPw').value.trim();
+if(!name||!ceo||!code||!pw){alert('Please complete required fields.');return;}
+var data=loadData();
+for(var i=0;i<data.orgs.length;i++){
+if(data.orgs[i].code===code){alert('Code already exists.');return;}
+if(data.orgs[i].password===pw){alert('Password already in use.');return;}
+}
+data.orgs.push({
+name:name,ceo:ceo,code:code,password:pw,intensity:'',
+kpi:{jurisdiction:document.getElementById('newOrgJuris').value,newToITI:'',firstTimeCB:'',firstTimeExp:document.getElementById('newFirstExp').value,sector:document.getElementById('newOrgSector').value,email:''},
+app:{turnover:document.getElementById('newTurnover').value,employees:document.getElementById('newEmployees').value,tradedPct:document.getElementById('newTradedPct').value,crossBorderPct:document.getElementById('newCBPct').value,priorITI:document.getElementById('newPriorITI').value,crossBorderTarget:''},
+baseline:DOMAINS.map(function(d){return{domain:d.name,score:'',evidence:''};}),
+endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
+diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
+smart:[],
+consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',days:'',domainMovement:'',rag:'',completed:false};}),
+coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
+notes:[],
+sop:{},baselineLocked:false,crossBorder:{baselinePct:'',endlinePct:'',target:''}
+});
+saveData(data);
+// Explicitly push the new org to Airtable
+var newOrg=data.orgs[data.orgs.length-1];
+AT.pushOrg(newOrg);
 closeAddOrg();
-document.getElementById('newOrgName').value='';document.getElementById('newCeoName').value='';document.getElementById('newOrgCode').value='';
-await reloadOrgs();
-}catch(err){alert('Save failed: '+err.message);}
-finally{btn.disabled=false;btn.textContent='Add';}
+['newOrgName','newCeoName','newOrgCode','newOrgPw','newOrgSector','newTurnover','newEmployees','newTradedPct','newCBPct'].forEach(function(id){document.getElementById(id).value='';});
+renderOrgGrid();renderCohortBar();
+var rv=document.getElementById('dashViewRag');
+if(rv&&rv.style.display!=='none')renderRagReport();
 }
 
-async function removeOrg(code){
-if(!confirm('Remove this organisation? The OrgProfile row will be deleted but linked baseline/notes/SMART data is preserved in Airtable as audit trail.'))return;
-try{await api('remove',{code:code});await reloadOrgs();}catch(err){alert('Remove failed: '+err.message);}
-}
-function copyLink(link){navigator.clipboard.writeText(link).then(function(){alert('Link copied to clipboard.');});}
-function getOrg(code){return orgsCache.find(function(o){return o.code===code;});}
+function removeOrg(code){if(!confirm('Remove this organisation?'))return;var data=loadData();var org=data.orgs.find(function(o){return o.code===code;});if(org)AT.deleteOrg(org);data.orgs=data.orgs.filter(function(o){return o.code!==code;});saveData(data);renderOrgGrid();renderCohortBar();}
 
-async function openTracker(code){
-var org=getOrg(code);if(!org){alert('Organisation not found.');return;}
+function copyLink(link){navigator.clipboard.writeText(link).then(function(){alert('CEO link copied to clipboard. Send this to the CEO along with their password.');});}
+
+function getOrg(code){var data=loadData();for(var i=0;i<data.orgs.length;i++){if(data.orgs[i].code===code)return data.orgs[i];}return null;}
+
+function openTracker(code){
+var org=getOrg(code);if(!org)return;
 currentOrg=code;
 document.getElementById('dashScreen').style.display='none';
+document.getElementById('sopScreen').style.display='none';
 document.getElementById('trackerScreen').style.display='block';
 document.getElementById('backDash').style.display=isAssessor?'inline-block':'none';
 document.getElementById('readonlyNotice').style.display=isAssessor?'none':'block';
 document.getElementById('saveBar').classList.toggle('hidden',!isAssessor);
 document.getElementById('trkOrgName').textContent=org.name;
-document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' \u00b7 Code: '+org.code+(org.kpi.jurisdiction?' \u00b7 '+org.kpi.jurisdiction:'')+(org.intensity?' \u00b7 '+org.intensity:'');
-ensureChecklist(org);ensureValidation(org);
-switchTab('kpi',document.querySelector('[data-tab="kpi"]'));
-renderKPI(org);renderDiagnosis(org);renderBaseline(org);renderSMART(org);renderConsulting(org);renderCoaching(org);renderProgress(org);renderEndline(org);renderChecklist(org);renderValidation(org);renderNotes(org);
+document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · '+org.code+' · '+(org.kpi.jurisdiction||'')+(org.intensity?' · '+org.intensity:'');
+switchTab('profile',document.querySelector('[data-tab="profile"]'));
+renderAll(org);
 }
 
-function ensureChecklist(org){
-if(!Array.isArray(org.checklist))org.checklist=[];
-if(org.checklist.length>0)return;
-var idx=0;
-DEFAULT_CHECKLIST.forEach(function(p){p.items.forEach(function(it){org.checklist.push({phase:p.phase,item:it,index:idx++,completed:false,completedAt:''});});});
+function renderAll(org){
+renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
+renderBaseline(org);renderDiagnosis(org);renderSMART(org);
+renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
 }
 
-function ensureValidation(org){
-if(!Array.isArray(org.validation))org.validation=[];
-if(org.validation.length>0)return;
-DEFAULT_VALIDATION.forEach(function(v){org.validation.push({num:v.num,title:v.title,notes:''});});
+function switchTab(tab,btn){
+document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+document.getElementById('tab-'+tab).classList.add('active');
+btn.classList.add('active');
 }
-
-function switchTab(tab,btn){document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('tab-'+tab).classList.add('active');btn.classList.add('active');}
 
 function renderKPI(org){
 var html='';
 KPI_FIELDS.forEach(function(f){
 html+='<div class="kpi-card"><label>'+f.label+'</label>';
 if(isAssessor){
-if(f.type==='select'){html+='<select data-kpi="'+f.key+'"><option value="">\u2014</option>';f.opts.forEach(function(o){html+='<option'+(org.kpi[f.key]===o?' selected':'')+'>'+o+'</option>';});html+='</select>';}
+if(f.type==='select'){html+='<select data-kpi="'+f.key+'"><option value="">--</option>';f.opts.forEach(function(o){html+='<option'+(org.kpi[f.key]===o?' selected':'')+'>'+o+'</option>';});html+='</select>';}
 else{html+='<input data-kpi="'+f.key+'" value="'+esc(org.kpi[f.key]||'')+'">';}
-}else{html+='<div class="kpi-val">'+(org.kpi[f.key]||'\u2014')+'</div>';}
+}else{html+='<div class="kpi-val">'+(org.kpi[f.key]||'--')+'</div>';}
 html+='</div>';
 });
 document.getElementById('kpiGrid').innerHTML=html;
+}
 
-var cb=org.crossBorder||{};
-var cbHtml='';
-['baseline','target','endline'].forEach(function(k){
-var label=k.charAt(0).toUpperCase()+k.slice(1);
-cbHtml+='<div class="kpi-card"><label>Cross-Border '+label+'</label>';
-if(isAssessor)cbHtml+='<input data-cb="'+k+'" value="'+esc(cb[k]||'')+'">';
-else cbHtml+='<div class="kpi-val">'+(cb[k]||'\u2014')+'</div>';
-cbHtml+='</div>';
+function renderAppData(org){
+if(!org.app)org.app={};
+var html='';
+APP_FIELDS.forEach(function(f){
+html+='<div class="kpi-card"><label>'+f.label+'</label>';
+if(isAssessor){
+if(f.type==='select'){html+='<select data-app="'+f.key+'"><option value="">--</option>';f.opts.forEach(function(o){html+='<option'+((org.app[f.key]||'')===o?' selected':'')+'>'+o+'</option>';});html+='</select>';}
+else{html+='<input data-app="'+f.key+'" value="'+esc(org.app[f.key]||'')+'">';}
+}else{html+='<div class="kpi-val">'+(org.app[f.key]||'--')+'</div>';}
+html+='</div>';
 });
-document.getElementById('cbRow').innerHTML=cbHtml;
+document.getElementById('appGrid').innerHTML=html;
+}
 
-if(isAssessor){
-var sel='<select data-meta="intensity">';INTENSITY_OPTS.forEach(function(o){sel+='<option value="'+o+'"'+(org.intensity===o?' selected':'')+'>'+(o||'\u2014')+'</option>';});sel+='</select>';
-document.getElementById('intensitySlot').innerHTML=sel;
-document.getElementById('assessorSlot').innerHTML='<input data-meta="assessor" value="'+esc(org.assessor||'')+'">';
-}else{
-document.getElementById('intensitySlot').innerHTML='<div class="kpi-val">'+(org.intensity||'\u2014')+'</div>';
-document.getElementById('assessorSlot').innerHTML='<div class="kpi-val">'+(org.assessor||'\u2014')+'</div>';
-}
-var ragF=[
-{id:'ragModeSlot',key:'mode',ph:'e.g. Consulting / Mentoring + Coaching',ta:false},
-{id:'ragBaselineSlot',key:'baselineTurnover',ph:'e.g. 120000',ta:false},
-{id:'ragCurrentSlot',key:'currentTurnover',ph:'e.g. 138000',ta:false},
-{id:'ragProgressSlot',key:'progressPct',ph:'0-100 (leave blank for auto)',ta:false},
-{id:'ragSurplusSlot',key:'opSurplus',ph:'e.g. 7.2',ta:false},
-{id:'ragCbSlot',key:'cbSales',ph:'e.g. 15000',ta:false},
-{id:'ragActionsSlot',key:'nextActions',ph:'Next actions or risks for RAG report',ta:true}
-];
-ragF.forEach(function(f){
-var el=document.getElementById(f.id);if(!el)return;
-if(isAssessor){
-if(f.ta)el.innerHTML='<textarea data-kpi="'+f.key+'" placeholder="'+f.ph+'" style="min-height:60px;width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">'+esc(org.kpi[f.key]||'')+'</textarea>';
-else el.innerHTML='<input data-kpi="'+f.key+'" placeholder="'+f.ph+'" value="'+esc(org.kpi[f.key]||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-}else{
-el.innerHTML='<div class="kpi-val">'+(org.kpi[f.key]||'\u2014')+'</div>';
-}
+function renderIntensity(org){
+var pills=['Stabilise','Strengthen','Scale'];
+var html='';
+pills.forEach(function(p){
+var sel=org.intensity===p;
+var cls=sel?'int-pill selected sel-'+p.toLowerCase():'int-pill';
+if(isAssessor){html+='<div class="'+cls+'" onclick="setIntensity(\''+p+'\')">'+p+'</div>';}
+else{html+='<div class="'+cls+'">'+p+'</div>';}
 });
+document.getElementById('intensityPills').innerHTML=html;
 }
 
-function renderDiagnosis(org){
-var d=org.diagnosis||{};
-function cell(id,key,placeholder,big){
-var t=d[key]||'';
-if(isAssessor){
-if(big)return '<textarea data-diag="'+key+'" placeholder="'+placeholder+'">'+esc(t)+'</textarea>';
-return '<input data-diag="'+key+'" placeholder="'+placeholder+'" value="'+esc(t)+'">';
+function setIntensity(val){
+var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+org.intensity=org.intensity===val?'':val;
+saveData(data);renderIntensity(org);
 }
-return '<div class="diag-val">'+(t||'\u2014')+'</div>';
-}
-document.getElementById('diagProblem').innerHTML=cell('p','problem','Single sentence describing the core commercial constraint',true);
-document.getElementById('diagObs').innerHTML=cell('o','observation','Assessor observation - strengths/risks not in scores',true);
-document.getElementById('diagPri').innerHTML=cell('pri','priorities','e.g. D1, D5, D7',false);
-document.getElementById('diagG1').innerHTML=cell('g1','goal1','First strategic goal',true);
-document.getElementById('diagG2').innerHTML=cell('g2','goal2','Second strategic goal',true);
-document.getElementById('diagG3').innerHTML=cell('g3','goal3','Third strategic goal',true);
+
+function renderCB(org){
+if(!org.crossBorder)org.crossBorder={};
+var fields=[{key:'baselinePct',label:'Baseline Cross-Border %'},{key:'target',label:'Cross-Border Target'},{key:'endlinePct',label:'Endline Cross-Border %'}];
+var html='';
+fields.forEach(function(f){
+html+='<div class="kpi-card"><label>'+f.label+'</label>';
+if(isAssessor){html+='<input data-cb="'+f.key+'" value="'+esc(org.crossBorder[f.key]||'')+'">';}
+else{html+='<div class="kpi-val">'+(org.crossBorder[f.key]||'--')+'</div>';}
+html+='</div>';
+});
+document.getElementById('cbGrid').innerHTML=html;
 }
 
 function renderBaseline(org){
-var tbody=document.querySelector('#baselineTable tbody');var html='';
+var tbody=document.querySelector('#baselineTable tbody');
+var html='';
 org.baseline.forEach(function(b,i){
-html+='<tr><td class="domain-name">'+b.domain+'</td>';
+var d=DOMAINS[i];var score=parseFloat(b.score)||0;var wt=d?d.wt:0;
+var wtdScore=(score*(wt/100)*5).toFixed(2);var pct=score?(score/5*100):0;
+html+='<tr><td class="domain-name">'+b.domain+'<span class="cluster-label '+d.clCss+'">'+d.cluster+'</span></td>';
+html+='<td class="wt">'+wt+'%</td>';
 if(isAssessor&&!org.baselineLocked){
 html+='<td><input type="number" min="0" max="5" step="0.5" data-bl="'+i+'" value="'+(b.score||'')+'"></td>';
-html+='<td><textarea data-bl-ev="'+i+'">'+esc(b.evidence||'')+'</textarea></td>';
-}else{
-html+='<td style="font-weight:700;color:var(--navy)">'+(b.score||'\u2014')+'</td>';
-html+='<td style="font-size:13px;color:var(--ts2);white-space:pre-wrap">'+(b.evidence||'\u2014')+'</td>';
-}
-html+='</tr>';
+}else{html+='<td style="font-weight:700;color:var(--navy)">'+(b.score||'--')+'</td>';}
+html+='<td style="font-size:12px;color:var(--ts)">'+(b.score?wtdScore:'--')+'</td>';
+if(isAssessor&&!org.baselineLocked){
+html+='<td><textarea data-bl-ev="'+i+'">'+(b.evidence||'')+'</textarea></td>';
+}else{html+='<td style="font-size:12px;color:var(--ts)">'+(b.evidence||'--')+'</td>';}
+html+='<td><div class="score-bar"><div class="score-bar-fill" style="width:'+pct+'%"></div></div></td></tr>';
 });
 tbody.innerHTML=html;
+var totalWtd=0;var hasScores=false;
+org.baseline.forEach(function(b,i){var s=parseFloat(b.score)||0;if(s>0)hasScores=true;totalWtd+=s*(DOMAINS[i].wt/100);});
+var overall=(totalWtd*5).toFixed(2);
+var maturity=totalWtd<1?'Fragile':totalWtd<2?'Foundational':totalWtd<3?'Developing':totalWtd<4?'Established':'Optimised';
+var foot='<tr style="background:var(--bg2);font-weight:700"><td>Overall Weighted Score</td><td>100%</td><td colspan="2" style="text-align:center;font-family:var(--serif);font-size:18px;color:var(--navy)">'+(hasScores?overall:'--')+'</td><td style="font-size:13px;color:var(--teal)">'+(hasScores?maturity:'--')+'</td><td></td></tr>';
+if(isAssessor&&!org.baselineLocked){foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';}
+document.getElementById('baselineFoot').innerHTML=foot;
 }
 
-function renderEndline(org){
-var tbody=document.querySelector('#endlineTable tbody');var html='';
-org.endline.forEach(function(e,i){
-var bl=org.baseline[i]?org.baseline[i].score:'';
-var change='';if(bl&&e.score){var diff=(parseFloat(e.score)-parseFloat(bl)).toFixed(1);change=(diff>0?'+':'')+diff;}
-html+='<tr><td class="domain-name">'+e.domain+'</td>';
-html+='<td style="color:var(--ts)">'+(bl||'\u2014')+'</td>';
-if(isAssessor){html+='<td><input type="number" min="0" max="5" step="0.5" data-el="'+i+'" value="'+(e.score||'')+'"></td>';}
-else{html+='<td style="font-weight:700;color:var(--navy)">'+(e.score||'\u2014')+'</td>';}
-html+='<td style="font-weight:700;color:'+(parseFloat(change)>0?'var(--teal)':parseFloat(change)<0?'var(--coral)':'var(--ts)')+'">'+(change||'\u2014')+'</td></tr>';
+function lockBaseline(){
+if(!confirm('Lock baseline? This cannot be undone. Scores will be frozen.'))return;
+var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+org.baselineLocked=true;saveData(data);renderBaseline(org);renderOrgGrid();
+}
+
+
+function renderRagKpiSlots(org){
+  var ragF=[
+    {id:'ragModeSlot',key:'ragMode',ph:'e.g. Consulting / Mentoring + Coaching',ta:false},
+    {id:'ragBaselineSlot',key:'ragBaseline',ph:'e.g. 120000',ta:false},
+    {id:'ragCurrentSlot',key:'ragCurrent',ph:'e.g. 138000',ta:false},
+    {id:'ragProgressSlot',key:'progressPct',ph:'0-100 (leave blank for auto)',ta:false},
+    {id:'ragSurplusSlot',key:'ragSurplus',ph:'e.g. 7.2',ta:false},
+    {id:'ragCbSlot',key:'ragCbSales',ph:'e.g. 15000',ta:false},
+    {id:'ragActionsSlot',key:'ragNextActions',ph:'Next actions or risks for RAG report',ta:true}
+  ];
+  ragF.forEach(function(f){
+    var el=document.getElementById(f.id);if(!el)return;
+    var val=(org.kpi&&org.kpi[f.key])?org.kpi[f.key]:'';
+    if(isAssessor){
+      if(f.ta)el.innerHTML='<textarea onchange="saveRagField(\''+f.key+'\',this.value)" placeholder="'+f.ph+'" style="min-height:60px;width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">'+esc(val)+'</textarea>';
+      else el.innerHTML='<input onchange="saveRagField(\''+f.key+'\',this.value)" placeholder="'+f.ph+'" value="'+esc(val)+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+    }else{
+      el.innerHTML='<div class="kpi-val">'+(val||'&mdash;')+'</div>';
+    }
+  });
+}
+function saveRagField(key,val){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!org.kpi)org.kpi={};
+  org.kpi[key]=val;
+  saveData(data);
+}
+
+function renderDiagnosis(org){
+if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
+var d=org.diagnosis;var html='';
+html+='<div class="problem-card"><div class="pc-label">Commercial Problem Statement</div>';
+if(isAssessor){html+='<textarea data-diag="problemStatement">'+esc(d.problemStatement)+'</textarea>';}
+else{html+='<div class="pc-val">'+(d.problemStatement||'--')+'</div>';}
+html+='</div>';
+html+='<div class="problem-card"><div class="pc-label">Scenario for Change</div>';
+if(isAssessor){
+html+='<div class="intensity-pills">';
+['Stabilise','Strengthen','Scale'].forEach(function(s){
+html+='<div class="int-pill'+(d.scenario===s?' selected sel-'+s.toLowerCase():'')+'" onclick="setScenario(\''+s+'\')">'+s+'</div>';
 });
-tbody.innerHTML=html;
+html+='</div>';
+}else{html+='<div class="pc-val">'+(d.scenario||'--')+'</div>';}
+html+='</div>';
+html+='<div class="problem-card"><div class="pc-label">Root Constraints (linked to domain)</div>';
+for(var i=0;i<3;i++){
+html+='<div class="constraint-row"><div class="c-num">'+(i+1)+'</div>';
+if(isAssessor){html+='<input data-constraint="'+i+'" value="'+esc(d.constraints[i]||'')+'" placeholder="Domain -- Constraint description">';}
+else{html+='<span style="font-size:14px;color:var(--ts2)">'+(d.constraints[i]||'--')+'</span>';}
+html+='</div>';
+}
+html+='</div>';
+html+='<div class="problem-card"><div class="pc-label">Key Commercial Observation</div>';
+if(isAssessor){html+='<textarea data-diag="observation">'+esc(d.observation)+'</textarea>';}
+else{html+='<div class="pc-val">'+(d.observation||'--')+'</div>';}
+html+='</div>';
+document.getElementById('diagnosisContent').innerHTML=html;
+}
+
+function setScenario(val){
+var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
+org.diagnosis.scenario=org.diagnosis.scenario===val?'':val;
+saveData(data);renderDiagnosis(org);
 }
 
 function renderSMART(org){
@@ -785,191 +979,460 @@ org.smart.forEach(function(s,i){
 html+='<div class="smart-obj"><div class="obj-num">Objective '+(i+1)+'</div>';
 if(isAssessor){
 html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
-html+='<div class="obj-row"><div><label>Target</label><input data-smart-target="'+i+'" value="'+esc(s.target||'')+'"></div><div><label>Timeline</label><input data-smart-timeline="'+i+'" value="'+esc(s.timeline||'')+'"></div><div><label>Owner</label><input data-smart-owner="'+i+'" value="'+esc(s.owner||'')+'"></div></div>';
+html+='<div class="obj-row">';
+html+='<div><label>Target</label><input data-smart-target="'+i+'" value="'+esc(s.target||'')+'"></div>';
+html+='<div><label>Timeline</label><input data-smart-timeline="'+i+'" value="'+esc(s.timeline||'')+'"></div>';
+html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="'+esc(s.domain||'')+'"></div>';
+html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
+html+='</div>';
 }else{
-html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px">'+(s.objective||'\u2014')+'</div>';
-html+='<div class="obj-row"><div><label>Target</label><div style="font-size:14px;font-weight:600">'+(s.target||'\u2014')+'</div></div><div><label>Timeline</label><div style="font-size:14px;font-weight:600">'+(s.timeline||'\u2014')+'</div></div><div><label>Owner</label><div style="font-size:14px;font-weight:600">'+(s.owner||'\u2014')+'</div></div></div>';
+html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px">'+(s.objective||'--')+'</div>';
+html+='<div class="obj-row">';
+html+='<div><label>Target</label><div style="font-size:14px;font-weight:600">'+(s.target||'--')+'</div></div>';
+html+='<div><label>Timeline</label><div style="font-size:14px;font-weight:600">'+(s.timeline||'--')+'</div></div>';
+html+='<div><label>Domain</label><div style="font-size:14px;font-weight:600">'+(s.domain||'--')+'</div></div>';
+html+='<div><label>Status</label><div style="font-size:14px;font-weight:600">'+(s.status||'--')+'</div></div>';
+html+='</div>';
 }
 html+='</div>';
 });
 document.getElementById('smartList').innerHTML=html;
 document.getElementById('smartAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addSMART()">+ Add objective</button>':'';
 }
-function addSMART(){var org=getOrg(currentOrg);org.smart.push({objective:'',target:'',timeline:'',owner:'',status:''});renderSMART(org);}
+function addSMART(){var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});saveData(data);renderSMART(org);}
 
-function phaseClass(p){var s=(p||'').toLowerCase();if(s.indexOf('diagnose')>-1)return 'diagnose';if(s.indexOf('translate')>-1)return 'translate';if(s.indexOf('strengthen')>-1)return 'strengthen';if(s.indexOf('sustain')>-1)return 'sustain';return '';}
+var OUTREACH_CYCLES=[
+{code:'OR1',title:'Health Check & Problem Identification',date:'4-18 May 2026',phase:'Diagnose',focus:'Deep-dive into commercial assessment; validate baseline; agree problem statement & SMART objectives'},
+{code:'OR2',title:'Commercialisation Plan Progress',date:'12-26 Jun 2026',phase:'Translate',focus:'Confirm scaling barriers, commercial priorities, scenario for change; refine Scale & Change Plan'},
+{code:'OR3',title:'Revenue & Business Model Deep-Dive',date:'10-24 Jul 2026',phase:'Strengthen',focus:'Revenue diversification; income mix; business model innovation; market demand testing'},
+{code:'OR4',title:'Change Management Implementation',date:'14-28 Aug 2026',phase:'Strengthen',focus:'Organisational & commercial change across pricing, cost control, cash-flow, sales processes'},
+{code:'OR5',title:'Financial Systems & Pricing',date:'11-25 Sep 2026',phase:'Strengthen',focus:'Cost structures; pricing assumptions; break-even; cash-flow management; financial dashboards'},
+{code:'OR6',title:'Digital Marketing & Cross-Border',date:'9-23 Oct 2026',phase:'Strengthen',focus:'Value proposition; market positioning; digital channels; cross-border entry planning'},
+{code:'OR7',title:'AI & Technology Adoption',date:'13-27 Nov 2026',phase:'Strengthen',focus:'Operational workflows; low-cost tech solutions; AI tools for finance, marketing, operations'},
+{code:'OR8',title:'Governance & Investment Readiness',date:'14-20 Dec 2026',phase:'Sustain',focus:'Board effectiveness; succession planning; business cases; financial projections; investor materials'}
+];
+
+function ensureConsulting(org){
+if(!org.consulting||org.consulting.length!==8){
+org.consulting=OUTREACH_CYCLES.map(function(c){
+var existing=org.consulting?org.consulting.find(function(e){return e.code===c.code;}):null;
+return existing||{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,
+consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',days:'',domainMovement:'',rag:'',completed:false};
+});
+}
+return org.consulting;
+}
 
 function renderConsulting(org){
-var html='';
-(org.consulting||[]).forEach(function(c,i){
-html+='<div class="cycle-card">';
-html+='<div class="cycle-head"><div><span class="cycle-code">'+esc(c.code||'OR')+'</span><span class="cycle-title">'+esc(c.title||'')+'</span><span class="cycle-phase '+phaseClass(c.phase)+'">'+esc(c.phase||'')+'</span><div class="cycle-meta">'+esc(c.date||'')+'</div></div>';
-if(c.rag)html+='<span class="rag-pill rag-'+esc(c.rag)+'">'+esc(c.rag)+'</span>';
-html+='</div>';
-if(c.focus)html+='<div class="cycle-default">'+esc(c.focus)+'</div>';
-html+='<div class="cycle-grid">';
-function field(label,key,wide,opts){
-var v=c[key]||'';
+ensureConsulting(org);
+var totalDays=0;var completed=0;
+org.consulting.forEach(function(c){var d=parseFloat(c.days)||0;totalDays+=d;if(c.completed)completed++;});
+var html='<div class="coaching-stat"><div class="cs-val">'+totalDays.toFixed(1)+' / 8</div><div class="cs-lbl">Days Used</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 8</div><div class="cs-lbl">Cycles Completed</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+(8-totalDays).toFixed(1)+'</div><div class="cs-lbl">Days Remaining</div></div>';
+document.getElementById('consultingSummary').innerHTML=html;
+
+var list='';
+org.consulting.forEach(function(c,i){
+var ref=OUTREACH_CYCLES[i];
+var phaseCls=ref.phase==='Diagnose'?'ph-diag':ref.phase==='Translate'?'ph-trans':ref.phase==='Sustain'?'ph-sust':'ph-str';
+list+='<div class="log-entry" style="border-left:4px solid var(--'+(ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy')+')">';
+list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+list+='<div class="log-date">'+esc(c.code)+' -- '+esc(c.title)+'</div>';
+list+='<div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;color:#fff;background:var(--'+(ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy')+')">'+ref.phase+'</div>';
+list+='</div>';
+list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
+list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
+
 if(isAssessor){
-if(opts){var s='<select data-co="'+i+'" data-cof="'+key+'"><option value="">\u2014</option>';opts.forEach(function(o){s+='<option value="'+o+'"'+(v===o?' selected':'')+'>'+o+'</option>';});s+='</select>';return '<div'+(wide?' class="span2"':'')+'><label>'+label+'</label>'+s+'</div>';}
-return '<div'+(wide?' class="span2"':'')+'><label>'+label+'</label><input data-co="'+i+'" data-cof="'+key+'" value="'+esc(v)+'"></div>';
+list+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">';
+list+='<div><div style="font-size:11px;color:var(--tt)">Consulted by</div><select data-con-by="'+i+'"><option value="">--</option><option'+(c.consultedBy==='Fiona'?' selected':'')+'>Fiona</option><option'+(c.consultedBy==='Clodagh'?' selected':'')+'>Clodagh</option><option'+(c.consultedBy==='Both'?' selected':'')+'>Both</option></select></div>';
+list+='<div><div style="font-size:11px;color:var(--tt)">Format</div><select data-con-format="'+i+'"><option value="">--</option><option'+(c.format==='In-person'?' selected':'')+'>In-person</option><option'+(c.format==='Online'?' selected':'')+'>Online</option><option'+(c.format==='Mixed'?' selected':'')+'>Mixed</option></select></div>';
+list+='</div>';
+list+='<div style="margin-top:10px"><div style="font-size:11px;color:var(--tt)">SMART objectives progressed</div><input data-con-smart="'+i+'" value="'+esc(c.smartProgressed||'')+'" placeholder="e.g. OBJ1, OBJ3"></div>';
+list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key actions agreed with CEO</div><textarea data-con-actions="'+i+'">'+esc(c.actionsAgreed||'')+'</textarea></div>';
+list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key outputs / evidence</div><textarea data-con-outputs="'+i+'">'+esc(c.keyOutputs||'')+'</textarea></div>';
+list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
+list+='<div><div style="font-size:11px;color:var(--tt)">Days used</div><input data-con-days="'+i+'" value="'+esc(c.days||'')+'" type="number" step="0.5" min="0" max="2" style="width:70px"></div>';
+list+='<div><div style="font-size:11px;color:var(--tt)">Domain movement?</div><input data-con-domain="'+i+'" value="'+esc(c.domainMovement||'')+'" placeholder="e.g. D2 ↑, D5 ↑"></div>';
+list+='<div><div style="font-size:11px;color:var(--tt)">RAG</div><select data-con-rag="'+i+'"><option value="">--</option><option'+(c.rag==='Green'?' selected':'')+'>Green</option><option'+(c.rag==='Amber'?' selected':'')+'>Amber</option><option'+(c.rag==='Red'?' selected':'')+'>Red</option></select></div>';
+list+='</div>';
+list+='<div style="margin-top:10px"><label style="font-size:12px;color:var(--ts2);cursor:pointer"><input type="checkbox" data-con-done="'+i+'"'+(c.completed?' checked':'')+' style="accent-color:var(--teal);margin-right:6px">Cycle completed</label></div>';
+}else{
+if(c.completed){
+list+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Consulted by:</b> '+(c.consultedBy||'--')+' · <b>Format:</b> '+(c.format||'--')+' · <b>Days:</b> '+(c.days||'--')+'</div>';
+if(c.actionsAgreed)list+='<div style="margin-top:6px;font-size:13px"><b>Actions agreed:</b> '+esc(c.actionsAgreed)+'</div>';
+if(c.keyOutputs)list+='<div style="margin-top:4px;font-size:13px"><b>Outputs:</b> '+esc(c.keyOutputs)+'</div>';
+}else{
+list+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">Not yet completed</div>';
 }
-return '<div'+(wide?' class="span2"':'')+'><label>'+label+'</label><div class="diag-val" style="font-size:13px">'+(v||'\u2014')+'</div></div>';
 }
-function ta(label,key){
-var v=c[key]||'';
-if(isAssessor)return '<div class="span2"><label>'+label+'</label><textarea data-co="'+i+'" data-cof="'+key+'">'+esc(v)+'</textarea></div>';
-return '<div class="span2"><label>'+label+'</label><div class="diag-val" style="font-size:13px;white-space:pre-wrap">'+(v||'\u2014')+'</div></div>';
-}
-html+=field('Consulted by','consultedBy',false);
-html+=field('Format','format',false,['','In-person','Virtual','Hybrid']);
-html+=field('SMART progressed','smartProgressed',false);
-html+=field('Days used','days',false);
-html+=ta('Actions agreed','actionsAgreed');
-html+=ta('Key outputs','keyOutputs');
-html+=field('Domain movement','domainMovement',false);
-html+=field('RAG status','rag',false,['','G','A','R']);
-html+='</div>';
-if(isAssessor)html+='<div class="cycle-done"><input type="checkbox" data-co="'+i+'" data-cof="completed"'+(c.completed?' checked':'')+'> Cycle complete</div>';
-else html+='<div class="cycle-done">'+(c.completed?'\u2705 Cycle complete':'\u23f3 Pending')+'</div>';
-html+='</div>';
+list+='</div>';
 });
-document.getElementById('consultingList').innerHTML=html||'<p style="color:var(--ts);font-style:italic">No consulting cycles seeded yet.</p>';
+document.getElementById('consultingList').innerHTML=list;
+}
+
+var COACHING_CYCLES=[
+{code:'C1',title:'Readiness & Individual Coaching Plans',date:'19-29 May 2026',focus:'Leadership baseline; coaching readiness assessment; bespoke coaching plan agreed'},
+{code:'C2',title:'Leadership Effectiveness & Decision-Making',date:'15-29 Jun 2026',focus:'Leadership effectiveness; commercial decision-making; prioritisation; resilience & strategic focus'},
+{code:'C3',title:'Leading Change & Behavioural Reinforcement',date:'17-31 Aug 2026',focus:'Leading organisational change; reinforcing behavioural change; commercial decision-making'},
+{code:'C4',title:'Market Positioning & Cross-Border Decisions',date:'12 Oct 2026',focus:'Communications confidence; market positioning; cross-border decision-making'},
+{code:'C5',title:'Board Leadership & Investment Decisions',date:'15 Dec 2026',focus:'Board leadership; succession planning; investor engagement; long-term sustainability'}
+];
+
+function ensureCoaching(org){
+if(!org.coaching||org.coaching.length!==5){
+org.coaching=COACHING_CYCLES.map(function(c){
+var existing=org.coaching?org.coaching.find(function(e){return e.code===c.code;}):null;
+return existing||{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,
+hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};
+});
+}
+return org.coaching;
 }
 
 function renderCoaching(org){
-var html='';
-(org.coaching||[]).forEach(function(c,i){
-html+='<div class="cycle-card">';
-html+='<div class="cycle-head"><div><span class="cycle-code coach">'+esc(c.code||'C')+'</span><span class="cycle-title">'+esc(c.title||'')+'</span><div class="cycle-meta">'+esc(c.date||'')+(c.coach?' \u00b7 '+esc(c.coach):'')+'</div></div></div>';
-if(c.theme)html+='<div class="cycle-default">'+esc(c.theme)+'</div>';
-html+='<div class="cycle-grid">';
+ensureCoaching(org);
+var totalHours=0;var completed=0;
+org.coaching.forEach(function(c){totalHours+=parseFloat(c.hours)||0;if(c.completed)completed++;});
+var html='<div class="coaching-stat"><div class="cs-val">'+totalHours.toFixed(1)+'</div><div class="cs-lbl">Hours Used</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+(21-totalHours).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining (of 21)</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 5</div><div class="cs-lbl">Cycles Completed</div></div>';
+document.getElementById('coachingSummary').innerHTML=html;
+
+var list='';
+org.coaching.forEach(function(c,i){
+var ref=COACHING_CYCLES[i];
+list+='<div class="log-entry" style="border-left:4px solid var(--coral)">';
+list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+list+='<div class="log-date">'+esc(c.code)+' -- '+esc(c.title)+'</div>';
+list+='<div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:var(--coral-light);color:var(--coral)">Coaching</div>';
+list+='</div>';
+list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
+list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
+
 if(isAssessor){
-html+='<div><label>Coach</label><input data-cc="'+i+'" data-ccf="coach" value="'+esc(c.coach||'')+'"></div>';
-html+='<div><label>Hours</label><input data-cc="'+i+'" data-ccf="hours" value="'+esc(c.hours||'')+'"></div>';
-html+='<div class="span2"><label>Action agreed</label><textarea data-cc="'+i+'" data-ccf="action">'+esc(c.action||'')+'</textarea></div>';
+list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
+list+='<div><div style="font-size:11px;color:var(--tt)">Hours</div><input data-coach-hours="'+i+'" value="'+esc(c.hours||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
+list+='<div><div style="font-size:11px;color:var(--tt)">Coach</div><select data-coach-by="'+i+'"><option'+(c.coach==='Sarah'?' selected':'')+'>Sarah</option><option'+(c.coach==='Aoife'?' selected':'')+'>Aoife</option><option'+(c.coach==='Sarah / Aoife'?' selected':'')+'>Sarah / Aoife</option></select></div>';
+list+='<div><div style="font-size:11px;color:var(--tt)">Completed?</div><label style="font-size:12px;cursor:pointer"><input type="checkbox" data-coach-done="'+i+'"'+(c.completed?' checked':'')+' style="accent-color:var(--teal);margin-right:4px">Done</label></div>';
+list+='</div>';
+list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Focus theme (confidential -- high-level only)</div><textarea data-coach-theme="'+i+'">'+esc(c.theme||'')+'</textarea></div>';
+list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Leadership action agreed</div><textarea data-coach-action="'+i+'">'+esc(c.actionAgreed||'')+'</textarea></div>';
 }else{
-html+='<div><label>Coach</label><div class="diag-val" style="font-size:13px">'+(c.coach||'\u2014')+'</div></div>';
-html+='<div><label>Hours</label><div class="diag-val" style="font-size:13px">'+(c.hours||'\u2014')+'</div></div>';
-html+='<div class="span2"><label>Action agreed</label><div class="diag-val" style="font-size:13px;white-space:pre-wrap">'+(c.action||'\u2014')+'</div></div>';
+if(c.completed){
+list+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Hours:</b> '+(c.hours||'--')+' · <b>Coach:</b> '+(c.coach||'--')+'</div>';
+if(c.theme)list+='<div style="margin-top:6px;font-size:13px"><b>Focus:</b> '+esc(c.theme)+'</div>';
+}else{
+list+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">Not yet completed</div>';
 }
-html+='</div>';
-if(isAssessor)html+='<div class="cycle-done"><input type="checkbox" data-cc="'+i+'" data-ccf="completed"'+(c.completed?' checked':'')+'> Session complete</div>';
-else html+='<div class="cycle-done">'+(c.completed?'\u2705 Session complete':'\u23f3 Pending')+'</div>';
-html+='</div>';
+}
+list+='</div>';
 });
-document.getElementById('coachingList').innerHTML=html||'<p style="color:var(--ts);font-style:italic">No coaching cycles seeded yet.</p>';
+document.getElementById('coachingList').innerHTML=list;
+document.getElementById('coachingAddWrap').innerHTML='';
 }
+/* addCoaching no longer needed -- cycles are pre-populated */
 
-function renderChecklist(org){
-var html='';
-var phases={};
-org.checklist.forEach(function(c){if(!phases[c.phase])phases[c.phase]=[];phases[c.phase].push(c);});
-Object.keys(phases).forEach(function(p){
-html+='<div class="checklist-phase">'+esc(p)+'</div>';
-phases[p].forEach(function(c){
-var doneClass=c.completed?' done':'';
-html+='<div class="checklist-item'+doneClass+'">';
-if(isAssessor)html+='<input type="checkbox" data-ck="'+c.index+'"'+(c.completed?' checked':'')+' onchange="toggleCheck('+c.index+',this.checked)">';
-else html+='<span style="font-size:16px">'+(c.completed?'\u2705':'\u2b1c\ufe0f')+'</span>';
-html+='<div class="ck-text'+doneClass+'">'+esc(c.item)+'</div>';
-if(c.completed&&c.completedAt)html+='<div class="ck-when">'+esc(c.completedAt)+'</div>';
-html+='</div>';
+function renderEndline(org){
+var tbody=document.querySelector('#endlineTable tbody');var html='';
+org.endline.forEach(function(e,i){
+var d=DOMAINS[i];var bl=org.baseline[i]?org.baseline[i].score:'';
+var change='';
+if(bl&&e.score){var diff=(parseFloat(e.score)-parseFloat(bl)).toFixed(1);change=(diff>0?'+':'')+diff;}
+var pct=e.score?(e.score/5*100):0;
+html+='<tr><td class="domain-name">'+e.domain+'</td>';
+html+='<td class="wt">'+d.wt+'%</td>';
+html+='<td style="color:var(--ts)">'+(bl||'--')+'</td>';
+if(isAssessor){html+='<td><input type="number" min="0" max="5" step="0.5" data-el="'+i+'" value="'+(e.score||'')+'"></td>';}
+else{html+='<td style="font-weight:700;color:var(--navy)">'+(e.score||'--')+'</td>';}
+html+='<td style="font-weight:700;color:'+(parseFloat(change)>0?'var(--teal)':parseFloat(change)<0?'var(--coral)':'var(--ts)')+'\">'+(change||'--')+'</td>';
+html+='<td><div class="score-bar"><div class="score-bar-fill" style="width:'+pct+'%"></div></div></td></tr>';
 });
-});
-document.getElementById('checklistWrap').innerHTML=html;
+tbody.innerHTML=html;
 }
-
-function toggleCheck(idx,checked){
-var org=getOrg(currentOrg);
-var item=org.checklist.find(function(c){return c.index===idx;});if(!item)return;
-item.completed=checked;
-item.completedAt=checked?new Date().toISOString().replace('T',' ').slice(0,16):'';
-renderChecklist(org);
-}
-
-function renderValidation(org){
-var html='';
-org.validation.forEach(function(v,i){
-var meta=DEFAULT_VALIDATION.find(function(d){return d.num===v.num;});
-var sub=meta?meta.sub:'';
-html+='<div class="val-section"><div class="val-head">'+esc(v.num)+'. '+esc(v.title)+'</div>';
-if(sub)html+='<div class="val-sub">'+esc(sub)+'</div>';
-if(isAssessor)html+='<textarea data-val="'+i+'">'+esc(v.notes||'')+'</textarea>';
-else html+='<div class="val-text">'+(v.notes||'\u2014')+'</div>';
-html+='</div>';
-});
-document.getElementById('validationWrap').innerHTML=html;
-}
-
-function renderProgress(org){
-var html='';
-org.progress.forEach(function(p,i){
-html+='<div class="log-entry"><div class="log-date">'+esc(p.month||'')+'</div>';
-if(isAssessor)html+='<textarea data-prog="'+i+'">'+esc(p.text||'')+'</textarea>';
-else html+='<div class="log-text">'+(p.text||'\u2014')+'</div>';
-html+='</div>';
-});
-document.getElementById('progressList').innerHTML=html;
-document.getElementById('progressAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addProgress()">+ Add month</button>':'';
-}
-function addProgress(){var month=prompt('Month label (e.g. June 2026):');if(!month)return;var org=getOrg(currentOrg);org.progress.push({month:month,text:''});renderProgress(org);}
-
-function formatSubmissionText(text){if(!text)return'';var t=String(text);t=t.replace(/===\s*DOMAIN/g,'\n=== DOMAIN');t=t.replace(/===\s*\n/g,'===\n\n');t=t.replace(/(Submitted:[^\n]+)/,'$1\n');t=t.replace(/\n{3,}/g,'\n\n');return t.trim();}
 
 function renderNotes(org){
 var html='';
 org.notes.forEach(function(n,i){
-var cls=n.type==='Coaching'?'nt-coach':n.type==='Form Submission'?'nt-form':'nt-consult';
-var displayText=n.type==='Form Submission'?formatSubmissionText(n.text):n.text;
+var cls=n.type==='Coaching'?'nt-coach':n.type==='Session'?'nt-session':'nt-consult';
 html+='<div class="note-entry"><div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+esc(n.date||'')+'</div>';
-if(isAssessor && n.type!=='Form Submission')html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';
-else html+='<div class="log-text">'+esc(displayText||'')+'</div>';
+if(isAssessor){html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';}
+else{html+='<div class="log-text">'+(n.text||'--')+'</div>';}
 html+='</div>';
 });
 document.getElementById('notesList').innerHTML=html;
-document.getElementById('notesAddWrap').innerHTML=isAssessor?'<div style="display:flex;gap:8px"><button class="btn btn-outline" onclick="addNote(\'Consulting\')">+ Consulting note</button><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching note</button></div>':'';
+if(isAssessor){
+document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" onclick="addNote(\'Consulting\')">+ Consulting</button><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching</button><button class="btn btn-outline" onclick="addNote(\'Session\')">+ Group Session</button></div>';
+}else{document.getElementById('notesAddWrap').innerHTML='';}
 }
-function addNote(type){var date=prompt('Date (e.g. 15 Jun 2026):');if(!date)return;var org=getOrg(currentOrg);org.notes.push({type:type,date:date,text:''});renderNotes(org);}
+function addNote(type){
+var date=prompt('Date (e.g. 15 Jun 2026):');if(!date)return;
+var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+org.notes.push({type:type,date:date,text:''});saveData(data);renderNotes(org);
+}
 
-async function saveTracker(){
-if(!isAssessor||!currentOrg)return;
-var org=getOrg(currentOrg);if(!org)return;
+/* SOP Checklist */
+function showSOP(){
+document.getElementById('dashScreen').style.display='none';
+document.getElementById('trackerScreen').style.display='none';
+document.getElementById('sopScreen').style.display='block';
+document.getElementById('saveBar').classList.remove('hidden');
+renderSOP();
+}
+
+function renderSOP(){
+var data=loadData();var html='';
+SOP_STEPS.forEach(function(phase){
+html+='<div class="sop-phase">'+phase.phase+'</div>';
+phase.items.forEach(function(item,ii){
+var stepKey=phase.phase.replace(/[^a-zA-Z0-9]/g,'')+'_'+ii;
+html+='<div class="sop-item"><div style="font-weight:600;min-width:180px;font-size:12px">'+item+'</div>';
+data.orgs.forEach(function(o){
+var checked=o.sop&&o.sop[stepKey];
+html+='<div style="text-align:center;min-width:60px"><div style="font-size:9px;color:var(--tt)">'+esc(o.name.substring(0,8))+'</div><input type="checkbox" data-sop-org="'+o.code+'" data-sop-key="'+stepKey+'"'+(checked?' checked':'')+'></div>';
+});
+html+='</div>';
+});
+});
+document.getElementById('sopContent').innerHTML=html;
+}
+
+function saveTracker(){
+if(!isAssessor)return;
+var data=loadData();
+
+// If on SOP screen, save SOP data
+if(document.getElementById('sopScreen').style.display!=='none'){
+document.querySelectorAll('[data-sop-org]').forEach(function(el){
+var orgCode=el.dataset.sopOrg;var key=el.dataset.sopKey;
+var org=data.orgs.find(function(o){return o.code===orgCode;});
+if(org){if(!org.sop)org.sop={};org.sop[key]=el.checked;}
+});
+saveData(data);showSaveMsg();return;
+}
+
+if(!currentOrg)return;
+var org=data.orgs.find(function(o){return o.code===currentOrg;});
+
+// KPIs
 document.querySelectorAll('[data-kpi]').forEach(function(el){org.kpi[el.dataset.kpi]=el.value;});
-document.querySelectorAll('[data-cb]').forEach(function(el){if(!org.crossBorder)org.crossBorder={};org.crossBorder[el.dataset.cb]=el.value;});
-document.querySelectorAll('[data-meta]').forEach(function(el){org[el.dataset.meta]=el.value;});
-document.querySelectorAll('[data-diag]').forEach(function(el){if(!org.diagnosis)org.diagnosis={};org.diagnosis[el.dataset.diag]=el.value;});
+// App data
+if(!org.app)org.app={};
+document.querySelectorAll('[data-app]').forEach(function(el){org.app[el.dataset.app]=el.value;});
+// Cross-border
+if(!org.crossBorder)org.crossBorder={};
+document.querySelectorAll('[data-cb]').forEach(function(el){org.crossBorder[el.dataset.cb]=el.value;});
+// Baseline scores + evidence
 document.querySelectorAll('[data-bl]').forEach(function(el){org.baseline[parseInt(el.dataset.bl)].score=el.value;});
 document.querySelectorAll('[data-bl-ev]').forEach(function(el){org.baseline[parseInt(el.dataset.blEv)].evidence=el.value;});
+// Endline
 document.querySelectorAll('[data-el]').forEach(function(el){org.endline[parseInt(el.dataset.el)].score=el.value;});
+// Diagnosis
+if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
+document.querySelectorAll('[data-diag]').forEach(function(el){org.diagnosis[el.dataset.diag]=el.value;});
+document.querySelectorAll('[data-constraint]').forEach(function(el){org.diagnosis.constraints[parseInt(el.dataset.constraint)]=el.value;});
+// SMART
 document.querySelectorAll('[data-smart-obj]').forEach(function(el){org.smart[parseInt(el.dataset.smartObj)].objective=el.value;});
 document.querySelectorAll('[data-smart-target]').forEach(function(el){org.smart[parseInt(el.dataset.smartTarget)].target=el.value;});
 document.querySelectorAll('[data-smart-timeline]').forEach(function(el){org.smart[parseInt(el.dataset.smartTimeline)].timeline=el.value;});
-document.querySelectorAll('[data-smart-owner]').forEach(function(el){org.smart[parseInt(el.dataset.smartOwner)].owner=el.value;});
-document.querySelectorAll('[data-co]').forEach(function(el){var i=parseInt(el.dataset.co);var f=el.dataset.cof;if(!org.consulting[i])return;if(el.type==='checkbox')org.consulting[i][f]=el.checked;else org.consulting[i][f]=el.value;});
-document.querySelectorAll('[data-cc]').forEach(function(el){var i=parseInt(el.dataset.cc);var f=el.dataset.ccf;if(!org.coaching[i])return;if(el.type==='checkbox')org.coaching[i][f]=el.checked;else org.coaching[i][f]=el.value;});
-document.querySelectorAll('[data-val]').forEach(function(el){org.validation[parseInt(el.dataset.val)].notes=el.value;});
-document.querySelectorAll('[data-prog]').forEach(function(el){org.progress[parseInt(el.dataset.prog)].text=el.value;});
+document.querySelectorAll('[data-smart-domain]').forEach(function(el){org.smart[parseInt(el.dataset.smartDomain)].domain=el.value;});
+document.querySelectorAll('[data-smart-status]').forEach(function(el){org.smart[parseInt(el.dataset.smartStatus)].status=el.value;});
+// Consulting (outreach cycles)
+ensureConsulting(org);
+document.querySelectorAll('[data-con-by]').forEach(function(el){org.consulting[parseInt(el.dataset.conBy)].consultedBy=el.value;});
+document.querySelectorAll('[data-con-format]').forEach(function(el){org.consulting[parseInt(el.dataset.conFormat)].format=el.value;});
+document.querySelectorAll('[data-con-smart]').forEach(function(el){org.consulting[parseInt(el.dataset.conSmart)].smartProgressed=el.value;});
+document.querySelectorAll('[data-con-actions]').forEach(function(el){org.consulting[parseInt(el.dataset.conActions)].actionsAgreed=el.value;});
+document.querySelectorAll('[data-con-outputs]').forEach(function(el){org.consulting[parseInt(el.dataset.conOutputs)].keyOutputs=el.value;});
+document.querySelectorAll('[data-con-days]').forEach(function(el){org.consulting[parseInt(el.dataset.conDays)].days=el.value;});
+document.querySelectorAll('[data-con-domain]').forEach(function(el){org.consulting[parseInt(el.dataset.conDomain)].domainMovement=el.value;});
+document.querySelectorAll('[data-con-rag]').forEach(function(el){org.consulting[parseInt(el.dataset.conRag)].rag=el.value;});
+document.querySelectorAll('[data-con-done]').forEach(function(el){org.consulting[parseInt(el.dataset.conDone)].completed=el.checked;});
+// Coaching (5 pre-populated cycles)
+ensureCoaching(org);
+document.querySelectorAll('[data-coach-hours]').forEach(function(el){org.coaching[parseInt(el.dataset.coachHours)].hours=el.value;});
+document.querySelectorAll('[data-coach-by]').forEach(function(el){org.coaching[parseInt(el.dataset.coachBy)].coach=el.value;});
+document.querySelectorAll('[data-coach-theme]').forEach(function(el){org.coaching[parseInt(el.dataset.coachTheme)].theme=el.value;});
+document.querySelectorAll('[data-coach-action]').forEach(function(el){org.coaching[parseInt(el.dataset.coachAction)].actionAgreed=el.value;});
+document.querySelectorAll('[data-coach-done]').forEach(function(el){org.coaching[parseInt(el.dataset.coachDone)].completed=el.checked;});
+// Notes
 document.querySelectorAll('[data-note]').forEach(function(el){org.notes[parseInt(el.dataset.note)].text=el.value;});
-var btn=document.getElementById('saveBtn');btn.disabled=true;btn.textContent='Saving\u2026';
-try{
-await api('update',{
-code:org.code,kpi:org.kpi,diagnosis:org.diagnosis,crossBorder:org.crossBorder,intensity:org.intensity,assessor:org.assessor,
-baseline:org.baseline,endline:org.endline,smart:org.smart,
-consulting:org.consulting,coaching:org.coaching,checklist:org.checklist,validation:org.validation,
-progress:org.progress,notes:org.notes,baselineLocked:org.baselineLocked
-});
-saveCache(orgsCache);
-var msg=document.getElementById('saveMsg');msg.classList.add('show');setTimeout(function(){msg.classList.remove('show');},2000);
-renderEndline(org);
-}catch(err){alert('Save failed: '+err.message+'\n\nYour changes are still in this browser \u2014 try again or refresh.');}
-finally{btn.disabled=false;btn.textContent='Save changes';}
+
+saveData(data);showSaveMsg();
+renderBaseline(org);renderEndline(org);renderConsulting(org);renderCoaching(org);
 }
 
-function exportAll(){var blob=new Blob([JSON.stringify({orgs:orgsCache,exported:new Date().toISOString()},null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='select_smart_tracker_export.json';a.click();}
-function esc(s){if(s===null||s===undefined)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+function showSaveMsg(){var msg=document.getElementById('saveMsg');msg.classList.add('show');setTimeout(function(){msg.classList.remove('show');},2000);}
 
-(function(){var params=new URLSearchParams(window.location.search);var orgId=params.get('id');if(orgId)document.querySelector('.auth-box h2').textContent='Access your SMART Tracker';})();
+function exportAll(){
+var data=loadData();
+data._exportedAt=new Date().toISOString();
+var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+a.download='select_tracker_'+new Date().toISOString().slice(0,10)+'.json';
+document.body.appendChild(a);a.click();document.body.removeChild(a);
+URL.revokeObjectURL(a.href);
+alert('Data exported. Share this file with your co-assessor to sync.');
+}
+
+function importAll(event){
+var file=event.target.files[0];
+if(!file) return;
+var reader=new FileReader();
+reader.onload=function(e){
+  try{
+    var imported=JSON.parse(e.target.result);
+    if(!imported.orgs||!Array.isArray(imported.orgs)){
+      alert('This does not appear to be a valid SELECT tracker export.');return;
+    }
+    var existing=loadData();
+    var existingCount=existing.orgs?existing.orgs.length:0;
+    var importCount=imported.orgs.length;
+    var importDate=imported._exportedAt?imported._exportedAt.slice(0,16).replace('T',' '):'unknown date';
+    if(existingCount>0){
+      if(!confirm('You have '+existingCount+' organisation(s) currently.\n\nThe import file has '+importCount+' organisation(s) (exported '+importDate+').\n\nChoose OK to REPLACE all current data, or Cancel to keep current data.\n\n(Tip: Export your current data first as a backup.)')) return;
+    }
+    saveData(imported);
+    // Push all imported orgs to Airtable
+    AT.migrateFromCache(function(n){
+      console.log('Migrated '+n+' orgs to Airtable after import');
+    });
+    showDash();
+    alert('Imported '+importCount+' organisation(s) successfully. Syncing to Airtable…');
+  }catch(err){
+    alert('Could not read file. Make sure it is a valid JSON export from this tracker.');
+  }
+};
+reader.readAsText(file);
+event.target.value='';
+}
+
+function loadSampleOrg(){
+if(!confirm('This will create 3 sample organisations with example data so you can preview the full system. You can delete them at any time. Continue?')) return;
+var data=loadData();
+
+// ORG 1: Green Threads -- FULLY SCORED AND LOCKED
+var org1={
+name:'Green Threads CIC',ceo:'Sarah Murphy',code:'green-threads',password:'demo-gt',intensity:'Strengthen',
+kpi:{jurisdiction:'ROI',newToITI:'Yes',firstTimeCB:'No',firstTimeExp:'No',sector:'Textiles / Circular Economy',email:'sarah@greenthreads.ie'},
+app:{turnover:'\u20ac280,000',employees:'8',tradedPct:'55%',crossBorderPct:'5%',priorITI:'No',crossBorderTarget:'15% by Dec 2026'},
+baseline:[
+{domain:'1. Business Model & Revenue Mix',score:3,evidence:'3 revenue streams but 60% from one HSE contract. Recurring income ~30%. Forward visibility 3\u20134 months.'},
+{domain:'2. Products & Unit Economics',score:2,evidence:'5 product lines. Cost-based pricing. Margins unknown on 3 of 5. No portfolio review process.'},
+{domain:'3. Financial Management & Cash',score:2,evidence:'Annual accounts current. No management accounts. Cashflow tracked informally. ~4 months runway.'},
+{domain:'4. Commercial Strategy & Market Focus',score:3,evidence:'12-month targets exist but not documented. Buyers are local authorities and direct consumers. Some repeat demand.'},
+{domain:'5. Go-To-Market & Sales',score:1,evidence:'All sales founder-led. No pipeline. Website and Instagram active but no conversion tracking. Repeat rate unknown.'},
+{domain:'6. Operations & Delivery Capacity',score:3,evidence:'Production capacity is the constraint. CEO does delivery, sales, and admin. 3-month absence = significant disruption.'},
+{domain:'7. Cross-Border Readiness',score:1,evidence:'One NI retailer trialled 2024. No systematic cross-border activity. Regulatory barriers unclear.'},
+{domain:'8. Leadership & Execution Capacity',score:2,evidence:'CEO spends 70% on delivery. Should be on strategy/sales. Impact evidence is anecdotal \u2014 case studies but no aggregated data.'},
+{domain:'9. Organisational Readiness',score:2,evidence:'Advisory board meets quarterly. No commercial agenda. Top risks: contract dependency, key-person, no succession.'}
+],
+endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
+diagnosis:{problemStatement:'Over-reliance on a single HSE contract combined with founder-dependency in sales and delivery means the organisation cannot grow traded income without structural change.',scenario:'If the HSE contract is not renewed in 2027, the organisation loses 60% of income with no pipeline to replace it.',constraints:['D1: Business Model & Revenue Mix','D5: Go-To-Market & Sales','D7: Cross-Border Readiness'],observation:'Strong mission alignment and product quality. The commercial constraint is structural, not motivational.'},
+smart:[
+{objective:'Reduce HSE contract dependency from 60% to below 40% of total revenue by securing 3 new B2B accounts',target:'40% dependency / 3 new accounts',timeline:'December 2026',owner:'Sarah Murphy',status:''},
+{objective:'Implement monthly management accounts and margin tracking across all 5 product lines',target:'Monthly accounts live',timeline:'August 2026',owner:'Sarah Murphy + bookkeeper',status:''},
+{objective:'Document and delegate the sales process so at least one team member can convert leads independently',target:'Documented process + 1 trained delegate',timeline:'October 2026',owner:'Sarah Murphy',status:''}
+],
+consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',days:'',domainMovement:'',rag:'',completed:false};}),
+coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
+notes:[
+{type:'session',date:'23 Apr 2026',text:'Group Session #1. Engaged well. Asked good questions about pricing methodology.'},
+{type:'consult',date:'8 May 2026',text:'Validation meeting completed. Strong self-awareness. Agreed problem statement and 3 SMART objectives. Intensity: Strengthen.'}
+],
+assessor:{checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-28T14:30:00Z','ck2':true,'ck2_ts':'2026-04-28T14:35:00Z','ck3':true,'ck3_ts':'2026-04-29T09:00:00Z','ck4':true,'ck4_ts':'2026-04-30T11:00:00Z','ck5':true,'ck5_ts':'2026-04-30T11:30:00Z','ck6':true,'ck6_ts':'2026-04-30T12:00:00Z','ck7':true,'ck7_ts':'2026-05-08T10:00:00Z','ck8':true,'ck8_ts':'2026-05-08T13:00:00Z','ck9':true,'ck9_ts':'2026-05-08T15:00:00Z','ck10':true,'ck10_ts':'2026-05-09T10:00:00Z','ck11':true,'ck11_ts':'2026-05-09T10:30:00Z'},
+validation:{'vn1':'CEO view largely accurate. Slight optimism on sales capability \u2014 she acknowledged no pipeline exists.','vn2':'Root constraint is single-contract dependency combined with founder-led sales. Everything else is a symptom.','vn3':'20% income drop would require immediate cost cuts. Pricing assumptions untested against market.','vn4':'Board is advisory only. No commercial challenge. No succession plan.','vn5':'Clear articulation: \u201cI am the bottleneck and the safety net.\u201d'},
+goals:{g_problem:'Over-reliance on a single HSE contract combined with founder-dependency in sales and delivery means the organisation cannot grow traded income without structural change.',g_problem_why:'If the HSE contract is not renewed in 2027, the organisation loses 60% of income with no pipeline to replace it.',g_goal1:'Diversify revenue beyond HSE dependency',g_goal2:'Build a repeatable, delegable sales process',g_goal3:'Establish management accounts and margin visibility',g_smart1:'Reduce HSE contract dependency from 60% to below 40% of total revenue by securing 3 new B2B accounts',g_smart2:'Implement monthly management accounts and margin tracking across all 5 product lines',g_smart3:'Document and delegate the sales process so at least one team member can convert leads independently'},
+priorities:['D1','D5','D7'],
+lock:{lk1:true,lk2:true,lk3:true,lk4:true,lk_led:'Fiona',lk_session_date:'2026-05-08',lk_lock_date:'2026-05-09'},
+assessor:'Fiona'},
+sop:{},baselineLocked:true,crossBorder:{baselinePct:'5%',endlinePct:'',target:'15%'}
+};
+
+// ORG 2: Harbour Social Enterprise -- PARTIALLY SCORED (mid-process)
+var org2={
+name:'Harbour Social Enterprise',ceo:'Declan O\u2019Brien',code:'harbour-se',password:'demo-hse',intensity:'',
+kpi:{jurisdiction:'NI',newToITI:'No',firstTimeCB:'Yes',firstTimeExp:'Yes',sector:'Food / Hospitality',email:'declan@harbourse.org'},
+app:{turnover:'\u00a3420,000',employees:'14',tradedPct:'70%',crossBorderPct:'0%',priorITI:'Yes',crossBorderTarget:'10% by Dec 2026'},
+baseline:[
+{domain:'1. Business Model & Revenue Mix',score:4,evidence:'4 revenue streams. Caf\u00e9 (45%), catering contracts (25%), training fees (20%), grants (10%). Good diversification. Recurring contracts ~40%.'},
+{domain:'2. Products & Unit Economics',score:3,evidence:'Caf\u00e9 margins known (~35%). Catering margins estimated but not tracked per contract. Training is break-even. No formal portfolio review.'},
+{domain:'3. Financial Management & Cash',score:3,evidence:'Monthly management accounts via accountant. Budget in place. Cashflow tracked. ~6 months runway. Forecasting is annual, not rolling.'},
+{domain:'4. Commercial Strategy & Market Focus',score:2,evidence:'Ambition to grow catering but no documented strategy. Market opportunity assumed not evidenced. Competitors not mapped.'},
+{domain:'5. Go-To-Market & Sales',score:'',evidence:''},
+{domain:'6. Operations & Delivery Capacity',score:'',evidence:''},
+{domain:'7. Cross-Border Readiness',score:'',evidence:''},
+{domain:'8. Leadership & Execution Capacity',score:'',evidence:''},
+{domain:'9. Organisational Readiness',score:'',evidence:''}
+],
+endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
+diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
+smart:[],
+consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',days:'',domainMovement:'',rag:'',completed:false};}),
+coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
+notes:[{type:'session',date:'23 Apr 2026',text:'Group Session #1. Quiet but engaged. Follow up on catering pipeline.'}],
+assessor:{checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-27T16:00:00Z','ck2':true,'ck2_ts':'2026-04-27T16:05:00Z','ck3':true,'ck3_ts':'2026-04-29T09:00:00Z','ck4':false},validation:{},goals:{},priorities:[],lock:{},assessor:'Clodagh'},
+sop:{},baselineLocked:false,crossBorder:{baselinePct:'0%',endlinePct:'',target:'10%'}
+};
+
+// ORG 3: Bright Futures CLG -- NOT YET STARTED (just added)
+var org3={
+name:'Bright Futures CLG',ceo:'Aoife Brennan',code:'bright-futures',password:'demo-bf',intensity:'',
+kpi:{jurisdiction:'ROI',newToITI:'Yes',firstTimeCB:'Yes',firstTimeExp:'Yes',sector:'Education / Youth Services',email:'aoife@brightfutures.ie'},
+app:{turnover:'\u20ac150,000',employees:'5',tradedPct:'30%',crossBorderPct:'0%',priorITI:'No',crossBorderTarget:''},
+baseline:DOMAINS.map(function(d){return{domain:d.name,score:'',evidence:''};}),
+endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
+diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
+smart:[],
+consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',days:'',domainMovement:'',rag:'',completed:false};}),
+coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
+notes:[],
+assessor:{checklist:{},validation:{},goals:{},priorities:[],lock:{},assessor:''},
+sop:{},baselineLocked:false,crossBorder:{baselinePct:'0%',endlinePct:'',target:''}
+};
+
+data.orgs.push(org1);
+data.orgs.push(org2);
+data.orgs.push(org3);
+saveData(data);
+// Push each to Airtable
+AT.pushOrg(org1);AT.pushOrg(org2);AT.pushOrg(org3);
+renderOrgGrid();renderCohortBar();
+}
+
+(function(){
+// Auto-seed demo data if localStorage is empty
+var checkData=loadData();
+if(!checkData.orgs||checkData.orgs.length===0){
+  loadSampleOrg_silent();
+}
+var params=new URLSearchParams(window.location.search);
+var orgId=params.get('id');
+if(orgId){
+targetOrgId=orgId;
+var data=loadData();
+var org=data.orgs.find(function(o){return o.code===orgId;});
+if(org){
+document.querySelector('.auth-box h2').textContent='Welcome, '+org.ceo;
+document.querySelector('.auth-box p').textContent='Enter your password to view the '+org.name+' SMART Tracker.';
+}else{
+document.querySelector('.auth-box h2').textContent='Access your SMART Tracker';
+document.querySelector('.auth-box p').textContent='Enter your password to continue.';
+}
+}
+})();
+
+/* Silent version of loadSampleOrg -- no confirm dialog */
+function loadSampleOrg_silent(){
+var data=loadData();
+if(data.orgs&&data.orgs.length>0) return;
+// Reuse the same loadSampleOrg logic but skip the confirm
+var origConfirm=window.confirm;
+window.confirm=function(){return true;};
+loadSampleOrg();
+window.confirm=origConfirm;
+}
 </script>
 </body>
 </html>
