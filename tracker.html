@@ -148,6 +148,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .note-entry .note-meta{font-size:11px;color:var(--tt);margin-bottom:4px}
 .note-entry .note-type{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-right:6px}
 .nt-consult{background:var(--teal-light);color:var(--teal)}
+.nt-form{background:var(--gold-light);color:var(--gold)}
 .nt-coach{background:var(--coral-light);color:var(--coral)}
 .nt-session{background:var(--navy-light);color:var(--navy)}
 
@@ -280,7 +281,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="dash-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
 <h2 id="dashTitle" style="font-family:var(--serif);font-size:22px;color:var(--navy)">All organisations</h2>
 <div style="display:flex;gap:8px;flex-wrap:wrap" id="dashHeadBtns">
-<button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){showDash();})" style="font-size:10px">&#8635; Refresh from Airtable</button>
+<button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){if(currentOrg){var o=d.orgs.find(function(x){return x.code===currentOrg;});if(o)renderAll(o);}else{showDash();}})" style="font-size:10px">&#8635; Refresh from Airtable</button>
 <button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px" id="migrateBtn">Migrate local &rarr; Airtable</button>
 <button class="btn btn-teal" onclick="openAddOrg()" id="addOrgBtn">+ Add organisation</button>
 </div>
@@ -1196,11 +1197,23 @@ tbody.innerHTML=html;
 
 function renderNotes(org){
 var html='';
+if(!org.notes||!org.notes.length){
+html='<div style="color:var(--tt);font-size:13px;font-style:italic;padding:12px 0">No notes yet.</div>';
+}
 org.notes.forEach(function(n,i){
-var cls=n.type==='Coaching'?'nt-coach':n.type==='Session'?'nt-session':'nt-consult';
-html+='<div class="note-entry"><div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+esc(n.date||'')+'</div>';
-if(isAssessor){html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';}
-else{html+='<div class="log-text">'+(n.text||'--')+'</div>';}
+var isForm=n.type==='Form Submission';
+var cls=n.type==='Coaching'?'nt-coach':n.type==='Session'?'nt-session':isForm?'nt-form':'nt-consult';
+var borderCol=isForm?'var(--gold)':n.type==='Coaching'?'var(--coral)':n.type==='Session'?'var(--navy)':'var(--teal)';
+html+='<div class="note-entry" style="border-left-color:'+borderCol+'">';
+html+='<div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+(n.date?esc(n.date):'')+'</div>';
+if(isForm){
+// Form submissions always shown as readable text, never editable textarea
+html+='<div class="log-text" style="white-space:pre-wrap;font-size:12px;line-height:1.6;color:var(--ts)">'+esc(n.text||'')+'</div>';
+}else if(isAssessor){
+html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';
+}else{
+html+='<div class="log-text">'+(n.text||'--')+'</div>';
+}
 html+='</div>';
 });
 document.getElementById('notesList').innerHTML=html;
