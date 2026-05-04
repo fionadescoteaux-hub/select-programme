@@ -647,10 +647,24 @@ function doAuth(){
 var pw=document.getElementById('authPw').value;
 if(ASSESSOR_PASSWORDS.indexOf(pw)>-1){
 isAssessor=true;isViewer=false;
-pw=MASTER_PW; // always use master for AT calls
+pw=MASTER_PW;
 AT.setAuth(pw);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(data){showDash();});
+AT.loadData(function(data){
+  showDash();
+  // Seed consulting+coaching for any orgs that don't have them
+  if(data.orgs){
+    data.orgs.forEach(function(o){
+      fetch('/api/airtable',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'seed',code:o.code,password:MASTER_PW})
+      }).then(function(r){return r.json();}).then(function(res){
+        if(res.seeded)console.log('[SELECT] Seeded consulting/coaching for',o.code);
+      }).catch(function(e){console.warn('Seed failed for',o.code,e.message);});
+    });
+  }
+});
 showDash();
 return;
 }

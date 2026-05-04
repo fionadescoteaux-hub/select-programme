@@ -146,24 +146,56 @@ var AT = (function() {
       return;
     }
 
-    setStatus('Saving…', 'info');
+    setStatus('Saving...', 'info');
 
-    // Strip internal fields before sending
-    var cleanOrg = JSON.parse(JSON.stringify(org));
-    delete cleanOrg._recordId;
+    var isNew = !org._rid;
+    var payload;
 
-    request('POST', null, { action: org._recordId ? 'update' : 'create', org: cleanOrg })
+    if (isNew) {
+      // New org: create action with flat fields
+      payload = {
+        action: 'create',
+        name: org.name || '',
+        ceo: org.ceo || '',
+        code: org.code || '',
+        jurisdiction: (org.kpi && org.kpi.jurisdiction) || 'ROI'
+      };
+    } else {
+      // Existing org: update action with all data
+      payload = {
+        action: 'update',
+        code: org.code,
+        kpi: org.kpi || {},
+        diagnosis: org.diagnosis || {},
+        crossBorder: org.crossBorder || {},
+        baseline: org.baseline || [],
+        endline: org.endline || [],
+        smart: org.smart || [],
+        consulting: org.consulting || [],
+        coaching: org.coaching || [],
+        checklist: org.checklist || [],
+        validation: org.validation || [],
+        progress: org.progress || [],
+        notes: org.notes || [],
+        baselineLocked: org.baselineLocked || false,
+        intensity: org.intensity || '',
+        assessor: org.assessor || ''
+      };
+    }
+
+    request('POST', null, payload)
       .then(function(res) {
-        setStatus('Saved ✓', 'ok');
+        setStatus('Saved', 'ok');
         setTimeout(function() { setStatus('', 'ok'); }, 2000);
         if (callback) callback(true);
       })
       .catch(function(err) {
         console.warn('Airtable save failed:', err.message);
-        setStatus('Save failed — cached locally', 'warn');
+        setStatus('Save failed -- cached locally', 'warn');
         if (callback) callback(false);
       });
   }
+
 
   // Delete an org from Airtable
   function deleteOrg(org, callback) {
