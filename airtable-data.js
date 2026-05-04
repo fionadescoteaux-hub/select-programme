@@ -152,18 +152,18 @@ var AT = (function() {
     var payload;
 
     if (isNew) {
-      // New org: create action with flat fields
       payload = {
         action: 'create',
+        password: authToken,
         name: org.name || '',
         ceo: org.ceo || '',
         code: org.code || '',
         jurisdiction: (org.kpi && org.kpi.jurisdiction) || 'ROI'
       };
     } else {
-      // Existing org: update action with all data
       payload = {
         action: 'update',
+        password: authToken,
         code: org.code,
         kpi: org.kpi || {},
         diagnosis: org.diagnosis || {},
@@ -196,15 +196,14 @@ var AT = (function() {
       });
   }
 
-
-  // Delete an org from Airtable
+    // Delete an org from Airtable
   function deleteOrg(org, callback) {
     if (!_online || !authToken || !org.code) {
       if (callback) callback(false);
       return;
     }
 
-    request('POST', null, {action:'remove', code:org.code})
+    request('POST', null, {action:'remove', code:org.code, password:authToken})
       .then(function() {
         if (callback) callback(true);
       })
