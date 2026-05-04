@@ -769,8 +769,8 @@ html+='<span class="org-status os-'+status+'">'+statusLabel+'</span>'+intBadge;
 if(o.kpi.sector)html+='<div class="org-meta-row">'+esc(o.kpi.sector)+'</div>';
 html+='<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--r);font-size:11px;color:var(--tt);word-break:break-all"><b>CEO link:</b> '+esc(ceoLink)+'</div>';
 if(isAssessor)html+='<div style="font-size:11px;color:var(--tt);margin-top:4px"><b>CEO password:</b> '+esc(o.password)+'</div>';
-if(isAssessor)html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\'">Copy CEO link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\'")>Remove</button></div>';
-else if(isViewer)html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\'">Copy link</button></div>';
+if(isAssessor)html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\')" >Copy CEO link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\')" >Remove</button></div>';
+else if(isViewer)html+='<div class="org-actions"><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\')" >Copy link</button></div>';
 html+='</div>';
 });
 grid.innerHTML=html;
@@ -1282,7 +1282,7 @@ document.querySelectorAll('[data-cb]').forEach(function(el){org.crossBorder[el.d
 document.querySelectorAll('[data-bl]').forEach(function(el){org.baseline[parseInt(el.dataset.bl)].score=el.value;});
 document.querySelectorAll('[data-bl-ev]').forEach(function(el){org.baseline[parseInt(el.dataset.blEv)].evidence=el.value;});
 // Endline
-document.querySelectorAll('[data-el]').forEach(function(el){org.endline[parseInt(el.dataset.el)].score=el.value;});
+document.querySelectorAll('[data-el]').forEach(function(el){var idx=parseInt(el.dataset.el);if(org.endline&&org.endline[idx])org.endline[idx].score=el.value;});
 // Diagnosis
 if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
 document.querySelectorAll('[data-diag]').forEach(function(el){org.diagnosis[el.dataset.diag]=el.value;});

@@ -629,7 +629,8 @@ exports.handler = async (event) => {
   catch (e) { return jsonResponse(400, { error: "Invalid JSON" }); }
 
   const masterPw = process.env.TRACKER_MASTER_PW || "SELECT2026";
-  const isAssessor = body.password === masterPw;
+  const authHeader = event.headers['x-auth'] || event.headers['X-Auth'] || '';
+  const isAssessor = body.password === masterPw || authHeader === masterPw;
   const writeActions = new Set(["create", "update", "remove", "seed"]);
   if (writeActions.has(body.action) && !isAssessor) return jsonResponse(403, { error: "Assessor password required for this action" });
 
