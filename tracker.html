@@ -664,32 +664,36 @@ showDash();
 return;
 }
 var data=loadData();
+// Map CEO password to org code (SL-SBI2026 -> siel-bleu)
+var CEO_PASSWORDS_MAP={
+'SL-LNT2026':'leave-no-trace','SL-SBI2026':'siel-bleu','SL-WMK2026':'waymaker',
+'SL-CON2026':'connections-arts','SL-COD2026':'codema','SL-PSY2026':'psycare',
+'SL-INC2026':'incredible','SL-CRT2026':'community-roots','SL-PAC2026':'pace','SL-YLK2026':'youthlink'
+};
+var mappedCode=CEO_PASSWORDS_MAP[pw]||null;
 // If direct link, only check password for that specific org
 if(targetOrgId){
 var org=data.orgs.find(function(o){return o.code===targetOrgId;});
-if(org&&org.password===pw){
+if(org&&(org.password===pw||org.code===mappedCode||org.code===pw)){
 isAssessor=false;currentOrg=org.code;
-AT.setAuth(pw);
+AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-// Load from Airtable then open tracker
-AT.loadData(function(){
-  openTracker(org.code);
-});
-openTracker(org.code); // show immediately with cache
+AT.loadData(function(){openTracker(org.code);});
+openTracker(org.code);
 return;
 }
 document.getElementById('authErr').style.display='block';return;
 }
-// Otherwise check all org passwords (assessor can also enter any CEO pw)
+// Otherwise check all org passwords
+// Accept: org.password match, CEO_PASSWORDS_MAP match, or org.code match
 for(var i=0;i<data.orgs.length;i++){
-if(data.orgs[i].password===pw){
-isAssessor=false;currentOrg=data.orgs[i].code;
-AT.setAuth(pw);
+var o=data.orgs[i];
+if(o.password===pw||o.code===mappedCode||(mappedCode&&o.code===mappedCode)){
+isAssessor=false;currentOrg=o.code;
+AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){
-  openTracker(data.orgs[i].code);
-});
-openTracker(data.orgs[i].code); // show immediately with cache
+AT.loadData(function(){openTracker(o.code);});
+openTracker(o.code);
 return;}
 }
 document.getElementById('authErr').style.display='block';
@@ -1035,6 +1039,8 @@ var existing=org.consulting?org.consulting.find(function(e){return e.code===c.co
 return existing||{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,
 consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',days:'',domainMovement:'',rag:'',completed:false};
 });
+// Auto-push templates to Airtable so they persist
+if(isAssessor){var d=loadData();AT.saveData(d,org.code);}
 }
 return org.consulting;
 }
@@ -1103,6 +1109,7 @@ var existing=org.coaching?org.coaching.find(function(e){return e.code===c.code;}
 return existing||{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,
 hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};
 });
+if(isAssessor){var d=loadData();AT.saveData(d,org.code);}
 }
 return org.coaching;
 }
