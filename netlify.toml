@@ -16,3 +16,14 @@
   to = "/.netlify/functions/submit-baseline"
   status = 200
   force = true
+
+[[headers]]
+  for = "/tracker.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/airtable-data.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
