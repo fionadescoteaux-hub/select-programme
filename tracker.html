@@ -308,20 +308,22 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <span><span class="rag-dot rag-r"></span>Red &lt;50%</span>
 </div>
 </div>
-<div class="rag-summary-bar">
+<div class="rag-summary-bar" style="grid-template-columns:repeat(6,1fr)">
 <div class="rag-sum-card green-card"><div class="rag-sum-num" id="ragCountGreen">-</div><div class="rag-sum-label">On Track</div></div>
 <div class="rag-sum-card amber-card"><div class="rag-sum-num" id="ragCountAmber">-</div><div class="rag-sum-label">Monitor</div></div>
 <div class="rag-sum-card red-card"><div class="rag-sum-num" id="ragCountRed">-</div><div class="rag-sum-label">At Risk</div></div>
+<div class="rag-sum-card" style="background:var(--navy-light);border:1px solid rgba(15,43,76,0.15)"><div class="rag-sum-num" id="ragTotalAtt" style="color:var(--navy)">-</div><div class="rag-sum-label">Session Attendance</div></div>
+<div class="rag-sum-card" style="background:var(--teal-light);border:1px solid rgba(0,140,130,0.15)"><div class="rag-sum-num" id="ragTotalMent" style="color:var(--teal)">-</div><div class="rag-sum-label">Mentoring Hrs</div></div>
+<div class="rag-sum-card" style="background:var(--teal-light);border:1px solid rgba(0,140,130,0.15)"><div class="rag-sum-num" id="ragTotalCoach" style="color:var(--teal)">-</div><div class="rag-sum-label">Coaching Hrs</div></div>
 </div>
 <div class="rag-table-wrap">
 <table class="rag-table">
 <thead><tr>
-<th>Enterprise</th><th>Region</th><th>Mode</th><th>Core Objective</th>
-<th class="rag-right">Baseline Turnover</th><th class="rag-right">Current Turnover</th>
+<th>Enterprise</th><th>Region</th><th>Baseline</th><th>Locked</th>
+<th class="rag-right">Sessions</th><th class="rag-right">Consult Hrs</th><th class="rag-right">Coach Hrs</th>
+<th class="rag-right">Traded Income</th><th class="rag-right">Growth %</th>
 <th class="rag-right">Progress %</th><th>RAG</th>
-<th class="rag-right">Mentoring Hrs</th><th class="rag-right">Coaching Hrs</th>
-<th class="rag-right">Op Surplus %</th><th class="rag-right">Cross-Border Sales</th>
-<th>Next Actions / Risks</th>
+<th class="rag-right">CB Sales</th><th>Next Actions / Risks</th>
 </tr></thead>
 <tbody id="ragTableBody"><tr><td colspan="13" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
 </table>
@@ -647,48 +649,85 @@ function renderRagReport(){
     var progCls=prog>=80?'prog-pos':prog>=50?'prog-neu':prog!==null?'prog-neg':'';
     var barCls='pbf-'+(status==='na'?'red':status);
     var barW=prog!==null?Math.min(100,Math.max(0,prog)):0;
-    rows+='<tr>';
-    rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button>';
-    rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
-    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(juris)+'</td>';
-    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(mode)+'</td>';
-    rows+='<td style="font-size:12px;color:var(--ts2)">'+esc(obj)+'</td>';
-    rows+='<td class="rag-right" style="font-weight:600">'+(bt?sym+bt:'-')+'</td>';
-    rows+='<td class="rag-right" style="font-weight:600">'+(ct?sym+ct:'-')+'</td>';
-    rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
-    rows+='<td>'+ragBadge(prog)+'</td>';
     // Mentoring hours
     var mentHrs=0;
     if(org.consulting&&org.consulting.length){org.consulting.forEach(function(c){mentHrs+=parseFloat(c.days||0)*4.375;});}
     mentHrs=parseFloat(mentHrs.toFixed(1));
     var mentCol=mentHrs>=35?'color:#2e7d32;font-weight:700':mentHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
-    rows+='<td class="rag-right" style="'+mentCol+'">'+mentHrs+' / 35</td>';
     // Coaching hours
     var coachHrs=0;
     if(org.coaching&&org.coaching.length){org.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});}
     coachHrs=parseFloat(coachHrs.toFixed(1));
     var coachCol=coachHrs>=12?'color:#2e7d32;font-weight:700':coachHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
+    // Attendance
+    var attCount=0;
+    if(org.attendance&&org.attendance.length){org.attendance.forEach(function(a){if(a.attended)attCount++;});}
+    var attCol=attCount>=8?'color:#2e7d32;font-weight:700':attCount>=6?'color:#ed6c02;font-weight:600':attCount>0?'color:#c62828;font-weight:600':'color:var(--tt)';
+    // Financial
+    var finObj=org.financial||{};
+    var blTrad=parseFloat(finObj.blTradedIncome)||0;
+    var curTrad=parseFloat(finObj.curTradedIncome)||0;
+    var tradGrowth=blTrad>0?parseFloat(((curTrad-blTrad)/blTrad*100).toFixed(1)):null;
+    var growthCol=tradGrowth===null?'color:var(--tt)':tradGrowth>=15?'color:#2e7d32;font-weight:700':tradGrowth>=0?'color:#ed6c02;font-weight:600':'color:#c62828;font-weight:600';
+    // Baseline score
+    var blScore='';
+    if(org.baseline&&org.baseline.length){var tot=0,wt=0;org.baseline.forEach(function(b){tot+=parseFloat(b.score||0)*parseFloat(b.weight||1);wt+=parseFloat(b.weight||1);});blScore=wt?parseFloat((tot/wt).toFixed(1)):'';}
+    var cbs=(org.kpi&&org.kpi.ragCbSales)?(sym+(org.kpi.ragCbSales)):'-';
+    var nxt=(org.kpi&&org.kpi.ragNextActions)?org.kpi.ragNextActions:'';
+    rows+='<tr>';
+    rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button>';
+    rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
+    rows+='<td class="rag-right" style="font-weight:600;color:var(--navy)">'+(blScore?blScore+'/5':'-')+'</td>';
+    rows+='<td style="text-align:center">'+(org.baselineLocked?'<span style="color:#2e7d32;font-weight:700;font-size:11px">LOCKED</span>':'<span style="color:#ed6c02;font-size:11px">Pending</span>')+'</td>';
+    rows+='<td class="rag-right" style="'+attCol+'">'+attCount+' / 8</td>';
+    rows+='<td class="rag-right" style="'+mentCol+'">'+mentHrs+' / 35</td>';
     rows+='<td class="rag-right" style="'+coachCol+'">'+coachHrs+' / 12</td>';
-    rows+='<td class="rag-right">'+(ops?ops+'%':'-')+'</td>';
-    rows+='<td class="rag-right">'+(cbs?sym+cbs:'-')+'</td>';
+    rows+='<td class="rag-right" style="font-weight:600">'+(blTrad?sym+blTrad.toLocaleString():'-')+'</td>';
+    rows+='<td class="rag-right" style="'+growthCol+'">'+(tradGrowth!==null?(tradGrowth>=0?'+':'')+tradGrowth+'%':'-')+'</td>';
+    rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
+    rows+='<td>'+ragBadge(prog)+'</td>';
+    rows+='<td class="rag-right">'+cbs+'</td>';
     rows+='<td style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
     rows+='</tr>';
   });
   var avgProg=progCount?Math.round(totalProg/progCount):null;
   var avgSurplus=surplusCount?(totalSurplus/surplusCount).toFixed(1):null;
+  // Programme totals
+  var totalMentHrs=0,totalCoachHrs=0,totalAtt=0;
+  orgs.forEach(function(o){
+    if(o.consulting)o.consulting.forEach(function(c){totalMentHrs+=parseFloat(c.days||0)*4.375;});
+    if(o.coaching)o.coaching.forEach(function(c){totalCoachHrs+=parseFloat(c.hours||0);});
+    if(o.attendance)o.attendance.forEach(function(a){if(a.attended)totalAtt++;});
+  });
   rows+='<tr class="rag-summary-row">';
-  rows+='<td colspan="4"><strong>Programme Summary ('+orgs.length+' orgs)</strong></td>';
-  rows+='<td></td><td></td><td></td><td></td>';
+  rows+='<td colspan="2"><strong>Programme Totals ('+orgs.length+' orgs)</strong></td>';
+  rows+='<td></td><td></td>';
+  rows+='<td class="rag-right"><strong>'+totalAtt+' / '+(orgs.length*8)+'</strong></td>';
+  rows+='<td class="rag-right"><strong>'+parseFloat(totalMentHrs.toFixed(1))+' / '+(orgs.length*35)+'</strong></td>';
+  rows+='<td class="rag-right"><strong>'+parseFloat(totalCoachHrs.toFixed(1))+' / '+(orgs.length*12)+'</strong></td>';
+  rows+='<td></td>';
   rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'-')+'</strong></td>';
+  rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'%':'-')+'</strong></td>';
   rows+='<td>'+ragBadge(avgProg)+'</td>';
-  rows+='<td class="rag-right">'+(avgSurplus?avgSurplus+'% avg':'-')+'</td>';
-  rows+='<td class="rag-right">-</td>';
-  rows+='<td style="font-size:12px;color:var(--ts)">Actions logged via SMART Tracker</td>';
+  rows+='<td></td>';
+  rows+='<td style="font-size:12px;color:var(--ts)">All figures cumulative across cohort</td>';
   rows+='</tr>';
   tbody.innerHTML=rows;
   document.getElementById('ragCountGreen').textContent=counts.green;
   document.getElementById('ragCountAmber').textContent=counts.amber;
   document.getElementById('ragCountRed').textContent=counts.red+(counts.na>0?' ('+counts.na+' N/A)':'');
+  var ragTotMent=0,ragTotCoach=0,ragTotAtt=0;
+  orgs.forEach(function(o){
+    if(o.consulting)o.consulting.forEach(function(c){ragTotMent+=parseFloat(c.days||0)*4.375;});
+    if(o.coaching)o.coaching.forEach(function(c){ragTotCoach+=parseFloat(c.hours||0);});
+    if(o.attendance)o.attendance.forEach(function(a){if(a.attended)ragTotAtt++;});
+  });
+  var attEl=document.getElementById('ragTotalAtt');
+  var mentEl=document.getElementById('ragTotalMent');
+  var coachEl=document.getElementById('ragTotalCoach');
+  if(attEl)attEl.textContent=ragTotAtt+' / '+(orgs.length*8);
+  if(mentEl)mentEl.textContent=parseFloat(ragTotMent.toFixed(1))+' / '+(orgs.length*35);
+  if(coachEl)coachEl.textContent=parseFloat(ragTotCoach.toFixed(1))+' / '+(orgs.length*12);
   document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
