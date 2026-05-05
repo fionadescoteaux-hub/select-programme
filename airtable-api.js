@@ -426,7 +426,7 @@ async function handleUpdate(payload) {
     if (crossBorder.endline !== undefined) profileFields[F.CB_ENDLINE] = crossBorder.endline;
   }
   if (intensity !== undefined) profileFields[F.INTENSITY] = intensity;
-  if (assessor !== undefined) profileFields[F.ASSESSOR] = assessor;
+  // assessor field skipped — Airtable field type incompatibility
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   await patchProfile(profile.id, profileFields);
 
@@ -628,11 +628,11 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); }
   catch (e) { return jsonResponse(400, { error: "Invalid JSON" }); }
 
-const masterPw = process.env.TRACKER_MASTER_PW || "SELECT2026";
-const authHeader = event.headers['x-auth'] || event.headers['X-Auth'] || '';
-const isAssessor = body.password === masterPw || authHeader === masterPw;
-const writeActions = new Set(["create", "update", "remove", "seed"]);
-if (writeActions.has(body.action) && !isAssessor) return jsonResponse(403, { error: "Assessor password required for this action" });
+  const masterPw = process.env.TRACKER_MASTER_PW || "SELECT2026";
+  const authHeader = event.headers['x-auth'] || event.headers['X-Auth'] || '';
+  const isAssessor = body.password === masterPw || authHeader === masterPw;
+  const writeActions = new Set(["create", "update", "remove", "seed"]);
+  if (writeActions.has(body.action) && !isAssessor) return jsonResponse(403, { error: "Assessor password required for this action" });
 
   try {
     switch (body.action) {
