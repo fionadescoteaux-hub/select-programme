@@ -954,7 +954,7 @@ function ensureAttendance(org){
   if(!org.attendance||org.attendance.length!==8){
     org.attendance=GROUP_SESSIONS.map(function(s){
       var ex=org.attendance?org.attendance.find(function(e){return e.code===s.code;}):null;
-      return ex||{code:s.code,title:s.title,date:s.date,phase:s.phase,attended:false,apology:false,notes:''};
+      return ex||{code:s.code,title:s.title,date:s.date,phase:s.phase,attended:false,apology:false,format:'Online',notes:''};
     });
   }
   return org.attendance;
@@ -983,6 +983,7 @@ function renderAttendance(org){
   list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Phase</th>';
   list+='<th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Attended</th>';
   list+='<th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Apology</th>';
+  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Format</th>';
   list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Notes</th>';
   list+='</tr></thead><tbody>';
   att.forEach(function(s,i){
@@ -996,10 +997,12 @@ function renderAttendance(org){
     if(isAssessor){
       list+='<td style="padding:10px 12px;text-align:center"><input type="checkbox" '+(s.attended?'checked':'')+' data-att-attended="'+i+'" style="width:16px;height:16px;cursor:pointer"></td>';
       list+='<td style="padding:10px 12px;text-align:center"><input type="checkbox" '+(s.apology?'checked':'')+' data-att-apology="'+i+'" style="width:16px;height:16px;cursor:pointer"></td>';
+      list+='<td style="padding:10px 12px"><select data-att-format="'+i+'" style="padding:4px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp);width:100%"><option'+(s.format==='Online'?' selected':'')+'>Online</option><option'+(s.format==='In Person'?' selected':'')+'>In Person</option><option'+(s.format==='Hybrid'?' selected':'')+'>Hybrid</option></select></td>';
       list+='<td style="padding:10px 12px"><input data-att-notes="'+i+'" value="'+esc(s.notes||'')+'" placeholder="Optional notes" style="width:100%;padding:4px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp)"></td>';
     }else{
       list+='<td style="padding:10px 12px;text-align:center">'+statusDot+'</td>';
       list+='<td style="padding:10px 12px;text-align:center">'+(s.apology?'<span style="color:#ed6c02">Yes</span>':'-')+'</td>';
+      list+='<td style="padding:10px 12px;font-size:12px;color:var(--ts)">'+(s.format||'Online')+'</td>';
       list+='<td style="padding:10px 12px;color:var(--ts);font-size:12px">'+esc(s.notes||'')+'</td>';
     }
     list+='</tr>';
@@ -1016,6 +1019,9 @@ function renderAttendance(org){
     });
     el.querySelectorAll('[data-att-apology]').forEach(function(cb){
       cb.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-apology')),'apology',this.checked);renderAttendance(org);});
+    });
+    el.querySelectorAll('[data-att-format]').forEach(function(sel){
+      sel.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-format')),'format',this.value);});
     });
     el.querySelectorAll('[data-att-notes]').forEach(function(inp){
       inp.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-notes')),'notes',this.value);});
