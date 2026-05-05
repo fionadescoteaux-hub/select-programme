@@ -149,6 +149,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .note-entry .note-type{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-right:6px}
 .nt-consult{background:var(--teal-light);color:var(--teal)}
 .nt-form{background:var(--gold-light);color:var(--gold)}
+.coaching-stat-flex{background:var(--teal-light);border:1px solid rgba(0,140,130,0.2);border-radius:var(--r);padding:12px 16px}
+.coaching-stat-flex .cs-val{color:var(--teal)}
+.coaching-stat-flex .cs-lbl{color:var(--teal);opacity:0.8}
 .nt-coach{background:var(--coral-light);color:var(--coral)}
 .nt-session{background:var(--navy-light);color:var(--navy)}
 
@@ -282,6 +285,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <h2 id="dashTitle" style="font-family:var(--serif);font-size:22px;color:var(--navy)">All organisations</h2>
 <div style="display:flex;gap:8px;flex-wrap:wrap" id="dashHeadBtns">
 <button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){if(currentOrg){var o=d.orgs.find(function(x){return x.code===currentOrg;});if(o)renderAll(o);}else{showDash();}})" style="font-size:10px">&#8635; Refresh from Airtable</button>
+<button class="btn btn-sm btn-outline" onclick="exportToExcel()" style="font-size:10px">&#8595; Export to Excel</button>
 <button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px" id="migrateBtn">Migrate local &rarr; Airtable</button>
 <button class="btn btn-teal" onclick="openAddOrg()" id="addOrgBtn">+ Add organisation</button>
 </div>
@@ -315,10 +319,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <th>Enterprise</th><th>Region</th><th>Mode</th><th>Core Objective</th>
 <th class="rag-right">Baseline Turnover</th><th class="rag-right">Current Turnover</th>
 <th class="rag-right">Progress %</th><th>RAG</th>
+<th class="rag-right">Mentoring Hrs</th><th class="rag-right">Coaching Hrs</th>
 <th class="rag-right">Op Surplus %</th><th class="rag-right">Cross-Border Sales</th>
 <th>Next Actions / Risks</th>
 </tr></thead>
-<tbody id="ragTableBody"><tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
+<tbody id="ragTableBody"><tr><td colspan="13" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
 </table>
 </div>
 <div class="rag-last-updated" id="ragLastUpdated"></div>
@@ -415,7 +420,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <!-- CONSULTING TAB -->
 <div class="tab-panel" id="tab-consulting">
 <div class="section-title">1:1 Consulting — Outreach Cycles</div>
-<div class="section-note">After each group session, Fiona or Clodagh meets with the CEO to build on their commercial plan for trade. 8 consulting days per enterprise across the programme.</div>
+<div class="section-note">After each group session, Fiona or Clodagh meets with the CEO to build on their commercial plan for trade. 8 consulting days (35 hours) per enterprise across the programme. An additional 9 flex hours can be allocated to mentoring or coaching as agreed.</div>
 <div class="coaching-summary" id="consultingSummary"></div>
 <div id="consultingList"></div>
 </div>
@@ -423,7 +428,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <!-- COACHING TAB -->
 <div class="tab-panel" id="tab-coaching">
 <div class="section-title">Executive Coaching Log</div>
-<div class="section-note">Up to 21 hours per enterprise. Sarah / Aoife — focus themes only (content is confidential).</div>
+<div class="section-note">Up to 12 hours per enterprise. Sarah / Aoife — focus themes only (content is confidential). Additional flex hours from the 9-hour pool may be added by agreement.</div>
 <div class="coaching-summary" id="coachingSummary"></div>
 <div id="coachingList"></div>
 <div id="coachingAddWrap" style="margin-top:12px"></div>
@@ -446,6 +451,40 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div id="notesList"></div>
 <div id="notesAddWrap" style="margin-top:12px"></div>
 </div>
+</div>
+
+<!-- ATTENDANCE TAB -->
+<div class="tab-panel" id="tab-attendance">
+<div class="section-title">Group Session Attendance</div>
+<div class="section-note">Mandatory attendance record for ITI reporting. 8 group sessions across the programme.</div>
+<div class="coaching-summary" id="attendanceSummary"></div>
+<div id="attendanceList"></div>
+</div>
+
+<!-- FINANCIAL BASELINE TAB -->
+<div class="tab-panel" id="tab-financial">
+<div class="section-title">Financial Baseline & Growth Tracking</div>
+<div class="section-note">Verified financial data captured at baseline lock. ITI requires traded income growth of &ge;15% by programme end. Update current figures each quarter.</div>
+<div class="sub-section">Baseline Financial Data (at lock)</div>
+<div class="kpi-grid" id="finBaselineGrid"></div>
+<div class="sub-section">Current Financial Data (updated quarterly)</div>
+<div class="kpi-grid" id="finCurrentGrid"></div>
+<div class="sub-section">Traded Income Growth</div>
+<div class="coaching-summary" id="finGrowthSummary"></div>
+<div class="sub-section">Leadership Confidence Index</div>
+<div class="section-note">Self-assessed 1-10 scale. Captured at baseline and endline.</div>
+<div class="kpi-grid" id="lciGrid"></div>
+</div>
+
+<!-- ITI KPIs TAB -->
+<div class="tab-panel" id="tab-itikpi">
+<div class="section-title">ITI KPI Classification</div>
+<div class="section-note">Contractual classifications set at programme entry. Used for ITI cohort-level reporting.</div>
+<div class="kpi-grid" id="itiKpiGrid"></div>
+<div class="sub-section">Cross-Border Detail</div>
+<div class="kpi-grid" id="itiCbGrid"></div>
+<div class="sub-section">Interim Report Data (30 July 2026)</div>
+<div class="kpi-grid" id="interimGrid"></div>
 </div>
 
 <!-- Save bar -->
@@ -492,6 +531,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 </style>
 
 <script src="airtable-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 var MASTER_PW='SELECT2026';
 // Assessor passwords: Fiona = SELECT2026-FD, Clodagh = SELECT2026-COR
@@ -576,7 +616,7 @@ function renderRagReport(){
   var data=loadData();
   var orgs=data.orgs||[];
   if(!orgs.length){
-    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>';
     ['ragCountGreen','ragCountAmber','ragCountRed'].forEach(function(id){document.getElementById(id).textContent='0';});
     return;
   }
@@ -617,6 +657,18 @@ function renderRagReport(){
     rows+='<td class="rag-right" style="font-weight:600">'+(ct?sym+ct:'-')+'</td>';
     rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
     rows+='<td>'+ragBadge(prog)+'</td>';
+    // Mentoring hours
+    var mentHrs=0;
+    if(org.consulting&&org.consulting.length){org.consulting.forEach(function(c){mentHrs+=parseFloat(c.days||0)*4.375;});}
+    mentHrs=parseFloat(mentHrs.toFixed(1));
+    var mentCol=mentHrs>=35?'color:#2e7d32;font-weight:700':mentHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
+    rows+='<td class="rag-right" style="'+mentCol+'">'+mentHrs+' / 35</td>';
+    // Coaching hours
+    var coachHrs=0;
+    if(org.coaching&&org.coaching.length){org.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});}
+    coachHrs=parseFloat(coachHrs.toFixed(1));
+    var coachCol=coachHrs>=12?'color:#2e7d32;font-weight:700':coachHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
+    rows+='<td class="rag-right" style="'+coachCol+'">'+coachHrs+' / 12</td>';
     rows+='<td class="rag-right">'+(ops?ops+'%':'-')+'</td>';
     rows+='<td class="rag-right">'+(cbs?sym+cbs:'-')+'</td>';
     rows+='<td style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
@@ -626,7 +678,7 @@ function renderRagReport(){
   var avgSurplus=surplusCount?(totalSurplus/surplusCount).toFixed(1):null;
   rows+='<tr class="rag-summary-row">';
   rows+='<td colspan="4"><strong>Programme Summary ('+orgs.length+' orgs)</strong></td>';
-  rows+='<td></td><td></td>';
+  rows+='<td></td><td></td><td></td><td></td>';
   rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'-')+'</strong></td>';
   rows+='<td>'+ragBadge(avgProg)+'</td>';
   rows+='<td class="rag-right">'+(avgSurplus?avgSurplus+'% avg':'-')+'</td>';
@@ -638,6 +690,451 @@ function renderRagReport(){
   document.getElementById('ragCountAmber').textContent=counts.amber;
   document.getElementById('ragCountRed').textContent=counts.red+(counts.na>0?' ('+counts.na+' N/A)':'');
   document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+
+function exportToExcel(){
+  var data=loadData();
+  var orgs=data.orgs||[];
+  if(!orgs.length){alert('No organisations to export.');return;}
+  var wb=XLSX.utils.book_new();
+
+  // ── SHEET 1: Programme Summary ──
+  var sum=[['SELECT Programme Export','','','','','','','','','','',''],
+    ['Generated: '+new Date().toLocaleString('en-IE'),'','','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+    ['Organisation','CEO','Jurisdiction','Intensity','Baseline Score','Baseline Locked','Phase',
+     'Mentoring Days Used','Mentoring Hrs Used','Mentoring Hrs Remaining','Coaching Hrs Used','Coaching Hrs Remaining','Flex Pool (hrs)','Progress %','RAG Status']];
+  orgs.forEach(function(o){
+    var mentDays=0,coachHrs=0;
+    if(o.consulting)o.consulting.forEach(function(c){mentDays+=parseFloat(c.days||0);});
+    if(o.coaching)o.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});
+    mentDays=parseFloat(mentDays.toFixed(2));
+    var mentHrs=parseFloat((mentDays*4.375).toFixed(1));
+    coachHrs=parseFloat(coachHrs.toFixed(1));
+    var prog=ragCalcProgress(o);
+    var ragStatus=prog===null?'N/A':prog>=80?'Green':prog>=50?'Amber':'Red';
+    var blScore='';
+    if(o.baseline&&o.baseline.length){
+      var tot=0,wt=0;
+      o.baseline.forEach(function(b){tot+=parseFloat(b.score||0)*parseFloat(b.weight||1);wt+=parseFloat(b.weight||1);});
+      blScore=wt?parseFloat((tot/wt).toFixed(2)):'';
+    }
+    sum.push([
+      o.name||'',o.ceo||'',(o.kpi&&o.kpi.jurisdiction)||'ROI',o.intensity||'',
+      blScore,o.baselineLocked?'Yes':'No',
+      (o.kpi&&o.kpi.ragMode)||'',
+      mentDays,mentHrs,parseFloat((35-mentHrs).toFixed(1)),
+      coachHrs,parseFloat((12-coachHrs).toFixed(1)),9,
+      prog!==null?prog:'',ragStatus
+    ]);
+  });
+  var ws1=XLSX.utils.aoa_to_sheet(sum);
+  ws1['!cols']=[{wch:28},{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:18},
+    {wch:16},{wch:16},{wch:18},{wch:16},{wch:18},{wch:14},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Programme Summary');
+
+  // ── SHEET 2: Baseline Scores ──
+  var bl=[['Organisation','CEO','Domain','Weight','Score (0-5)','Weighted Score','Notes']];
+  var DOMAIN_NAMES=['Business Model & Revenue Mix','Products & Unit Economics','Financial Management & Cash',
+    'Commercial Strategy & Market Focus','Go-to-Market & Sales','Operations & Delivery Capacity',
+    'Cross-Border Readiness','Leadership & Execution Capacity','Organisational Readiness'];
+  orgs.forEach(function(o){
+    if(o.baseline&&o.baseline.length){
+      o.baseline.forEach(function(b,i){
+        bl.push([o.name||'',o.ceo||'',DOMAIN_NAMES[i]||('Domain '+(i+1)),
+          b.weight||1,b.score||'',
+          b.score&&b.weight?parseFloat((b.score*b.weight).toFixed(2)):'',
+          b.notes||'']);
+      });
+      bl.push(['','','','','','','']);
+    }
+  });
+  var ws2=XLSX.utils.aoa_to_sheet(bl);
+  ws2['!cols']=[{wch:28},{wch:18},{wch:35},{wch:8},{wch:12},{wch:14},{wch:40}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Baseline Scores');
+
+  // ── SHEET 3: Consulting Log ──
+  var cl=[['Organisation','CEO','Cycle','Date','Phase','Focus','Consultant',
+    'Format','Days','Hours','SMART Progressed','Actions Agreed','Key Outputs','Domain Movement','RAG','Completed']];
+  orgs.forEach(function(o){
+    if(o.consulting&&o.consulting.length){
+      o.consulting.forEach(function(c){
+        var hrs=parseFloat((parseFloat(c.days||0)*4.375).toFixed(2));
+        cl.push([o.name||'',o.ceo||'',c.title||'',c.date||'',c.phase||'',
+          c.defaultFocus||'',c.consultedBy||'',c.format||'',
+          c.days||'',hrs||'',c.smartProgressed||'',
+          c.actionsAgreed||'',c.keyOutputs||'',c.domainMovement||'',
+          c.rag||'',c.completed?'Yes':'No']);
+      });
+    }
+  });
+  var ws3=XLSX.utils.aoa_to_sheet(cl);
+  ws3['!cols']=[{wch:28},{wch:18},{wch:20},{wch:12},{wch:12},{wch:30},{wch:18},
+    {wch:14},{wch:8},{wch:8},{wch:20},{wch:30},{wch:30},{wch:20},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Consulting Log');
+
+  // ── SHEET 4: Coaching Log ──
+  var ch=[['Organisation','CEO','Cycle','Date','Focus','Coach','Hours','Actions Agreed','Completed']];
+  orgs.forEach(function(o){
+    if(o.coaching&&o.coaching.length){
+      o.coaching.forEach(function(c){
+        ch.push([o.name||'',o.ceo||'',c.title||'',c.date||'',
+          c.defaultFocus||'',c.coach||'Sarah / Aoife',
+          c.hours||'',c.actionAgreed||'',c.completed?'Yes':'No']);
+      });
+    }
+  });
+  var ws4=XLSX.utils.aoa_to_sheet(ch);
+  ws4['!cols']=[{wch:28},{wch:18},{wch:20},{wch:12},{wch:30},{wch:18},{wch:8},{wch:35},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws4,'Coaching Log');
+
+  // ── SHEET 5: SMART Objectives ──
+  var sm=[['Organisation','CEO','Objective','Metric','Baseline Value','Target','Deadline','Status','Progress %']];
+  orgs.forEach(function(o){
+    if(o.smart&&o.smart.length){
+      o.smart.forEach(function(s){
+        sm.push([o.name||'',o.ceo||'',s.objective||'',s.metric||'',
+          s.baseline||'',s.target||'',s.deadline||'',s.status||'',s.progress||'']);
+      });
+    }
+  });
+  var ws5=XLSX.utils.aoa_to_sheet(sm);
+  ws5['!cols']=[{wch:28},{wch:18},{wch:40},{wch:25},{wch:15},{wch:15},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws5,'SMART Objectives');
+
+  // ── SHEET 6: Hours Summary ──
+  var hrs=[['SELECT Programme Hours Summary','','','','','',''],
+    ['Generated: '+new Date().toLocaleString('en-IE'),'','','','','',''],
+    ['','','','','','',''],
+    ['','Mentoring (days)','Mentoring (hrs)','Mentoring Remaining','Coaching (hrs)','Coaching Remaining','Flex Pool (hrs)'],
+    ['TOTAL ALLOCATED','8 days','35 hrs','','12 hrs','','9 hrs'],
+    ['','','','','','','']];
+  orgs.forEach(function(o){
+    var md=0,ch2=0;
+    if(o.consulting)o.consulting.forEach(function(c){md+=parseFloat(c.days||0);});
+    if(o.coaching)o.coaching.forEach(function(c){ch2+=parseFloat(c.hours||0);});
+    md=parseFloat(md.toFixed(2));
+    var mh=parseFloat((md*4.375).toFixed(1));
+    ch2=parseFloat(ch2.toFixed(1));
+    hrs.push([o.name||'',md,mh,parseFloat((35-mh).toFixed(1)),ch2,parseFloat((12-ch2).toFixed(1)),9]);
+  });
+  // Totals row
+  hrs.push(['PROGRAMME TOTALS',
+    '=SUM(B7:B'+( 6+orgs.length)+')',
+    '=SUM(C7:C'+(6+orgs.length)+')',
+    '=SUM(D7:D'+(6+orgs.length)+')',
+    '=SUM(E7:E'+(6+orgs.length)+')',
+    '=SUM(F7:F'+(6+orgs.length)+')',
+    '=SUM(G7:G'+(6+orgs.length)+')']);
+  var ws6=XLSX.utils.aoa_to_sheet(hrs);
+  ws6['!cols']=[{wch:28},{wch:16},{wch:16},{wch:20},{wch:16},{wch:20},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws6,'Hours Summary');
+
+  // ── SHEET 7: Attendance ──
+  var att=[['Organisation','CEO','Session','Date','Phase','Attended','Apology','Notes']];
+  orgs.forEach(function(o){
+    if(o.attendance&&o.attendance.length){
+      o.attendance.forEach(function(s){
+        att.push([o.name||'',o.ceo||'',s.title||'',s.date||'',s.phase||'',
+          s.attended?'Yes':'No',s.apology?'Yes':'No',s.notes||'']);
+      });
+    }
+  });
+  var ws7=XLSX.utils.aoa_to_sheet(att);
+  ws7['!cols']=[{wch:28},{wch:18},{wch:45},{wch:14},{wch:12},{wch:10},{wch:10},{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws7,'Attendance');
+
+  // ── SHEET 8: Financial Baseline ──
+  var fin=[['Organisation','CEO','Juris','Baseline Turnover','Baseline Traded Income',
+    'Traded Income %','Operating Surplus/Deficit','Cash Position','Runway (mths)',
+    'CB Sales %','CB Sales Value','Export Status',
+    'Current Turnover','Current Traded Income','Current CB Sales %','Current CB Sales Value',
+    'Traded Income Growth %','Target (15%)','LCI Baseline','LCI Midpoint','LCI Endline']];
+  orgs.forEach(function(o){
+    var f=o.financial||{};
+    var juris=(o.kpi&&o.kpi.jurisdiction)||'ROI';
+    var bl=parseFloat(f.blTradedIncome)||0;
+    var cur=parseFloat(f.curTradedIncome)||0;
+    var growth=bl>0?parseFloat(((cur-bl)/bl*100).toFixed(1)):'';
+    var target=bl>0?Math.round(bl*1.15):'';
+    fin.push([o.name||'',o.ceo||'',juris,
+      f.blTurnover||'',f.blTradedIncome||'',f.blTradedPct||'',f.blOpSurplus||'',
+      f.blCashPosition||'',f.blRunway||'',f.blCbSalesPct||'',f.blCbSalesVal||'',f.blExportStatus||'',
+      f.curTurnover||'',f.curTradedIncome||'',f.curCbSalesPct||'',f.curCbSalesVal||'',
+      growth,target,f.lciBaseline||'',f.lciMidpoint||'',f.lciEndline||'']);
+  });
+  var ws8=XLSX.utils.aoa_to_sheet(fin);
+  ws8['!cols']=[{wch:28},{wch:18},{wch:8},{wch:16},{wch:18},{wch:14},{wch:20},{wch:14},
+    {wch:12},{wch:12},{wch:16},{wch:14},{wch:16},{wch:18},{wch:16},{wch:18},{wch:18},{wch:14},{wch:12},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws8,'Financial Baseline');
+
+  // ── SHEET 9: ITI KPIs ──
+  var iti=[['Organisation','CEO','New to ITI','First-Time Exporter','First-Time Cross-Border',
+    'Jurisdiction','Sector','De Minimis','Employee Count','Prior ITI Support',
+    'CB Current Activity','CB Target','CB Opportunity','CB Barriers',
+    'Interim Traded Income','Interim Growth %','Interim CB Sales','Interim SMART Progress',
+    'Interim Risks','Interim Report Status']];
+  orgs.forEach(function(o){
+    var k=o.itiKpi||{};
+    iti.push([o.name||'',o.ceo||'',
+      k.newToIti||'',k.firstTimeExporter||'',k.firstTimeCb||'',
+      k.roiNi||((o.kpi&&o.kpi.jurisdiction)||''),k.sector||'',k.deMinimis||'',
+      k.employeeCount||'',k.priorItiSupport||'',
+      k.cbCurrentActivity||'',k.cbTarget||'',k.cbOpportunity||'',k.cbBarriers||'',
+      k.interimTradedIncome||'',k.interimGrowthPct||'',k.interimCbSales||'',
+      k.interimSmartProgress||'',k.interimRisks||'',k.interimReportStatus||'']);
+  });
+  var ws9=XLSX.utils.aoa_to_sheet(iti);
+  ws9['!cols']=[{wch:28},{wch:18},{wch:12},{wch:16},{wch:18},{wch:12},{wch:20},{wch:12},
+    {wch:14},{wch:20},{wch:30},{wch:25},{wch:25},{wch:25},{wch:18},{wch:16},{wch:16},{wch:35},{wch:35},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws9,'ITI KPIs');
+
+  // ── Export ──
+  var date=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,'SELECT_Programme_Export_'+date+'.xlsx');
+}
+
+
+// ═══════════════════════════════════════
+// GROUP SESSION ATTENDANCE
+// ═══════════════════════════════════════
+var GROUP_SESSIONS=[
+  {code:'GS1',title:'Group Session 1 - Programme Launch & Baseline',date:'30 Apr 2026',phase:'Diagnose'},
+  {code:'GS2',title:'Group Session 2 - Taking Ownership & Driving Forward',date:'May 2026',phase:'Translate'},
+  {code:'GS3',title:'Group Session 3 - Strategic Development & Innovation',date:'Jun 2026',phase:'Translate'},
+  {code:'GS4',title:'Group Session 4 - Change Management for Scaling 1',date:'Jul 2026',phase:'Strengthen'},
+  {code:'GS5',title:'Group Session 5 - Change Management for Scaling 2',date:'Aug 2026',phase:'Strengthen'},
+  {code:'GS6',title:'Group Session 6 - Digital Marketing & Cross-Border',date:'Sep 2026',phase:'Strengthen'},
+  {code:'GS7',title:'Group Session 7 - Governance, Leadership & Investment Readiness (1)',date:'Oct 2026',phase:'Strengthen'},
+  {code:'GS8',title:'Group Session 8 - Governance, Leadership & Investment Readiness (2)',date:'Nov 2026',phase:'Sustain'}
+];
+
+function ensureAttendance(org){
+  if(!org.attendance||org.attendance.length!==8){
+    org.attendance=GROUP_SESSIONS.map(function(s){
+      var ex=org.attendance?org.attendance.find(function(e){return e.code===s.code;}):null;
+      return ex||{code:s.code,title:s.title,date:s.date,phase:s.phase,attended:false,apology:false,notes:''};
+    });
+  }
+  return org.attendance;
+}
+
+function renderAttendance(org){
+  ensureAttendance(org);
+  var att=org.attendance;
+  var attended=att.filter(function(a){return a.attended;}).length;
+  var html='<div class="coaching-stat"><div class="cs-val">'+attended+' / 8</div><div class="cs-lbl">Sessions Attended</div></div>';
+  html+='<div class="coaching-stat"><div class="cs-val">'+(8-attended)+'</div><div class="cs-lbl">Sessions Remaining</div></div>';
+  var pct=Math.round((attended/8)*100);
+  var pctCol=pct>=80?'color:#2e7d32':pct>=50?'color:#ed6c02':'color:#c62828';
+  html+='<div class="coaching-stat"><div class="cs-val" style="'+pctCol+'">'+pct+'%</div><div class="cs-lbl">Attendance Rate</div></div>';
+  document.getElementById('attendanceSummary').innerHTML=html;
+
+  var list='';
+  att.forEach(function(s,i){
+    var statusCol=s.attended?'#2e7d32':s.apology?'#ed6c02':'#c62828';
+    var statusLabel=s.attended?'Attended':s.apology?'Apology':'Not recorded';
+    list+='<div class="consulting-card" style="margin-bottom:12px;border-left:3px solid '+statusCol+'">';
+    list+='<div class="cc-header"><div><span class="cc-badge">'+s.code+'</span> <strong>'+esc(s.title)+'</strong></div>';
+    list+='<span style="font-size:11px;color:var(--tt)">'+esc(s.date)+' &middot; '+esc(s.phase)+'</span></div>';
+    if(isAssessor){
+      list+='<div style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap">';
+      list+='<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">';
+      list+='<input type="checkbox" '+(s.attended?'checked':'')+' onchange="saveAttField('+i+',\x27attended\x27,this.checked)"> Attended</label>';
+      list+='<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">';
+      list+='<input type="checkbox" '+(s.apology?'checked':'')+' onchange="saveAttField('+i+',\x27apology\x27,this.checked)"> Apology received</label>';
+      list+='<input placeholder="Notes" value="'+esc(s.notes||'')+'" onchange="saveAttField('+i+',\x27notes\x27,this.value)" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+      list+='</div>';
+    }else{
+      list+='<div style="margin-top:8px"><span style="font-size:12px;font-weight:700;color:'+statusCol+'">'+statusLabel+'</span>';
+      if(s.notes)list+='<span style="font-size:12px;color:var(--ts);margin-left:12px">'+esc(s.notes)+'</span>';
+      list+='</div>';
+    }
+    list+='</div>';
+  });
+  document.getElementById('attendanceList').innerHTML=list;
+}
+
+function saveAttField(i,field,val){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  ensureAttendance(org);
+  org.attendance[i][field]=val;
+  saveData(data,currentOrg);
+}
+
+// ═══════════════════════════════════════
+// FINANCIAL BASELINE & GROWTH
+// ═══════════════════════════════════════
+function renderFinancial(org){
+  if(!org.financial)org.financial={};
+  var f=org.financial;
+  var juris=(org.kpi&&org.kpi.jurisdiction)||'ROI';
+  var sym=juris.toUpperCase()==='NI'?'£':'€';
+
+  var baseFields=[
+    {key:'blTurnover',label:'Annual Turnover at Baseline ('+sym+')',ph:'e.g. 450000'},
+    {key:'blTradedIncome',label:'Traded Income at Baseline ('+sym+')',ph:'e.g. 380000'},
+    {key:'blTradedPct',label:'Traded Income as % of Total',ph:'e.g. 84'},
+    {key:'blOpSurplus',label:'Operating Surplus/Deficit ('+sym+')',ph:'e.g. 22000 or -5000'},
+    {key:'blCashPosition',label:'Cash Position ('+sym+')',ph:'e.g. 65000'},
+    {key:'blRunway',label:'Cash Runway (months)',ph:'e.g. 3'},
+    {key:'blCbSalesPct',label:'Cross-Border Sales % of Total',ph:'e.g. 0 or 12'},
+    {key:'blCbSalesVal',label:'Cross-Border Sales Value ('+sym+')',ph:'e.g. 0 or 54000'},
+    {key:'blExportStatus',label:'Exporter Status',ph:'None / First-time / Active'}
+  ];
+  var curFields=[
+    {key:'curTurnover',label:'Current Annual Turnover ('+sym+')',ph:'e.g. 520000'},
+    {key:'curTradedIncome',label:'Current Traded Income ('+sym+')',ph:'e.g. 440000'},
+    {key:'curTradedPct',label:'Traded Income as % of Total',ph:'e.g. 85'},
+    {key:'curOpSurplus',label:'Current Operating Surplus/Deficit ('+sym+')',ph:'e.g. 28000'},
+    {key:'curCbSalesPct',label:'Current Cross-Border Sales %',ph:'e.g. 8'},
+    {key:'curCbSalesVal',label:'Current Cross-Border Sales Value ('+sym+')',ph:'e.g. 35000'},
+    {key:'curAsOf',label:'Data as of (date)',ph:'e.g. Mar 2026'}
+  ];
+  var lciFields=[
+    {key:'lciBaseline',label:'Leadership Confidence Index - Baseline (1-10)',ph:'1-10'},
+    {key:'lciMidpoint',label:'Leadership Confidence Index - Midpoint (1-10)',ph:'1-10'},
+    {key:'lciEndline',label:'Leadership Confidence Index - Endline (1-10)',ph:'1-10'}
+  ];
+
+  function renderFieldGroup(fields,containerId,saveFn){
+    var h='';
+    fields.forEach(function(fd){
+      var val=f[fd.key]||'';
+      h+='<div class="kpi-card"><label>'+esc(fd.label)+'</label>';
+      if(isAssessor){
+        h+='<input data-key="'+esc(fd.key)+'" data-savefn="'+saveFn+'" placeholder="'+esc(fd.ph||'')+'" value="'+esc(val)+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+      }else{
+        h+='<div class="kpi-val">'+(val||'--')+'</div>';
+      }
+      h+='</div>';
+    });
+    var el=document.getElementById(containerId);
+    el.innerHTML=h;
+    if(isAssessor){
+      el.querySelectorAll('input[data-key]').forEach(function(inp){
+        inp.addEventListener('change',function(){
+          var k=this.getAttribute('data-key');
+          var fn=this.getAttribute('data-savefn');
+          if(fn==='fin')saveFinField(k,this.value);
+          else if(fn==='iti')saveItiField(k,this.value);
+        });
+      });
+    }
+  }
+
+  renderFieldGroup(baseFields,'finBaselineGrid','fin');
+  renderFieldGroup(curFields,'finCurrentGrid','fin');
+  renderFieldGroup(lciFields,'lciGrid','fin');
+
+  // Growth summary
+  var bl=parseFloat(f.blTradedIncome)||0;
+  var cur=parseFloat(f.curTradedIncome)||0;
+  var growth=bl>0?((cur-bl)/bl*100):null;
+  var target=bl*1.15;
+  var gs='';
+  if(bl&&cur){
+    var gcol=growth>=15?'#2e7d32':growth>=0?'#ed6c02':'#c62828';
+    gs+='<div class="coaching-stat"><div class="cs-val" style="color:'+gcol+'">'+(growth>=0?'+':'')+growth.toFixed(1)+'%</div><div class="cs-lbl">Traded Income Growth</div></div>';
+    gs+='<div class="coaching-stat"><div class="cs-val">'+sym+bl.toLocaleString()+'</div><div class="cs-lbl">Baseline Traded Income</div></div>';
+    gs+='<div class="coaching-stat"><div class="cs-val">'+sym+cur.toLocaleString()+'</div><div class="cs-lbl">Current Traded Income</div></div>';
+    gs+='<div class="coaching-stat"><div class="cs-val" style="color:#0f2b4c">'+sym+target.toLocaleString()+'</div><div class="cs-lbl">Target (15% growth)</div></div>';
+  }else{
+    gs='<div style="color:var(--tt);font-size:13px;padding:8px 0">Enter baseline and current traded income above to calculate growth.</div>';
+  }
+  document.getElementById('finGrowthSummary').innerHTML=gs;
+}
+
+function saveFinField(key,val){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!org.financial)org.financial={};
+  org.financial[key]=val;
+  saveData(data,currentOrg);
+  // Refresh growth summary
+  renderFinancial(org);
+}
+
+// ═══════════════════════════════════════
+// ITI KPI CLASSIFICATIONS
+// ═══════════════════════════════════════
+function renderItiKpi(org){
+  if(!org.itiKpi)org.itiKpi={};
+  var k=org.itiKpi;
+  var juris=(org.kpi&&org.kpi.jurisdiction)||'ROI';
+  var sym=juris.toUpperCase()==='NI'?'£':'€';
+
+  var kpiFields=[
+    {key:'newToIti',label:'New to ITI Support',type:'select',opts:['Yes','No','Unknown']},
+    {key:'firstTimeExporter',label:'First-Time Exporter',type:'select',opts:['Yes','No','Unknown']},
+    {key:'firstTimeCb',label:'First-Time Cross-Border Trader',type:'select',opts:['Yes','No','Unknown']},
+    {key:'roiNi',label:'Primary Jurisdiction',type:'select',opts:['ROI','NI','Both']},
+    {key:'sector',label:'Sector / Subsector',type:'text',ph:'e.g. Health & Wellbeing'},
+    {key:'deMinimis',label:'De Minimis / State Aid Declaration',type:'select',opts:['Declared','Not required','Pending']},
+    {key:'employeeCount',label:'Employee Count at Entry',type:'text',ph:'e.g. 12 FTE'},
+    {key:'priorItiSupport',label:'Prior ITI Support',type:'text',ph:'None / describe any previous'}
+  ];
+  var cbFields=[
+    {key:'cbCurrentActivity',label:'Current Cross-Border Activity',type:'textarea',ph:'Describe any existing NI<->ROI activity'},
+    {key:'cbTarget',label:'Cross-Border Target by Programme End',type:'text',ph:'e.g. '+sym+'50,000 or First sales into NI'},
+    {key:'cbOpportunity',label:'Primary Cross-Border Opportunity',type:'text',ph:'e.g. HSE equivalent in NI'},
+    {key:'cbBarriers',label:'Key Cross-Border Barriers',type:'text',ph:'e.g. Regulatory, Market knowledge'}
+  ];
+  var interimFields=[
+    {key:'interimTradedIncome',label:'Traded Income at Interim (30 Jul 2026, '+sym+')',type:'text',ph:'e.g. 240000'},
+    {key:'interimGrowthPct',label:'Traded Income Growth at Interim (%)',type:'text',ph:'auto or enter e.g. 8.5'},
+    {key:'interimCbSales',label:'Cross-Border Sales at Interim ('+sym+')',type:'text',ph:'e.g. 0 or 15000'},
+    {key:'interimSmartProgress',label:'SMART Objectives Progress Summary',type:'textarea',ph:'Brief narrative for interim report'},
+    {key:'interimRisks',label:'Risks / Issues to Flag to ITI',type:'textarea',ph:'Any risks to programme delivery or outcomes'},
+    {key:'interimReportStatus',label:'Interim Report Status',type:'select',opts:['Not started','In preparation','Submitted']}
+  ];
+
+  function renderKpiGroup(fields,containerId){
+    var h='';
+    fields.forEach(function(fd){
+      var val=k[fd.key]||'';
+      h+='<div class="kpi-card"><label>'+esc(fd.label)+'</label>';
+      if(isAssessor){
+        if(fd.type==='select'){
+          h+='<select data-key="'+esc(fd.key)+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+          h+='<option value="">-- Select --</option>';
+          fd.opts.forEach(function(o){h+='<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
+          h+='</select>';
+        }else if(fd.type==='textarea'){
+          h+='<textarea data-key="'+esc(fd.key)+'" placeholder="'+esc(fd.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);min-height:70px">'+esc(val)+'</textarea>';
+        }else{
+          h+='<input data-key="'+esc(fd.key)+'" value="'+esc(val)+'" placeholder="'+esc(fd.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+        }
+      }else{
+        h+='<div class="kpi-val">'+(val||'--')+'</div>';
+      }
+      h+='</div>';
+    });
+    var el=document.getElementById(containerId);
+    el.innerHTML=h;
+    if(isAssessor){
+      el.querySelectorAll('[data-key]').forEach(function(inp){
+        inp.addEventListener('change',function(){saveItiField(this.getAttribute('data-key'),this.value);});
+      });
+    }
+  }
+
+  renderKpiGroup(kpiFields,'itiKpiGrid');
+  renderKpiGroup(cbFields,'itiCbGrid');
+  renderKpiGroup(interimFields,'interimGrid');
+}
+
+function saveItiField(key,val){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!org.itiKpi)org.itiKpi={};
+  org.itiKpi[key]=val;
+  saveData(data,currentOrg);
 }
 
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -825,6 +1322,7 @@ function renderAll(org){
 renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
 renderBaseline(org);renderDiagnosis(org);renderSMART(org);
 renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
+renderAttendance(org);renderFinancial(org);renderItiKpi(org);
 }
 
 function switchTab(tab,btn){
@@ -1055,9 +1553,12 @@ function renderConsulting(org){
 ensureConsulting(org);
 var totalDays=0;var completed=0;
 org.consulting.forEach(function(c){var d=parseFloat(c.days)||0;totalDays+=d;if(c.completed)completed++;});
+var totalHrsConsult=parseFloat((totalDays*4.375).toFixed(1));
 var html='<div class="coaching-stat"><div class="cs-val">'+totalDays.toFixed(1)+' / 8</div><div class="cs-lbl">Days Used</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+totalHrsConsult+' / 35</div><div class="cs-lbl">Hours Used</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+(35-totalHrsConsult).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining</div></div>';
 html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 8</div><div class="cs-lbl">Cycles Completed</div></div>';
-html+='<div class="coaching-stat"><div class="cs-val">'+(8-totalDays).toFixed(1)+'</div><div class="cs-lbl">Days Remaining</div></div>';
+html+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val">9</div><div class="cs-lbl">Flex Pool (hrs)</div></div>';
 document.getElementById('consultingSummary').innerHTML=html;
 
 var list='';
@@ -1125,7 +1626,8 @@ ensureCoaching(org);
 var totalHours=0;var completed=0;
 org.coaching.forEach(function(c){totalHours+=parseFloat(c.hours)||0;if(c.completed)completed++;});
 var html='<div class="coaching-stat"><div class="cs-val">'+totalHours.toFixed(1)+'</div><div class="cs-lbl">Hours Used</div></div>';
-html+='<div class="coaching-stat"><div class="cs-val">'+(21-totalHours).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining (of 21)</div></div>';
+html+='<div class="coaching-stat"><div class="cs-val">'+(12-totalHours).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining (of 12)</div></div>';
+html+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val">9</div><div class="cs-lbl">Flex Pool (hrs)</div></div>';
 html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 5</div><div class="cs-lbl">Cycles Completed</div></div>';
 document.getElementById('coachingSummary').innerHTML=html;
 
