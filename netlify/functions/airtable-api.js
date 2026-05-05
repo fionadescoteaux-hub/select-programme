@@ -1,3 +1,6 @@
+// SELECT Programme — Airtable API Function
+// Version: 2026-05-05-v3 (scrubFields safety net + selectVal helper)
+// If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
 const TABLES = {
@@ -214,6 +217,16 @@ function pct(value) {
   if (value === undefined || value === null || value === "") return "";
   const m = String(value).match(/(\d+(?:\.\d+)?)/);
   return m ? m[1] : "";
+}
+
+// For Single Select / Multi Select fields: empty strings cause Airtable to try
+// to CREATE a blank option, which fails with INVALID_MULTIPLE_CHOICE_OPTIONS.
+// Use this to convert "" to null (which Airtable accepts as "clear the field").
+function selectVal(v) {
+  if (v === undefined || v === null) return undefined; // skip the field entirely
+  const s = String(v).trim();
+  if (s === "") return null; // explicitly clear
+  return s;
 }
 
 function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance) {
@@ -456,27 +469,27 @@ async function handleGet(orgCode) {
 
 async function seedConsultingAndCoaching(orgCode) {
   const consulting = CONSULTING_TEMPLATE.map((c) => ({
-    fields: {
+    fields: scrubFields({
       [F.CO_ORG]: orgCode,
       [F.CO_CODE]: c.code,
       [F.CO_TITLE]: c.title,
       [F.CO_DATE]: c.date,
       [F.CO_PHASE]: c.phase,
       [F.CO_FOCUS]: c.focus,
-    },
+    }),
   }));
   for (let i = 0; i < consulting.length; i += 10) {
     await airtableFetch(TABLES.CONSULTING, { method: "POST", body: JSON.stringify({ records: consulting.slice(i, i + 10) }) });
   }
   const coaching = COACHING_TEMPLATE.map((c) => ({
-    fields: {
+    fields: scrubFields({
       [F.CC_ORG]: orgCode,
       [F.CC_CODE]: c.code,
       [F.CC_TITLE]: c.title,
       [F.CC_DATE]: c.date,
       [F.CC_COACH]: c.coach,
       [F.CC_THEME]: c.theme,
-    },
+    }),
   }));
   for (let i = 0; i < coaching.length; i += 10) {
     await airtableFetch(TABLES.COACHING, { method: "POST", body: JSON.stringify({ records: coaching.slice(i, i + 10) }) });
@@ -486,12 +499,12 @@ async function seedConsultingAndCoaching(orgCode) {
 async function handleCreate(payload) {
   const { name, ceo, code, jurisdiction } = payload;
   if (!name || !ceo || !code) return jsonResponse(400, { error: "name, ceo, code are required" });
-  const fields = {
+  const fields = scrubFields({
     [F.ORG_CODE]: code,
     [F.ORG_NAME]: name,
     [F.CEO_NAME]: ceo,
     [F.JURISDICTION]: jurisdiction || "ROI",
-  };
+  });
   await airtableFetch(TABLES.ORG_PROFILE, { method: "POST", body: JSON.stringify({ records: [{ fields }] }) });
   try {
     await seedConsultingAndCoaching(code);
@@ -509,20 +522,41 @@ async function handleRemove(orgCode) {
   return jsonResponse(200, { ok: true });
 }
 
+// Scrub empty-string values from a fields object before sending to Airtable.
+// Airtable rejects "" on Single Select / Multi Select / Date / Email fields with
+// INVALID_MULTIPLE_CHOICE_OPTIONS. Setting null clears the field; deleting
+// the key entirely leaves the existing value. We delete by default for safety
+// (so we never accidentally clear data the user didn't mean to clear).
+function scrubFields(fields) {
+  if (!fields || typeof fields !== "object") return fields;
+  const out = {};
+  Object.keys(fields).forEach((k) => {
+    const v = fields[k];
+    if (v === "") return; // skip empty strings entirely
+    if (v === undefined) return;
+    if (typeof v === "string" && v.trim() === "") return; // also skip whitespace-only
+    out[k] = v;
+  });
+  return out;
+}
+
 async function patchProfile(profileId, fields) {
-  if (!Object.keys(fields).length) return;
-  await airtableFetch(TABLES.ORG_PROFILE, { method: "PATCH", body: JSON.stringify({ records: [{ id: profileId, fields }] }) });
+  const clean = scrubFields(fields);
+  if (!Object.keys(clean).length) return;
+  await airtableFetch(TABLES.ORG_PROFILE, { method: "PATCH", body: JSON.stringify({ records: [{ id: profileId, fields: clean }] }) });
 }
 
 async function batchUpdate(tableId, updates) {
-  for (let i = 0; i < updates.length; i += 10) {
-    await airtableFetch(tableId, { method: "PATCH", body: JSON.stringify({ records: updates.slice(i, i + 10) }) });
+  const clean = updates.map((u) => ({ id: u.id, fields: scrubFields(u.fields) }));
+  for (let i = 0; i < clean.length; i += 10) {
+    await airtableFetch(tableId, { method: "PATCH", body: JSON.stringify({ records: clean.slice(i, i + 10) }) });
   }
 }
 
 async function batchCreate(tableId, creates) {
-  for (let i = 0; i < creates.length; i += 10) {
-    await airtableFetch(tableId, { method: "POST", body: JSON.stringify({ records: creates.slice(i, i + 10) }) });
+  const clean = creates.map((c) => ({ fields: scrubFields(c.fields) }));
+  for (let i = 0; i < clean.length; i += 10) {
+    await airtableFetch(tableId, { method: "POST", body: JSON.stringify({ records: clean.slice(i, i + 10) }) });
   }
 }
 
@@ -547,12 +581,28 @@ async function handleUpdate(payload) {
 
   // Existing KPI fields + new KPI fields
   if (kpi) {
-    if (kpi.jurisdiction !== undefined) profileFields[F.JURISDICTION] = kpi.jurisdiction;
+    if (kpi.jurisdiction !== undefined) {
+      const v = selectVal(kpi.jurisdiction);
+      if (v !== undefined) profileFields[F.JURISDICTION] = v;
+    }
     if (kpi.sector !== undefined) profileFields[F.SECTOR] = kpi.sector;
-    if (kpi.email !== undefined) profileFields[F.EMAIL] = kpi.email;
-    if (kpi.newToITI !== undefined) profileFields[F.NEW_TO_ITI] = kpi.newToITI;
-    if (kpi.firstTimeCB !== undefined) profileFields[F.FIRST_TIME_CB] = kpi.firstTimeCB;
-    if (kpi.firstTimeExp !== undefined) profileFields[F.FIRST_TIME_EXP] = kpi.firstTimeExp;
+    if (kpi.email !== undefined) {
+      const e = String(kpi.email || "").trim();
+      if (e === "") profileFields[F.EMAIL] = null;
+      else profileFields[F.EMAIL] = e;
+    }
+    if (kpi.newToITI !== undefined) {
+      const v = selectVal(kpi.newToITI);
+      if (v !== undefined) profileFields[F.NEW_TO_ITI] = v;
+    }
+    if (kpi.firstTimeCB !== undefined) {
+      const v = selectVal(kpi.firstTimeCB);
+      if (v !== undefined) profileFields[F.FIRST_TIME_CB] = v;
+    }
+    if (kpi.firstTimeExp !== undefined) {
+      const v = selectVal(kpi.firstTimeExp);
+      if (v !== undefined) profileFields[F.FIRST_TIME_EXP] = v;
+    }
     // Legacy fields if old client still sends them:
     if (kpi.crossBorderPct !== undefined) profileFields[F.CB_PCT] = pct(kpi.crossBorderPct);
     if (kpi.turnoverBand !== undefined) profileFields[F.TURNOVER] = String(kpi.turnoverBand);
@@ -566,7 +616,10 @@ async function handleUpdate(payload) {
     if (app.employees !== undefined) profileFields[F.EMPLOYEES] = String(app.employees || "");
     if (app.tradedPct !== undefined) profileFields[F.TRADED_PCT] = pct(app.tradedPct);
     if (app.crossBorderPct !== undefined) profileFields[F.CB_PCT] = pct(app.crossBorderPct);
-    if (app.priorITI !== undefined) profileFields[F.PRIOR_ITI] = app.priorITI;
+    if (app.priorITI !== undefined) {
+      const v = selectVal(app.priorITI);
+      if (v !== undefined) profileFields[F.PRIOR_ITI] = v;
+    }
     if (app.crossBorderTarget !== undefined) profileFields[F.CB_TARGET_TEXT] = app.crossBorderTarget;
   }
 
@@ -585,7 +638,10 @@ async function handleUpdate(payload) {
         ? diagnosis.priorities.join(", ")
         : String(diagnosis.priorities);
     }
-    if (diagnosis.scenario !== undefined) profileFields[F.SCENARIO] = diagnosis.scenario;
+    if (diagnosis.scenario !== undefined) {
+      const v = selectVal(diagnosis.scenario);
+      if (v !== undefined) profileFields[F.SCENARIO] = v;
+    }
     if (Array.isArray(diagnosis.constraints)) {
       if (diagnosis.constraints[0] !== undefined) profileFields[F.CONSTRAINT_1] = diagnosis.constraints[0] || "";
       if (diagnosis.constraints[1] !== undefined) profileFields[F.CONSTRAINT_2] = diagnosis.constraints[1] || "";
@@ -613,7 +669,10 @@ async function handleUpdate(payload) {
     if (financial.blRunway !== undefined) profileFields[F.BL_RUNWAY] = String(financial.blRunway || "");
     if (financial.blCbSalesPct !== undefined) profileFields[F.BL_CB_SALES_PCT] = String(financial.blCbSalesPct || "");
     if (financial.blCbSalesVal !== undefined) profileFields[F.BL_CB_SALES_VAL] = String(financial.blCbSalesVal || "");
-    if (financial.blExportStatus !== undefined) profileFields[F.BL_EXPORT_STATUS] = financial.blExportStatus || "";
+    if (financial.blExportStatus !== undefined) {
+      const v = selectVal(financial.blExportStatus);
+      if (v !== undefined) profileFields[F.BL_EXPORT_STATUS] = v;
+    }
     if (financial.curTurnover !== undefined) profileFields[F.CUR_TURNOVER] = String(financial.curTurnover || "");
     if (financial.curTradedIncome !== undefined) profileFields[F.CUR_TRADED_INCOME] = String(financial.curTradedIncome || "");
     if (financial.curTradedPct !== undefined) profileFields[F.CUR_TRADED_PCT] = String(financial.curTradedPct || "");
@@ -656,9 +715,18 @@ async function handleUpdate(payload) {
         if (assessor.lock.lk2 !== undefined) profileFields[F.LOCK_LK2] = !!assessor.lock.lk2;
         if (assessor.lock.lk3 !== undefined) profileFields[F.LOCK_LK3] = !!assessor.lock.lk3;
         if (assessor.lock.lk4 !== undefined) profileFields[F.LOCK_LK4] = !!assessor.lock.lk4;
-        if (assessor.lock.lk_led !== undefined) profileFields[F.LOCK_LED] = assessor.lock.lk_led || "";
-        if (assessor.lock.lk_session_date !== undefined) profileFields[F.LOCK_SESSION_DATE] = assessor.lock.lk_session_date || null;
-        if (assessor.lock.lk_lock_date !== undefined) profileFields[F.LOCK_LOCK_DATE] = assessor.lock.lk_lock_date || null;
+        if (assessor.lock.lk_led !== undefined) {
+          const v = selectVal(assessor.lock.lk_led);
+          if (v !== undefined) profileFields[F.LOCK_LED] = v;
+        }
+        if (assessor.lock.lk_session_date !== undefined) {
+          const d = String(assessor.lock.lk_session_date || "").trim();
+          profileFields[F.LOCK_SESSION_DATE] = d === "" ? null : d;
+        }
+        if (assessor.lock.lk_lock_date !== undefined) {
+          const d = String(assessor.lock.lk_lock_date || "").trim();
+          profileFields[F.LOCK_LOCK_DATE] = d === "" ? null : d;
+        }
       }
     }
   }
@@ -709,17 +777,21 @@ async function handleUpdate(payload) {
     const existing = await listAllRecords(TABLES.SMART);
     const toDelete = existing.filter((r) => r.fields[F.SM_ORG] === code).map((r) => r.id);
     await batchDelete(TABLES.SMART, toDelete);
-    const creates = smart.map((s, i) => ({
-      fields: {
+    const creates = smart.map((s, i) => {
+      const fields = {
         [F.SM_ORG]: code,
         [F.SM_NUM]: i + 1,
         [F.SM_OBJ]: s.objective || "",
         [F.SM_TARGET]: s.target || "",
         [F.SM_TIMELINE]: s.timeline || "",
-        [F.SM_OWNER]: s.owner || "",
-        [F.SM_STATUS]: s.status || "",
-      },
-    }));
+      };
+      // Owner / status may be select fields — skip if empty
+      const owner = selectVal(s.owner);
+      if (owner !== undefined) fields[F.SM_OWNER] = owner;
+      const status = selectVal(s.status);
+      if (status !== undefined) fields[F.SM_STATUS] = status;
+      return { fields };
+    });
     await batchCreate(TABLES.SMART, creates);
   }
 
@@ -736,18 +808,24 @@ async function handleUpdate(payload) {
         [F.CO_CODE]: c.code || "",
         [F.CO_TITLE]: c.title || "",
         [F.CO_DATE]: c.date || "",
-        [F.CO_PHASE]: c.phase || "",
         [F.CO_FOCUS]: c.focus || "",
-        [F.CO_BY]: c.consultedBy || "",
-        [F.CO_FORMAT]: c.format || "",
         [F.CO_SMART]: c.smartProgressed || "",
         [F.CO_ACTIONS]: c.actionsAgreed || "",
         [F.CO_OUTPUTS]: c.keyOutputs || "",
         [F.CO_DAYS]: c.days || "",
         [F.CO_MOVEMENT]: c.domainMovement || "",
-        [F.CO_RAG]: c.rag || "",
         [F.CO_DONE]: !!c.completed,
       };
+      // Select fields: only set if non-empty (else Airtable rejects with INVALID_MULTIPLE_CHOICE_OPTIONS)
+      const phase = selectVal(c.phase);
+      if (phase !== undefined) fields[F.CO_PHASE] = phase;
+      const by = selectVal(c.consultedBy);
+      if (by !== undefined) fields[F.CO_BY] = by;
+      const fmt = selectVal(c.format);
+      if (fmt !== undefined) fields[F.CO_FORMAT] = fmt;
+      const rag = selectVal(c.rag);
+      if (rag !== undefined) fields[F.CO_RAG] = rag;
+
       const exists = byCode[c.code];
       if (exists) updates.push({ id: exists.id, fields });
       else creates.push({ fields });
@@ -769,12 +847,15 @@ async function handleUpdate(payload) {
         [F.CC_CODE]: c.code || "",
         [F.CC_TITLE]: c.title || "",
         [F.CC_DATE]: c.date || "",
-        [F.CC_COACH]: c.coach || "",
         [F.CC_HOURS]: c.hours || "",
         [F.CC_THEME]: c.theme || "",
         [F.CC_ACTION]: c.action || c.actionAgreed || "",
         [F.CC_DONE]: !!c.completed,
       };
+      // Coach is a select field — only set if non-empty
+      const coach = selectVal(c.coach);
+      if (coach !== undefined) fields[F.CC_COACH] = coach;
+
       const exists = byCode[c.code];
       if (exists) updates.push({ id: exists.id, fields });
       else creates.push({ fields });
@@ -795,13 +876,13 @@ async function handleUpdate(payload) {
       const key = "ck" + i;
       if (assessorObj.checklist[key] === undefined) continue;
       const done = !!assessorObj.checklist[key];
-      const ts = assessorObj.checklist[key + "_ts"] || "";
+      const ts = String(assessorObj.checklist[key + "_ts"] || "").trim();
       const fields = {
         [F.CK_ORG]: code,
         [F.CK_INDEX]: i,
         [F.CK_DONE]: done,
-        [F.CK_AT]: ts,
       };
+      if (ts) fields[F.CK_AT] = ts;
       const exists = byIdx[i];
       if (exists) updates.push({ id: exists.id, fields });
       else creates.push({ fields });
@@ -851,9 +932,12 @@ async function handleUpdate(payload) {
         [F.AT_PHASE]: a.phase || "",
         [F.AT_ATTENDED]: !!a.attended,
         [F.AT_APOLOGY]: !!a.apology,
-        [F.AT_FORMAT]: a.format || "",
         [F.AT_NOTES]: a.notes || "",
       };
+      // Format is Single select — skip if empty
+      const fmt = selectVal(a.format);
+      if (fmt !== undefined) fields[F.AT_FORMAT] = fmt;
+
       const exists = byCode[sessionCode];
       if (exists) updates.push({ id: exists.id, fields });
       else creates.push({ fields });
@@ -896,6 +980,7 @@ async function handleUpdate(payload) {
 }
 
 exports.handler = async (event) => {
+  console.log("[SELECT API v3] Invoked - method:", event.httpMethod, "action:", (() => { try { return JSON.parse(event.body || "{}").action; } catch { return "?"; } })());
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: corsHeaders(), body: "" };
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method not allowed" });
   if (!process.env.AIRTABLE_PAT || !process.env.AIRTABLE_BASE_ID) return jsonResponse(500, { error: "Server misconfigured — missing env vars" });
