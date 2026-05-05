@@ -96,9 +96,11 @@ var AT = (function() {
             if (!o.notes) o.notes = [];
             if (!o.consulting) o.consulting = [];
             if (!o.coaching) o.coaching = [];
+            if (!o.attendance) o.attendance = [];
             if (!o.kpi) o.kpi = {};
             if (!o.app) o.app = {};
-            if (!o.assessor) o.assessor = {};
+            if (!o.financial) o.financial = {};
+            if (!o.assessor || typeof o.assessor !== 'object') o.assessor = {};
             if (!o.diagnosis) o.diagnosis = {};
             if (!o.sop) o.sop = {};
             if (!o.crossBorder) o.crossBorder = {};
@@ -166,20 +168,22 @@ var AT = (function() {
         password: authToken,
         code: org.code,
         kpi: org.kpi || {},
+        app: org.app || {},
         diagnosis: org.diagnosis || {},
         crossBorder: org.crossBorder || {},
+        financial: org.financial || {},
         baseline: org.baseline || [],
         endline: org.endline || [],
         smart: org.smart || [],
         consulting: org.consulting || [],
         coaching: org.coaching || [],
-        checklist: org.checklist || [],
-        validation: org.validation || [],
+        attendance: org.attendance || [],
         progress: org.progress || [],
         notes: org.notes || [],
         baselineLocked: org.baselineLocked || false,
         intensity: org.intensity || '',
-        assessor: org.assessor || ''
+        // Send full assessor object (rich form: assessor lead + checklist + validation + goals + priorities + lock)
+        assessor: org.assessor || {}
       };
     }
 
