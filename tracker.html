@@ -392,7 +392,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <button class="tab-btn" data-tab="endline" onclick="switchTab('endline',this)">Endline</button>
 <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance',this)">Attendance</button>
 <button class="tab-btn" data-tab="financial" onclick="switchTab('financial',this)">Financial</button>
-<button class="tab-btn" data-tab="itikpi" onclick="switchTab('itikpi',this)">ITI KPIs</button>
 <button class="tab-btn" data-tab="notes" onclick="switchTab('notes',this)">Notes</button>
 </div>
 </div>
@@ -516,16 +515,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="kpi-grid" id="lciGrid"></div>
 </div>
 
-<!-- ITI KPIs TAB -->
-<div class="tab-panel" id="tab-itikpi">
-<div class="section-title">ITI KPI Classification</div>
-<div class="section-note">Contractual classifications set at programme entry. Used for ITI cohort-level reporting.</div>
-<div class="kpi-grid" id="itiKpiGrid"></div>
-<div class="sub-section">Cross-Border Detail</div>
-<div class="kpi-grid" id="itiCbGrid"></div>
-<div class="sub-section">Interim Report Data (30 July 2026)</div>
-<div class="kpi-grid" id="interimGrid"></div>
-</div>
+<!-- ITI KPIs TAB removed - duplicates Profile fields -->
 
 </div><!-- /trackerScreen -->
 
@@ -982,27 +972,6 @@ function exportToExcel(){
     {wch:12},{wch:12},{wch:16},{wch:14},{wch:16},{wch:18},{wch:16},{wch:18},{wch:18},{wch:14},{wch:12},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws8,'Financial Baseline');
 
-  // ── SHEET 9: ITI KPIs ──
-  var iti=[['Organisation','CEO','New to ITI','First-Time Exporter','First-Time Cross-Border',
-    'Jurisdiction','Sector','De Minimis','Employee Count','Prior ITI Support',
-    'CB Current Activity','CB Target','CB Opportunity','CB Barriers',
-    'Interim Traded Income','Interim Growth %','Interim CB Sales','Interim SMART Progress',
-    'Interim Risks','Interim Report Status']];
-  orgs.forEach(function(o){
-    var k=o.itiKpi||{};
-    iti.push([o.name||'',o.ceo||'',
-      k.newToIti||'',k.firstTimeExporter||'',k.firstTimeCb||'',
-      k.roiNi||((o.kpi&&o.kpi.jurisdiction)||''),k.sector||'',k.deMinimis||'',
-      k.employeeCount||'',k.priorItiSupport||'',
-      k.cbCurrentActivity||'',k.cbTarget||'',k.cbOpportunity||'',k.cbBarriers||'',
-      k.interimTradedIncome||'',k.interimGrowthPct||'',k.interimCbSales||'',
-      k.interimSmartProgress||'',k.interimRisks||'',k.interimReportStatus||'']);
-  });
-  var ws9=XLSX.utils.aoa_to_sheet(iti);
-  ws9['!cols']=[{wch:28},{wch:18},{wch:12},{wch:16},{wch:18},{wch:12},{wch:20},{wch:12},
-    {wch:14},{wch:20},{wch:30},{wch:25},{wch:25},{wch:25},{wch:18},{wch:16},{wch:16},{wch:35},{wch:35},{wch:18}];
-  XLSX.utils.book_append_sheet(wb,ws9,'ITI KPIs');
-
   // ── Export ──
   var date=new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb,'SELECT_Programme_Export_'+date+'.xlsx');
@@ -1177,10 +1146,10 @@ function renderAttendance(org){
     list+='<td style="padding:10px 12px;color:var(--ts);white-space:nowrap">'+esc(s.date)+'</td>';
     list+='<td style="padding:10px 12px;color:var(--ts);white-space:nowrap">'+esc(s.phase)+'</td>';
     if(isAssessor){
-      list+='<td style="padding:10px 12px;text-align:center"><input type="checkbox" '+(s.attended?'checked':'')+' data-att-attended="'+i+'" style="width:16px;height:16px;cursor:pointer"></td>';
-      list+='<td style="padding:10px 12px;text-align:center"><input type="checkbox" '+(s.apology?'checked':'')+' data-att-apology="'+i+'" style="width:16px;height:16px;cursor:pointer"></td>';
-      list+='<td style="padding:10px 12px"><select data-att-format="'+i+'" style="padding:4px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp);width:100%"><option'+(s.format==='Online'?' selected':'')+'>Online</option><option'+(s.format==='In Person'?' selected':'')+'>In Person</option><option'+(s.format==='Hybrid'?' selected':'')+'>Hybrid</option></select></td>';
-      list+='<td style="padding:10px 12px"><input data-att-notes="'+i+'" value="'+esc(s.notes||'')+'" placeholder="Optional notes" style="width:100%;padding:4px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp)"></td>';
+      list+='<td style="padding:10px 12px;text-align:center"><label style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;cursor:pointer;border-radius:4px;transition:background .15s" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'"><input type="checkbox" '+(s.attended?'checked':'')+' data-att-attended="'+i+'" style="width:18px;height:18px;cursor:pointer;accent-color:var(--teal)"></label></td>';
+      list+='<td style="padding:10px 12px;text-align:center"><label style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;cursor:pointer;border-radius:4px;transition:background .15s" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'"><input type="checkbox" '+(s.apology?'checked':'')+' data-att-apology="'+i+'" style="width:18px;height:18px;cursor:pointer;accent-color:#ed6c02"></label></td>';
+      list+='<td style="padding:10px 12px"><select data-att-format="'+i+'" style="padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp);width:100%;cursor:pointer"><option value="Online"'+(s.format==='Online'||!s.format?' selected':'')+'>Online</option><option value="In Person"'+(s.format==='In Person'?' selected':'')+'>In Person</option><option value="Hybrid"'+(s.format==='Hybrid'?' selected':'')+'>Hybrid</option></select></td>';
+      list+='<td style="padding:10px 12px"><input data-att-notes="'+i+'" value="'+esc(s.notes||'')+'" placeholder="Optional notes" style="width:100%;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp)"></td>';
     }else{
       list+='<td style="padding:10px 12px;text-align:center">'+statusDot+'</td>';
       list+='<td style="padding:10px 12px;text-align:center">'+(s.apology?'<span style="color:#ed6c02">Yes</span>':'-')+'</td>';
@@ -1197,16 +1166,45 @@ function renderAttendance(org){
   // Wire up event listeners for the checkboxes and inputs
   if(isAssessor){
     el.querySelectorAll('[data-att-attended]').forEach(function(cb){
-      cb.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-attended')),'attended',this.checked);renderAttendance(org);});
+      cb.addEventListener('change',function(){
+        var idx=parseInt(this.getAttribute('data-att-attended'));
+        var checked=this.checked;
+        try{
+          saveAttField(idx,'attended',checked);
+          // If marking attended and no format set, default to Online
+          if(checked){
+            var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
+            if(o&&o.attendance&&o.attendance[idx]&&!o.attendance[idx].format){
+              o.attendance[idx].format='Online';
+              saveData(d);
+            }
+          }
+        }catch(err){console.error('Save attended failed:',err);}
+        // Defer re-render so the click event finishes cleanly
+        setTimeout(function(){renderAttendance(org);},0);
+      });
     });
     el.querySelectorAll('[data-att-apology]').forEach(function(cb){
-      cb.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-apology')),'apology',this.checked);renderAttendance(org);});
+      cb.addEventListener('change',function(){
+        var idx=parseInt(this.getAttribute('data-att-apology'));
+        var checked=this.checked;
+        try{saveAttField(idx,'apology',checked);}catch(err){console.error('Save apology failed:',err);}
+        setTimeout(function(){renderAttendance(org);},0);
+      });
     });
     el.querySelectorAll('[data-att-format]').forEach(function(sel){
-      sel.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-format')),'format',this.value);});
+      sel.addEventListener('change',function(){
+        var idx=parseInt(this.getAttribute('data-att-format'));
+        var val=this.value;
+        try{saveAttField(idx,'format',val);}catch(err){console.error('Save format failed:',err);}
+      });
     });
     el.querySelectorAll('[data-att-notes]').forEach(function(inp){
-      inp.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-notes')),'notes',this.value);});
+      inp.addEventListener('change',function(){
+        var idx=parseInt(this.getAttribute('data-att-notes'));
+        var val=this.value;
+        try{saveAttField(idx,'notes',val);}catch(err){console.error('Save notes failed:',err);}
+      });
     });
   }
 }
@@ -1214,10 +1212,11 @@ function renderAttendance(org){
 function saveAttField(i,field,val){
   var data=loadData();
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
+  if(!org){console.warn('saveAttField: org not found',currentOrg);return;}
   ensureAttendance(org);
+  if(!org.attendance[i]){console.warn('saveAttField: session index missing',i);return;}
   org.attendance[i][field]=val;
-  saveData(data,currentOrg);
+  saveData(data);
 }
 
 // ═══════════════════════════════════════
@@ -1273,9 +1272,7 @@ function renderFinancial(org){
       el.querySelectorAll('input[data-key]').forEach(function(inp){
         inp.addEventListener('change',function(){
           var k=this.getAttribute('data-key');
-          var fn=this.getAttribute('data-savefn');
-          if(fn==='fin')saveFinField(k,this.value);
-          else if(fn==='iti')saveItiField(k,this.value);
+          saveFinField(k,this.value);
         });
       });
     }
@@ -1313,85 +1310,6 @@ function saveFinField(key,val){
   // Refresh growth summary
   renderFinancial(org);
 }
-
-// ═══════════════════════════════════════
-// ITI KPI CLASSIFICATIONS
-// ═══════════════════════════════════════
-function renderItiKpi(org){
-  if(!org.itiKpi)org.itiKpi={};
-  var k=org.itiKpi;
-  var juris=(org.kpi&&org.kpi.jurisdiction)||'ROI';
-  var sym=juris.toUpperCase()==='NI'?'£':'€';
-
-  var kpiFields=[
-    {key:'newToIti',label:'New to ITI Support',type:'select',opts:['Yes','No','Unknown']},
-    {key:'firstTimeExporter',label:'First-Time Exporter',type:'select',opts:['Yes','No','Unknown']},
-    {key:'firstTimeCb',label:'First-Time Cross-Border Trader',type:'select',opts:['Yes','No','Unknown']},
-    {key:'roiNi',label:'Primary Jurisdiction',type:'select',opts:['ROI','NI','Both']},
-    {key:'sector',label:'Sector / Subsector',type:'text',ph:'e.g. Health & Wellbeing'},
-    {key:'deMinimis',label:'De Minimis / State Aid Declaration',type:'select',opts:['Declared','Not required','Pending']},
-    {key:'employeeCount',label:'Employee Count at Entry',type:'text',ph:'e.g. 12 FTE'},
-    {key:'priorItiSupport',label:'Prior ITI Support',type:'text',ph:'None / describe any previous'}
-  ];
-  var cbFields=[
-    {key:'cbCurrentActivity',label:'Current Cross-Border Activity',type:'textarea',ph:'Describe any existing NI<->ROI activity'},
-    {key:'cbTarget',label:'Cross-Border Target by Programme End',type:'text',ph:'e.g. '+sym+'50,000 or First sales into NI'},
-    {key:'cbOpportunity',label:'Primary Cross-Border Opportunity',type:'text',ph:'e.g. HSE equivalent in NI'},
-    {key:'cbBarriers',label:'Key Cross-Border Barriers',type:'text',ph:'e.g. Regulatory, Market knowledge'}
-  ];
-  var interimFields=[
-    {key:'interimTradedIncome',label:'Traded Income at Interim (30 Jul 2026, '+sym+')',type:'text',ph:'e.g. 240000'},
-    {key:'interimGrowthPct',label:'Traded Income Growth at Interim (%)',type:'text',ph:'auto or enter e.g. 8.5'},
-    {key:'interimCbSales',label:'Cross-Border Sales at Interim ('+sym+')',type:'text',ph:'e.g. 0 or 15000'},
-    {key:'interimSmartProgress',label:'SMART Objectives Progress Summary',type:'textarea',ph:'Brief narrative for interim report'},
-    {key:'interimRisks',label:'Risks / Issues to Flag to ITI',type:'textarea',ph:'Any risks to programme delivery or outcomes'},
-    {key:'interimReportStatus',label:'Interim Report Status',type:'select',opts:['Not started','In preparation','Submitted']}
-  ];
-
-  function renderKpiGroup(fields,containerId){
-    var h='';
-    fields.forEach(function(fd){
-      var val=k[fd.key]||'';
-      h+='<div class="kpi-card"><label>'+esc(fd.label)+'</label>';
-      if(isAssessor){
-        if(fd.type==='select'){
-          h+='<select data-key="'+esc(fd.key)+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-          h+='<option value="">-- Select --</option>';
-          fd.opts.forEach(function(o){h+='<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
-          h+='</select>';
-        }else if(fd.type==='textarea'){
-          h+='<textarea data-key="'+esc(fd.key)+'" placeholder="'+esc(fd.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);min-height:70px">'+esc(val)+'</textarea>';
-        }else{
-          h+='<input data-key="'+esc(fd.key)+'" value="'+esc(val)+'" placeholder="'+esc(fd.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-        }
-      }else{
-        h+='<div class="kpi-val">'+(val||'--')+'</div>';
-      }
-      h+='</div>';
-    });
-    var el=document.getElementById(containerId);
-    el.innerHTML=h;
-    if(isAssessor){
-      el.querySelectorAll('[data-key]').forEach(function(inp){
-        inp.addEventListener('change',function(){saveItiField(this.getAttribute('data-key'),this.value);});
-      });
-    }
-  }
-
-  renderKpiGroup(kpiFields,'itiKpiGrid');
-  renderKpiGroup(cbFields,'itiCbGrid');
-  renderKpiGroup(interimFields,'interimGrid');
-}
-
-function saveItiField(key,val){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  if(!org.itiKpi)org.itiKpi={};
-  org.itiKpi[key]=val;
-  saveData(data,currentOrg);
-}
-
 
 function toggleJurisdiction(){
   var data=loadData();
@@ -1603,7 +1521,7 @@ if(jBanner){
 renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
 renderBaseline(org);renderDiagnosis(org);renderValidation(org);renderSMART(org);
 renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
-renderAttendance(org);renderFinancial(org);renderItiKpi(org);
+renderAttendance(org);renderFinancial(org);
 }
 
 function switchTab(tab,btn){
