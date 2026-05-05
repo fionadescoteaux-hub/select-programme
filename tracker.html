@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- SELECT SMART Tracker v3.1 - 2026-05-05 -->
+<!-- SELECT SMART Tracker v3.2 - 2026-05-05 - saveTracker hardened against undefined arrays -->
 <title>SELECT — SMART Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -1860,50 +1860,101 @@ saveData(data);showSaveMsg();return;
 
 if(!currentOrg)return;
 var org=data.orgs.find(function(o){return o.code===currentOrg;});
+if(!org)return;
+
+// ── DEFENSIVE GUARDS: ensure every container exists before any write ──
+// Fixes "Cannot set properties of undefined (setting '0')" when records
+// loaded from Airtable are missing arrays/objects (e.g. diagnosis.constraints).
+if(!org.kpi)org.kpi={};
+if(!org.app)org.app={};
+if(!org.crossBorder)org.crossBorder={};
+if(!Array.isArray(org.baseline))org.baseline=DOMAINS.map(function(d){return{domain:d.name,score:'',evidence:''};});
+if(!Array.isArray(org.endline))org.endline=DOMAINS.map(function(d){return{domain:d.name,score:''};});
+if(!Array.isArray(org.smart))org.smart=[];
+if(!Array.isArray(org.notes))org.notes=[];
+if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
+if(!Array.isArray(org.diagnosis.constraints))org.diagnosis.constraints=['','',''];
+while(org.diagnosis.constraints.length<3)org.diagnosis.constraints.push('');
 
 // KPIs
 document.querySelectorAll('[data-kpi]').forEach(function(el){org.kpi[el.dataset.kpi]=el.value;});
 // App data
-if(!org.app)org.app={};
 document.querySelectorAll('[data-app]').forEach(function(el){org.app[el.dataset.app]=el.value;});
 // Cross-border
-if(!org.crossBorder)org.crossBorder={};
 document.querySelectorAll('[data-cb]').forEach(function(el){org.crossBorder[el.dataset.cb]=el.value;});
 // Baseline scores + evidence
-document.querySelectorAll('[data-bl]').forEach(function(el){org.baseline[parseInt(el.dataset.bl)].score=el.value;});
-document.querySelectorAll('[data-bl-ev]').forEach(function(el){org.baseline[parseInt(el.dataset.blEv)].evidence=el.value;});
+document.querySelectorAll('[data-bl]').forEach(function(el){
+var idx=parseInt(el.dataset.bl);
+if(!org.baseline[idx])org.baseline[idx]={domain:(DOMAINS[idx]?DOMAINS[idx].name:''),score:'',evidence:''};
+org.baseline[idx].score=el.value;
+});
+document.querySelectorAll('[data-bl-ev]').forEach(function(el){
+var idx=parseInt(el.dataset.blEv);
+if(!org.baseline[idx])org.baseline[idx]={domain:(DOMAINS[idx]?DOMAINS[idx].name:''),score:'',evidence:''};
+org.baseline[idx].evidence=el.value;
+});
 // Endline
-document.querySelectorAll('[data-el]').forEach(function(el){var idx=parseInt(el.dataset.el);if(org.endline&&org.endline[idx])org.endline[idx].score=el.value;});
+document.querySelectorAll('[data-el]').forEach(function(el){
+var idx=parseInt(el.dataset.el);
+if(!org.endline[idx])org.endline[idx]={domain:(DOMAINS[idx]?DOMAINS[idx].name:''),score:''};
+org.endline[idx].score=el.value;
+});
 // Diagnosis
-if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
 document.querySelectorAll('[data-diag]').forEach(function(el){org.diagnosis[el.dataset.diag]=el.value;});
-document.querySelectorAll('[data-constraint]').forEach(function(el){org.diagnosis.constraints[parseInt(el.dataset.constraint)]=el.value;});
+document.querySelectorAll('[data-constraint]').forEach(function(el){
+var idx=parseInt(el.dataset.constraint);
+while(org.diagnosis.constraints.length<=idx)org.diagnosis.constraints.push('');
+org.diagnosis.constraints[idx]=el.value;
+});
 // SMART
-document.querySelectorAll('[data-smart-obj]').forEach(function(el){org.smart[parseInt(el.dataset.smartObj)].objective=el.value;});
-document.querySelectorAll('[data-smart-target]').forEach(function(el){org.smart[parseInt(el.dataset.smartTarget)].target=el.value;});
-document.querySelectorAll('[data-smart-timeline]').forEach(function(el){org.smart[parseInt(el.dataset.smartTimeline)].timeline=el.value;});
-document.querySelectorAll('[data-smart-domain]').forEach(function(el){org.smart[parseInt(el.dataset.smartDomain)].domain=el.value;});
-document.querySelectorAll('[data-smart-status]').forEach(function(el){org.smart[parseInt(el.dataset.smartStatus)].status=el.value;});
+document.querySelectorAll('[data-smart-obj]').forEach(function(el){
+var idx=parseInt(el.dataset.smartObj);
+if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
+org.smart[idx].objective=el.value;
+});
+document.querySelectorAll('[data-smart-target]').forEach(function(el){
+var idx=parseInt(el.dataset.smartTarget);
+if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
+org.smart[idx].target=el.value;
+});
+document.querySelectorAll('[data-smart-timeline]').forEach(function(el){
+var idx=parseInt(el.dataset.smartTimeline);
+if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
+org.smart[idx].timeline=el.value;
+});
+document.querySelectorAll('[data-smart-domain]').forEach(function(el){
+var idx=parseInt(el.dataset.smartDomain);
+if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
+org.smart[idx].domain=el.value;
+});
+document.querySelectorAll('[data-smart-status]').forEach(function(el){
+var idx=parseInt(el.dataset.smartStatus);
+if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
+org.smart[idx].status=el.value;
+});
 // Consulting (outreach cycles)
 ensureConsulting(org);
-document.querySelectorAll('[data-con-by]').forEach(function(el){org.consulting[parseInt(el.dataset.conBy)].consultedBy=el.value;});
-document.querySelectorAll('[data-con-format]').forEach(function(el){org.consulting[parseInt(el.dataset.conFormat)].format=el.value;});
-document.querySelectorAll('[data-con-smart]').forEach(function(el){org.consulting[parseInt(el.dataset.conSmart)].smartProgressed=el.value;});
-document.querySelectorAll('[data-con-actions]').forEach(function(el){org.consulting[parseInt(el.dataset.conActions)].actionsAgreed=el.value;});
-document.querySelectorAll('[data-con-outputs]').forEach(function(el){org.consulting[parseInt(el.dataset.conOutputs)].keyOutputs=el.value;});
-document.querySelectorAll('[data-con-days]').forEach(function(el){org.consulting[parseInt(el.dataset.conDays)].days=el.value;});
-document.querySelectorAll('[data-con-domain]').forEach(function(el){org.consulting[parseInt(el.dataset.conDomain)].domainMovement=el.value;});
-document.querySelectorAll('[data-con-rag]').forEach(function(el){org.consulting[parseInt(el.dataset.conRag)].rag=el.value;});
-document.querySelectorAll('[data-con-done]').forEach(function(el){org.consulting[parseInt(el.dataset.conDone)].completed=el.checked;});
+document.querySelectorAll('[data-con-by]').forEach(function(el){var i=parseInt(el.dataset.conBy);if(org.consulting[i])org.consulting[i].consultedBy=el.value;});
+document.querySelectorAll('[data-con-format]').forEach(function(el){var i=parseInt(el.dataset.conFormat);if(org.consulting[i])org.consulting[i].format=el.value;});
+document.querySelectorAll('[data-con-smart]').forEach(function(el){var i=parseInt(el.dataset.conSmart);if(org.consulting[i])org.consulting[i].smartProgressed=el.value;});
+document.querySelectorAll('[data-con-actions]').forEach(function(el){var i=parseInt(el.dataset.conActions);if(org.consulting[i])org.consulting[i].actionsAgreed=el.value;});
+document.querySelectorAll('[data-con-outputs]').forEach(function(el){var i=parseInt(el.dataset.conOutputs);if(org.consulting[i])org.consulting[i].keyOutputs=el.value;});
+document.querySelectorAll('[data-con-days]').forEach(function(el){var i=parseInt(el.dataset.conDays);if(org.consulting[i])org.consulting[i].days=el.value;});
+document.querySelectorAll('[data-con-domain]').forEach(function(el){var i=parseInt(el.dataset.conDomain);if(org.consulting[i])org.consulting[i].domainMovement=el.value;});
+document.querySelectorAll('[data-con-rag]').forEach(function(el){var i=parseInt(el.dataset.conRag);if(org.consulting[i])org.consulting[i].rag=el.value;});
+document.querySelectorAll('[data-con-done]').forEach(function(el){var i=parseInt(el.dataset.conDone);if(org.consulting[i])org.consulting[i].completed=el.checked;});
 // Coaching (5 pre-populated cycles)
 ensureCoaching(org);
-document.querySelectorAll('[data-coach-hours]').forEach(function(el){org.coaching[parseInt(el.dataset.coachHours)].hours=el.value;});
-document.querySelectorAll('[data-coach-by]').forEach(function(el){org.coaching[parseInt(el.dataset.coachBy)].coach=el.value;});
-document.querySelectorAll('[data-coach-theme]').forEach(function(el){org.coaching[parseInt(el.dataset.coachTheme)].theme=el.value;});
-document.querySelectorAll('[data-coach-action]').forEach(function(el){org.coaching[parseInt(el.dataset.coachAction)].actionAgreed=el.value;});
-document.querySelectorAll('[data-coach-done]').forEach(function(el){org.coaching[parseInt(el.dataset.coachDone)].completed=el.checked;});
+document.querySelectorAll('[data-coach-hours]').forEach(function(el){var i=parseInt(el.dataset.coachHours);if(org.coaching[i])org.coaching[i].hours=el.value;});
+document.querySelectorAll('[data-coach-by]').forEach(function(el){var i=parseInt(el.dataset.coachBy);if(org.coaching[i])org.coaching[i].coach=el.value;});
+document.querySelectorAll('[data-coach-theme]').forEach(function(el){var i=parseInt(el.dataset.coachTheme);if(org.coaching[i])org.coaching[i].theme=el.value;});
+document.querySelectorAll('[data-coach-action]').forEach(function(el){var i=parseInt(el.dataset.coachAction);if(org.coaching[i])org.coaching[i].actionAgreed=el.value;});
+document.querySelectorAll('[data-coach-done]').forEach(function(el){var i=parseInt(el.dataset.coachDone);if(org.coaching[i])org.coaching[i].completed=el.checked;});
 // Notes
-document.querySelectorAll('[data-note]').forEach(function(el){org.notes[parseInt(el.dataset.note)].text=el.value;});
+document.querySelectorAll('[data-note]').forEach(function(el){
+var idx=parseInt(el.dataset.note);
+if(org.notes[idx])org.notes[idx].text=el.value;
+});
 
 saveData(data);showSaveMsg();
 renderBaseline(org);renderEndline(org);renderConsulting(org);renderCoaching(org);
