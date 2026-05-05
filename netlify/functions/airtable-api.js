@@ -426,7 +426,7 @@ async function handleUpdate(payload) {
     if (crossBorder.endline !== undefined) profileFields[F.CB_ENDLINE] = crossBorder.endline;
   }
   if (intensity !== undefined) profileFields[F.INTENSITY] = intensity;
-  if (assessor !== undefined) profileFields[F.ASSESSOR] = assessor;
+  // assessor field skipped — Airtable field type incompatibility
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   await patchProfile(profile.id, profileFields);
 
@@ -629,8 +629,9 @@ exports.handler = async (event) => {
   catch (e) { return jsonResponse(400, { error: "Invalid JSON" }); }
 
   const masterPw = process.env.TRACKER_MASTER_PW || "SELECT2026";
-  const isAssessor = body.password === masterPw;
-  const writeActions = new Set(["create", "update", "remove"]);
+  const authHeader = event.headers['x-auth'] || event.headers['X-Auth'] || '';
+  const isAssessor = body.password === masterPw || authHeader === masterPw;
+  const writeActions = new Set(["create", "update", "remove", "seed"]);
   if (writeActions.has(body.action) && !isAssessor) return jsonResponse(403, { error: "Assessor password required for this action" });
 
   try {
@@ -640,6 +641,18 @@ exports.handler = async (event) => {
       case "create": return await handleCreate(body);
       case "update": return await handleUpdate(body);
       case "remove": return await handleRemove(body.code);
+      case "seed": {
+        // Seed consulting+coaching templates for an existing org
+        const code = body.code;
+        if (!code) return jsonResponse(400, { error: "code is required" });
+        // Check if already seeded
+        const existing = await listAllRecords(TABLES.CONSULTING);
+        const hasCycles = existing.some((r) => r.fields[F.CO_ORG] === code);
+        if (!hasCycles) {
+          await seedConsultingAndCoaching(code);
+        }
+        return jsonResponse(200, { ok: true, seeded: !hasCycles });
+      }
       default: return jsonResponse(400, { error: `Unknown action: ${body.action}` });
     }
   } catch (err) {
