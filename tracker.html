@@ -457,10 +457,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- ATTENDANCE TAB -->
 <div class="tab-panel" id="tab-attendance">
-<div class="section-title">Group Session Attendance</div>
-<div class="section-note">Mandatory attendance record for ITI reporting. 8 group sessions across the programme.</div>
-<div class="coaching-summary" id="attendanceSummary"></div>
-<div id="attendanceList"></div>
+<div class="section-title">Group Session &amp; Module Attendance</div>
+<div class="section-note">Mandatory attendance record for ITI audit and reporting. 8 group sessions across the programme. Attendance is mandatory — flag apologies immediately.</div>
+<div class="coaching-summary" id="attendanceSummary" style="flex-wrap:wrap"></div>
+<div style="margin-top:20px" id="attendanceList"></div>
 </div>
 
 <!-- FINANCIAL BASELINE TAB -->
@@ -963,36 +963,63 @@ function renderAttendance(org){
   ensureAttendance(org);
   var att=org.attendance;
   var attended=att.filter(function(a){return a.attended;}).length;
-  var html='<div class="coaching-stat"><div class="cs-val">'+attended+' / 8</div><div class="cs-lbl">Sessions Attended</div></div>';
-  html+='<div class="coaching-stat"><div class="cs-val">'+(8-attended)+'</div><div class="cs-lbl">Sessions Remaining</div></div>';
+  var apologies=att.filter(function(a){return !a.attended&&a.apology;}).length;
   var pct=Math.round((attended/8)*100);
-  var pctCol=pct>=80?'color:#2e7d32':pct>=50?'color:#ed6c02':'color:#c62828';
-  html+='<div class="coaching-stat"><div class="cs-val" style="'+pctCol+'">'+pct+'%</div><div class="cs-lbl">Attendance Rate</div></div>';
-  document.getElementById('attendanceSummary').innerHTML=html;
+  var pctCol=pct>=80?'#2e7d32':pct>=50?'#ed6c02':'#c62828';
+  var sumHtml='';
+  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+pctCol+'">'+attended+' / 8</div><div class="cs-lbl">Attended</div></div>';
+  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#ed6c02">'+apologies+'</div><div class="cs-lbl">Apologies</div></div>';
+  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+(8-attended-apologies>0?'#c62828':'var(--navy)')+'">'+Math.max(0,8-attended-apologies)+'</div><div class="cs-lbl">Not Recorded</div></div>';
+  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+pctCol+'">'+pct+'%</div><div class="cs-lbl">Attendance Rate</div></div>';
+  document.getElementById('attendanceSummary').innerHTML=sumHtml;
 
-  var list='';
+  // Module attendance grid
+  var list='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  list+='<thead><tr style="background:var(--navy);color:rgba(255,255,255,0.85)">';
+  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap">Module</th>';
+  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Session</th>';
+  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Date</th>';
+  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Phase</th>';
+  list+='<th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Attended</th>';
+  list+='<th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Apology</th>';
+  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Notes</th>';
+  list+='</tr></thead><tbody>';
   att.forEach(function(s,i){
-    var statusCol=s.attended?'#2e7d32':s.apology?'#ed6c02':'#c62828';
-    var statusLabel=s.attended?'Attended':s.apology?'Apology':'Not recorded';
-    list+='<div class="consulting-card" style="margin-bottom:12px;border-left:3px solid '+statusCol+'">';
-    list+='<div class="cc-header"><div><span class="cc-badge">'+s.code+'</span> <strong>'+esc(s.title)+'</strong></div>';
-    list+='<span style="font-size:11px;color:var(--tt)">'+esc(s.date)+' &middot; '+esc(s.phase)+'</span></div>';
+    var rowBg=s.attended?'rgba(46,125,50,0.05)':s.apology?'rgba(237,108,2,0.05)':'rgba(198,40,40,0.03)';
+    var statusDot=s.attended?'<span style="color:#2e7d32;font-size:16px">&#10003;</span>':s.apology?'<span style="color:#ed6c02;font-size:12px">A</span>':'<span style="color:#c62828;font-size:12px">-</span>';
+    list+='<tr style="border-bottom:1px solid var(--tb);background:'+rowBg+'">';
+    list+='<td style="padding:10px 12px;font-weight:700;color:var(--navy);white-space:nowrap">'+esc(s.code)+'</td>';
+    list+='<td style="padding:10px 12px;color:var(--tp)">'+esc(s.title)+'</td>';
+    list+='<td style="padding:10px 12px;color:var(--ts);white-space:nowrap">'+esc(s.date)+'</td>';
+    list+='<td style="padding:10px 12px;color:var(--ts);white-space:nowrap">'+esc(s.phase)+'</td>';
     if(isAssessor){
-      list+='<div style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap">';
-      list+='<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">';
-      list+='<input type="checkbox" '+(s.attended?'checked':'')+' onchange="saveAttField('+i+',\x27attended\x27,this.checked)"> Attended</label>';
-      list+='<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">';
-      list+='<input type="checkbox" '+(s.apology?'checked':'')+' onchange="saveAttField('+i+',\x27apology\x27,this.checked)"> Apology received</label>';
-      list+='<input placeholder="Notes" value="'+esc(s.notes||'')+'" onchange="saveAttField('+i+',\x27notes\x27,this.value)" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-      list+='</div>';
+      list+='<td style="padding:10px 12px;text-align:center"><input type="checkbox" '+(s.attended?'checked':'')+' data-att-attended="'+i+'" style="width:16px;height:16px;cursor:pointer"></td>';
+      list+='<td style="padding:10px 12px;text-align:center"><input type="checkbox" '+(s.apology?'checked':'')+' data-att-apology="'+i+'" style="width:16px;height:16px;cursor:pointer"></td>';
+      list+='<td style="padding:10px 12px"><input data-att-notes="'+i+'" value="'+esc(s.notes||'')+'" placeholder="Optional notes" style="width:100%;padding:4px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp)"></td>';
     }else{
-      list+='<div style="margin-top:8px"><span style="font-size:12px;font-weight:700;color:'+statusCol+'">'+statusLabel+'</span>';
-      if(s.notes)list+='<span style="font-size:12px;color:var(--ts);margin-left:12px">'+esc(s.notes)+'</span>';
-      list+='</div>';
+      list+='<td style="padding:10px 12px;text-align:center">'+statusDot+'</td>';
+      list+='<td style="padding:10px 12px;text-align:center">'+(s.apology?'<span style="color:#ed6c02">Yes</span>':'-')+'</td>';
+      list+='<td style="padding:10px 12px;color:var(--ts);font-size:12px">'+esc(s.notes||'')+'</td>';
     }
-    list+='</div>';
+    list+='</tr>';
   });
-  document.getElementById('attendanceList').innerHTML=list;
+  list+='</tbody></table>';
+
+  var el=document.getElementById('attendanceList');
+  el.innerHTML=list;
+
+  // Wire up event listeners for the checkboxes and inputs
+  if(isAssessor){
+    el.querySelectorAll('[data-att-attended]').forEach(function(cb){
+      cb.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-attended')),'attended',this.checked);renderAttendance(org);});
+    });
+    el.querySelectorAll('[data-att-apology]').forEach(function(cb){
+      cb.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-apology')),'apology',this.checked);renderAttendance(org);});
+    });
+    el.querySelectorAll('[data-att-notes]').forEach(function(inp){
+      inp.addEventListener('change',function(){saveAttField(parseInt(this.getAttribute('data-att-notes')),'notes',this.value);});
+    });
+  }
 }
 
 function saveAttField(i,field,val){
@@ -1174,6 +1201,17 @@ function saveItiField(key,val){
   if(!org.itiKpi)org.itiKpi={};
   org.itiKpi[key]=val;
   saveData(data,currentOrg);
+}
+
+
+function toggleJurisdiction(){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!org.kpi)org.kpi={};
+  org.kpi.jurisdiction=org.kpi.jurisdiction==='NI'?'ROI':'NI';
+  saveData(data);
+  renderAll(org);
 }
 
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -1358,6 +1396,21 @@ renderAll(org);
 }
 
 function renderAll(org){
+// Jurisdiction banner
+var jBanner=document.getElementById('jurisdictionBanner');
+if(jBanner){
+  var j=(org.kpi&&org.kpi.jurisdiction)||'';
+  var jCol=j==='NI'?'var(--navy)':'var(--teal)';
+  var jBg=j==='NI'?'var(--navy-light)':'var(--teal-light)';
+  if(j){
+    jBanner.innerHTML='<span style="background:'+jBg+';color:'+jCol+';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px">'+j+'</span>';
+    if(isAssessor){
+      jBanner.innerHTML+='<button onclick="toggleJurisdiction()" style="font-size:10px;color:var(--ts);background:none;border:none;cursor:pointer;text-decoration:underline">Change</button>';
+    }
+  } else {
+    jBanner.innerHTML=isAssessor?'<button onclick="toggleJurisdiction()" style="font-size:11px;color:var(--ts);background:none;border:1px dashed var(--tb2);padding:3px 10px;border-radius:20px;cursor:pointer">Set ROI / NI</button>':'';
+  }
+}
 renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
 renderBaseline(org);renderDiagnosis(org);renderSMART(org);
 renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
