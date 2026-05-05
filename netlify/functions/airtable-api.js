@@ -10,6 +10,7 @@ const TABLES = {
   COACHING: "tblMKZVTSsl9kyuNx",
   CHECKLIST: "tblkIVaKSg0f1PhNs",
   VALIDATION: "tbl05mLuPICPy5DS0",
+  ATTENDANCE: "tbl4zny0FtKjofM44",
 };
 
 const F = {
@@ -35,6 +36,43 @@ const F = {
   CB_TARGET: "fld5ebS4shD6ndmpb",
   CB_ENDLINE: "fld486HdK2hxqPQaH",
   BASELINE_LOCKED: "fld8UegLqlAhxOQn5",
+  // ── New fields (Phase 1) ──
+  NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
+  FIRST_TIME_CB: "fld150A4iIyzD3gPF",
+  FIRST_TIME_EXP: "fldUDKLRJbNjcxJy0",
+  PRIOR_ITI: "fld4EzTkthjupixfb",
+  CB_TARGET_TEXT: "fldEUUVF4265HRDBv",
+  SCENARIO: "fld6GiO46JuElatnw",
+  CONSTRAINT_1: "fld7E1LGvKIWXGGQ6",
+  CONSTRAINT_2: "fldQZsvhEhr3oxb25",
+  CONSTRAINT_3: "fld0QMQmG0wW0WmKn",
+  BL_TURNOVER: "fldqdcaEXsW9uO6PZ",
+  BL_TRADED_INCOME: "fldXswX25yUEqmzoZ",
+  BL_TRADED_PCT: "fld9bN9Pd4B0wit4b",
+  BL_OP_SURPLUS: "fldk2CSpkVyUCdSlv",
+  BL_CASH_POSITION: "fldMWlAWk9iZljTIk",
+  BL_RUNWAY: "fldzODkNhTZDSnFkg",
+  BL_CB_SALES_PCT: "fldn55zsjvugpwEvm",
+  BL_CB_SALES_VAL: "fldwyxaFzoQ7xDC21",
+  BL_EXPORT_STATUS: "fldILjtjKFJpBhaLj",
+  CUR_TURNOVER: "fld2ZQYWnHTatorsd",
+  CUR_TRADED_INCOME: "fldLjrFbMs6q5nrHI",
+  CUR_TRADED_PCT: "fld5l4zGso4Ol4Tbq",
+  CUR_OP_SURPLUS: "flduYkAdrylcV1wkb",
+  CUR_CB_SALES_PCT: "fldXwPlm1c9p6yBj2",
+  CUR_CB_SALES_VAL: "fld74x2gHNlcfHs1b",
+  CUR_AS_OF: "fldehwAvZ85J6BgIO",
+  LCI_BASELINE: "fld1S3LWyDx1kUzdy",
+  LCI_MIDPOINT: "fldLiN2e5PgUeNdZc",
+  LCI_ENDLINE: "fldoeCnT7aZ8ZMQdI",
+  LOCK_LK1: "fldUp9Yd2P3PXVSRV",
+  LOCK_LK2: "fldr7ms1yhaCKiF0H",
+  LOCK_LK3: "fldudHcAc7c4CoYdA",
+  LOCK_LK4: "fldSDFqzfIx6FmB2G",
+  LOCK_LED: "fldzPJNlmeog2nv1F",
+  LOCK_SESSION_DATE: "fldw4kJTU7ceS1Tmw",
+  LOCK_LOCK_DATE: "fldB4C3EUBen1SqLR",
+  // ── Existing per-row table fields ──
   BS_ORG: "fldTH4PXtzyyJ35yC",
   BS_DOMAIN_NUM: "fldMM5I9G3i4HFKmL",
   BS_DOMAIN_NAME: "fldIs8JqfiHJ1Emxj",
@@ -89,6 +127,16 @@ const F = {
   V_NUM: "fldu8UjnlsBfqZ780",
   V_TITLE: "flddOCEZdYb0b4drM",
   V_NOTES: "flduAKEA2kyPuZqQP",
+  // ── New ATTENDANCE table ──
+  AT_ORG: "fldmXijh7JUIRDRRT",
+  AT_CODE: "fldtcqTC7KAzCrEyf",
+  AT_TITLE: "fldbRoY1cAnFuMcaM",
+  AT_DATE: "fldURPtH54JHH2h5k",
+  AT_PHASE: "fldnG7Rd7SvIaBq1g",
+  AT_ATTENDED: "fldVIVVZVP6kQV3Hq",
+  AT_APOLOGY: "fldhpYfCTMv7I0apK",
+  AT_FORMAT: "fldu6YT6IvUAGb5Q5",
+  AT_NOTES: "fldoRU1pT3dffHiWi",
 };
 
 const DOMAINS = [
@@ -168,7 +216,7 @@ function pct(value) {
   return m ? m[1] : "";
 }
 
-function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulting, coaching, checklist, validation) {
+function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance) {
   const f = profile.fields;
   const orgCode = f[F.ORG_CODE] || profile.id;
 
@@ -180,6 +228,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
   const coachingRows = coaching.filter((r) => r.fields[F.CC_ORG] === orgCode).sort((a, b) => String(a.fields[F.CC_CODE] || "").localeCompare(String(b.fields[F.CC_CODE] || ""), undefined, { numeric: true }));
   const checklistRows = checklist.filter((r) => r.fields[F.CK_ORG] === orgCode).sort((a, b) => (a.fields[F.CK_INDEX] || 0) - (b.fields[F.CK_INDEX] || 0));
   const validationRows = validation.filter((r) => r.fields[F.V_ORG] === orgCode).sort((a, b) => (a.fields[F.V_NUM] || 0) - (b.fields[F.V_NUM] || 0));
+  const attendanceRows = (attendance || []).filter((r) => r.fields[F.AT_ORG] === orgCode).sort((a, b) => String(a.fields[F.AT_CODE] || "").localeCompare(String(b.fields[F.AT_CODE] || ""), undefined, { numeric: true }));
 
   const baselineByNum = {};
   baselineRows.forEach((r) => (baselineByNum[r.fields[F.BS_DOMAIN_NUM]] = r));
@@ -198,6 +247,45 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
   const progressItems = noteRows.filter((r) => r.fields[F.N_TYPE] === "Progress").map((r) => ({ month: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
   const generalNotes = noteRows.filter((r) => r.fields[F.N_TYPE] === "Consulting" || r.fields[F.N_TYPE] === "Coaching" || r.fields[F.N_TYPE] === "Form Submission").map((r) => ({ type: r.fields[F.N_TYPE], date: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
 
+  // Build rich assessor object expected by Validation tab
+  const assessorObj = {
+    assessor: f[F.ASSESSOR] || "",
+    checklist: {},
+    validation: {},
+    goals: {
+      g_problem: f[F.PROBLEM] || "",
+      g_problem_why: "",
+      g_goal1: f[F.GOAL1] || "",
+      g_goal2: f[F.GOAL2] || "",
+      g_goal3: f[F.GOAL3] || "",
+      g_smart1: "",
+      g_smart2: "",
+      g_smart3: "",
+    },
+    priorities: f[F.PRIORITIES] ? String(f[F.PRIORITIES]).split(",").map((s) => s.trim()).filter(Boolean) : [],
+    lock: {
+      lk1: !!f[F.LOCK_LK1],
+      lk2: !!f[F.LOCK_LK2],
+      lk3: !!f[F.LOCK_LK3],
+      lk4: !!f[F.LOCK_LK4],
+      lk_led: f[F.LOCK_LED] || "",
+      lk_session_date: f[F.LOCK_SESSION_DATE] || "",
+      lk_lock_date: f[F.LOCK_LOCK_DATE] || "",
+    },
+  };
+  // Fill checklist + ts from CHECKLIST table rows
+  checklistRows.forEach((r) => {
+    const idx = r.fields[F.CK_INDEX];
+    const key = "ck" + idx;
+    assessorObj.checklist[key] = !!r.fields[F.CK_DONE];
+    if (r.fields[F.CK_AT]) assessorObj.checklist[key + "_ts"] = r.fields[F.CK_AT];
+  });
+  // Fill validation notes from VALIDATION table rows
+  validationRows.forEach((r) => {
+    const num = r.fields[F.V_NUM];
+    if (num) assessorObj.validation["vn" + num] = r.fields[F.V_NOTES] || "";
+  });
+
   return {
     _rid: profile.id,
     name: f[F.ORG_NAME] || "",
@@ -205,27 +293,65 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
     code: orgCode,
     password: orgCode,
     intensity: f[F.INTENSITY] || "",
-    assessor: f[F.ASSESSOR] || "",
+    assessor: assessorObj,
     kpi: {
       jurisdiction: f[F.JURISDICTION] || "",
       sector: f[F.SECTOR] || "",
-      crossBorderPct: f[F.CB_PCT] || "",
-      turnoverBand: f[F.TURNOVER] || "",
+      email: f[F.EMAIL] || "",
+      newToITI: f[F.NEW_TO_ITI] || "",
+      firstTimeCB: f[F.FIRST_TIME_CB] || "",
+      firstTimeExp: f[F.FIRST_TIME_EXP] || "",
+    },
+    app: {
+      turnover: f[F.TURNOVER] || "",
       employees: f[F.EMPLOYEES] || "",
       tradedPct: f[F.TRADED_PCT] || "",
+      crossBorderPct: f[F.CB_PCT] || "",
+      priorITI: f[F.PRIOR_ITI] || "",
+      crossBorderTarget: f[F.CB_TARGET_TEXT] || "",
     },
     diagnosis: {
       problem: f[F.PROBLEM] || "",
+      problemStatement: f[F.PROBLEM] || "", // alias for new tracker
       observation: f[F.OBSERVATION] || "",
       goal1: f[F.GOAL1] || "",
       goal2: f[F.GOAL2] || "",
       goal3: f[F.GOAL3] || "",
       priorities: f[F.PRIORITIES] || "",
+      scenario: f[F.SCENARIO] || "",
+      constraints: [
+        f[F.CONSTRAINT_1] || "",
+        f[F.CONSTRAINT_2] || "",
+        f[F.CONSTRAINT_3] || "",
+      ],
     },
     crossBorder: {
       baseline: f[F.CB_BASELINE] || "",
       target: f[F.CB_TARGET] || "",
       endline: f[F.CB_ENDLINE] || "",
+      baselinePct: f[F.CB_BASELINE] || "",
+      endlinePct: f[F.CB_ENDLINE] || "",
+    },
+    financial: {
+      blTurnover: f[F.BL_TURNOVER] || "",
+      blTradedIncome: f[F.BL_TRADED_INCOME] || "",
+      blTradedPct: f[F.BL_TRADED_PCT] || "",
+      blOpSurplus: f[F.BL_OP_SURPLUS] || "",
+      blCashPosition: f[F.BL_CASH_POSITION] || "",
+      blRunway: f[F.BL_RUNWAY] || "",
+      blCbSalesPct: f[F.BL_CB_SALES_PCT] || "",
+      blCbSalesVal: f[F.BL_CB_SALES_VAL] || "",
+      blExportStatus: f[F.BL_EXPORT_STATUS] || "",
+      curTurnover: f[F.CUR_TURNOVER] || "",
+      curTradedIncome: f[F.CUR_TRADED_INCOME] || "",
+      curTradedPct: f[F.CUR_TRADED_PCT] || "",
+      curOpSurplus: f[F.CUR_OP_SURPLUS] || "",
+      curCbSalesPct: f[F.CUR_CB_SALES_PCT] || "",
+      curCbSalesVal: f[F.CUR_CB_SALES_VAL] || "",
+      curAsOf: f[F.CUR_AS_OF] || "",
+      lciBaseline: f[F.LCI_BASELINE] || "",
+      lciMidpoint: f[F.LCI_MIDPOINT] || "",
+      lciEndline: f[F.LCI_ENDLINE] || "",
     },
     baseline: baselineFull,
     endline: endlineFull,
@@ -265,6 +391,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       hours: r.fields[F.CC_HOURS] || "",
       theme: r.fields[F.CC_THEME] || "",
       action: r.fields[F.CC_ACTION] || "",
+      actionAgreed: r.fields[F.CC_ACTION] || "",
       completed: !!r.fields[F.CC_DONE],
       _rid: r.id,
     })),
@@ -282,12 +409,23 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       notes: r.fields[F.V_NOTES] || "",
       _rid: r.id,
     })),
+    attendance: attendanceRows.map((r) => ({
+      code: r.fields[F.AT_CODE] || "",
+      title: r.fields[F.AT_TITLE] || "",
+      date: r.fields[F.AT_DATE] || "",
+      phase: r.fields[F.AT_PHASE] || "",
+      attended: !!r.fields[F.AT_ATTENDED],
+      apology: !!r.fields[F.AT_APOLOGY],
+      format: r.fields[F.AT_FORMAT] || "",
+      notes: r.fields[F.AT_NOTES] || "",
+      _rid: r.id,
+    })),
     baselineLocked: !!f[F.BASELINE_LOCKED],
   };
 }
 
 async function loadAll() {
-  const [profiles, baseline, endline, smart, notes, consulting, coaching, checklist, validation] = await Promise.all([
+  const [profiles, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance] = await Promise.all([
     listAllRecords(TABLES.ORG_PROFILE),
     listAllRecords(TABLES.BASELINE_SCORES),
     listAllRecords(TABLES.ENDLINE_SCORES),
@@ -297,13 +435,14 @@ async function loadAll() {
     listAllRecords(TABLES.COACHING),
     listAllRecords(TABLES.CHECKLIST),
     listAllRecords(TABLES.VALIDATION),
+    listAllRecords(TABLES.ATTENDANCE),
   ]);
-  return { profiles, baseline, endline, smart, notes, consulting, coaching, checklist, validation };
+  return { profiles, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance };
 }
 
 async function handleList() {
   const all = await loadAll();
-  const orgs = all.profiles.map((p) => buildOrgFromAirtable(p, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation));
+  const orgs = all.profiles.map((p) => buildOrgFromAirtable(p, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation, all.attendance));
   return jsonResponse(200, { orgs });
 }
 
@@ -311,7 +450,7 @@ async function handleGet(orgCode) {
   const all = await loadAll();
   const profile = all.profiles.find((p) => p.fields[F.ORG_CODE] === orgCode);
   if (!profile) return jsonResponse(404, { error: "Org not found" });
-  const org = buildOrgFromAirtable(profile, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation);
+  const org = buildOrgFromAirtable(profile, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation, all.attendance);
   return jsonResponse(200, { org });
 }
 
@@ -396,40 +535,137 @@ async function batchDelete(tableId, ids) {
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, diagnosis, crossBorder, baseline, endline, smart, progress, notes, consulting, coaching, checklist, validation, baselineLocked, intensity, assessor } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
   const profile = profiles.find((p) => p.fields[F.ORG_CODE] === code);
   if (!profile) return jsonResponse(404, { error: "Org not found" });
 
+  // ── PROFILE FIELDS (single record on ORG_PROFILE) ──
   const profileFields = {};
+
+  // Existing KPI fields + new KPI fields
   if (kpi) {
     if (kpi.jurisdiction !== undefined) profileFields[F.JURISDICTION] = kpi.jurisdiction;
     if (kpi.sector !== undefined) profileFields[F.SECTOR] = kpi.sector;
+    if (kpi.email !== undefined) profileFields[F.EMAIL] = kpi.email;
+    if (kpi.newToITI !== undefined) profileFields[F.NEW_TO_ITI] = kpi.newToITI;
+    if (kpi.firstTimeCB !== undefined) profileFields[F.FIRST_TIME_CB] = kpi.firstTimeCB;
+    if (kpi.firstTimeExp !== undefined) profileFields[F.FIRST_TIME_EXP] = kpi.firstTimeExp;
+    // Legacy fields if old client still sends them:
     if (kpi.crossBorderPct !== undefined) profileFields[F.CB_PCT] = pct(kpi.crossBorderPct);
     if (kpi.turnoverBand !== undefined) profileFields[F.TURNOVER] = String(kpi.turnoverBand);
     if (kpi.employees !== undefined) profileFields[F.EMPLOYEES] = String(kpi.employees);
     if (kpi.tradedPct !== undefined) profileFields[F.TRADED_PCT] = pct(kpi.tradedPct);
   }
+
+  // Application-stage data (new — was previously dropped)
+  if (app) {
+    if (app.turnover !== undefined) profileFields[F.TURNOVER] = String(app.turnover || "");
+    if (app.employees !== undefined) profileFields[F.EMPLOYEES] = String(app.employees || "");
+    if (app.tradedPct !== undefined) profileFields[F.TRADED_PCT] = pct(app.tradedPct);
+    if (app.crossBorderPct !== undefined) profileFields[F.CB_PCT] = pct(app.crossBorderPct);
+    if (app.priorITI !== undefined) profileFields[F.PRIOR_ITI] = app.priorITI;
+    if (app.crossBorderTarget !== undefined) profileFields[F.CB_TARGET_TEXT] = app.crossBorderTarget;
+  }
+
+  // Diagnosis (existing + new scenario/constraints)
   if (diagnosis) {
-    if (diagnosis.problem !== undefined) profileFields[F.PROBLEM] = diagnosis.problem;
+    // Accept either problemStatement (new) or problem (old) — normalise to PROBLEM field
+    if (diagnosis.problemStatement !== undefined) profileFields[F.PROBLEM] = diagnosis.problemStatement;
+    else if (diagnosis.problem !== undefined) profileFields[F.PROBLEM] = diagnosis.problem;
     if (diagnosis.observation !== undefined) profileFields[F.OBSERVATION] = diagnosis.observation;
     if (diagnosis.goal1 !== undefined) profileFields[F.GOAL1] = diagnosis.goal1;
     if (diagnosis.goal2 !== undefined) profileFields[F.GOAL2] = diagnosis.goal2;
     if (diagnosis.goal3 !== undefined) profileFields[F.GOAL3] = diagnosis.goal3;
-    if (diagnosis.priorities !== undefined) profileFields[F.PRIORITIES] = diagnosis.priorities;
+    if (diagnosis.priorities !== undefined) {
+      // Accept array (join) or string
+      profileFields[F.PRIORITIES] = Array.isArray(diagnosis.priorities)
+        ? diagnosis.priorities.join(", ")
+        : String(diagnosis.priorities);
+    }
+    if (diagnosis.scenario !== undefined) profileFields[F.SCENARIO] = diagnosis.scenario;
+    if (Array.isArray(diagnosis.constraints)) {
+      if (diagnosis.constraints[0] !== undefined) profileFields[F.CONSTRAINT_1] = diagnosis.constraints[0] || "";
+      if (diagnosis.constraints[1] !== undefined) profileFields[F.CONSTRAINT_2] = diagnosis.constraints[1] || "";
+      if (diagnosis.constraints[2] !== undefined) profileFields[F.CONSTRAINT_3] = diagnosis.constraints[2] || "";
+    }
   }
+
+  // Cross-border baseline/target/endline (existing structured fields)
   if (crossBorder) {
     if (crossBorder.baseline !== undefined) profileFields[F.CB_BASELINE] = crossBorder.baseline;
     if (crossBorder.target !== undefined) profileFields[F.CB_TARGET] = crossBorder.target;
     if (crossBorder.endline !== undefined) profileFields[F.CB_ENDLINE] = crossBorder.endline;
+    // Aliases used by new tracker
+    if (crossBorder.baselinePct !== undefined) profileFields[F.CB_BASELINE] = crossBorder.baselinePct;
+    if (crossBorder.endlinePct !== undefined) profileFields[F.CB_ENDLINE] = crossBorder.endlinePct;
   }
+
+  // Financial baseline + current + LCI (new — was previously dropped)
+  if (financial) {
+    if (financial.blTurnover !== undefined) profileFields[F.BL_TURNOVER] = String(financial.blTurnover || "");
+    if (financial.blTradedIncome !== undefined) profileFields[F.BL_TRADED_INCOME] = String(financial.blTradedIncome || "");
+    if (financial.blTradedPct !== undefined) profileFields[F.BL_TRADED_PCT] = String(financial.blTradedPct || "");
+    if (financial.blOpSurplus !== undefined) profileFields[F.BL_OP_SURPLUS] = String(financial.blOpSurplus || "");
+    if (financial.blCashPosition !== undefined) profileFields[F.BL_CASH_POSITION] = String(financial.blCashPosition || "");
+    if (financial.blRunway !== undefined) profileFields[F.BL_RUNWAY] = String(financial.blRunway || "");
+    if (financial.blCbSalesPct !== undefined) profileFields[F.BL_CB_SALES_PCT] = String(financial.blCbSalesPct || "");
+    if (financial.blCbSalesVal !== undefined) profileFields[F.BL_CB_SALES_VAL] = String(financial.blCbSalesVal || "");
+    if (financial.blExportStatus !== undefined) profileFields[F.BL_EXPORT_STATUS] = financial.blExportStatus || "";
+    if (financial.curTurnover !== undefined) profileFields[F.CUR_TURNOVER] = String(financial.curTurnover || "");
+    if (financial.curTradedIncome !== undefined) profileFields[F.CUR_TRADED_INCOME] = String(financial.curTradedIncome || "");
+    if (financial.curTradedPct !== undefined) profileFields[F.CUR_TRADED_PCT] = String(financial.curTradedPct || "");
+    if (financial.curOpSurplus !== undefined) profileFields[F.CUR_OP_SURPLUS] = String(financial.curOpSurplus || "");
+    if (financial.curCbSalesPct !== undefined) profileFields[F.CUR_CB_SALES_PCT] = String(financial.curCbSalesPct || "");
+    if (financial.curCbSalesVal !== undefined) profileFields[F.CUR_CB_SALES_VAL] = String(financial.curCbSalesVal || "");
+    if (financial.curAsOf !== undefined) profileFields[F.CUR_AS_OF] = financial.curAsOf || "";
+    if (financial.lciBaseline !== undefined) profileFields[F.LCI_BASELINE] = String(financial.lciBaseline || "");
+    if (financial.lciMidpoint !== undefined) profileFields[F.LCI_MIDPOINT] = String(financial.lciMidpoint || "");
+    if (financial.lciEndline !== undefined) profileFields[F.LCI_ENDLINE] = String(financial.lciEndline || "");
+  }
+
   if (intensity !== undefined) profileFields[F.INTENSITY] = intensity;
-  // assessor field skipped — Airtable field type incompatibility
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
+
+  // Assessor: NEW supports rich object {assessor (lead name), checklist, validation, goals, priorities, lock}
+  // OR legacy plain string. Detect and handle both.
+  let assessorObj = null;
+  if (assessor !== undefined) {
+    if (typeof assessor === "string") {
+      profileFields[F.ASSESSOR] = assessor;
+    } else if (assessor && typeof assessor === "object") {
+      assessorObj = assessor;
+      if (assessor.assessor !== undefined) profileFields[F.ASSESSOR] = String(assessor.assessor || "");
+      // Goals (rich form fields override legacy diagnosis.* if present)
+      if (assessor.goals && typeof assessor.goals === "object") {
+        if (assessor.goals.g_problem !== undefined) profileFields[F.PROBLEM] = assessor.goals.g_problem;
+        if (assessor.goals.g_goal1 !== undefined) profileFields[F.GOAL1] = assessor.goals.g_goal1;
+        if (assessor.goals.g_goal2 !== undefined) profileFields[F.GOAL2] = assessor.goals.g_goal2;
+        if (assessor.goals.g_goal3 !== undefined) profileFields[F.GOAL3] = assessor.goals.g_goal3;
+      }
+      if (Array.isArray(assessor.priorities)) {
+        profileFields[F.PRIORITIES] = assessor.priorities.join(", ");
+      } else if (typeof assessor.priorities === "string") {
+        profileFields[F.PRIORITIES] = assessor.priorities;
+      }
+      // Lock fields
+      if (assessor.lock && typeof assessor.lock === "object") {
+        if (assessor.lock.lk1 !== undefined) profileFields[F.LOCK_LK1] = !!assessor.lock.lk1;
+        if (assessor.lock.lk2 !== undefined) profileFields[F.LOCK_LK2] = !!assessor.lock.lk2;
+        if (assessor.lock.lk3 !== undefined) profileFields[F.LOCK_LK3] = !!assessor.lock.lk3;
+        if (assessor.lock.lk4 !== undefined) profileFields[F.LOCK_LK4] = !!assessor.lock.lk4;
+        if (assessor.lock.lk_led !== undefined) profileFields[F.LOCK_LED] = assessor.lock.lk_led || "";
+        if (assessor.lock.lk_session_date !== undefined) profileFields[F.LOCK_SESSION_DATE] = assessor.lock.lk_session_date || null;
+        if (assessor.lock.lk_lock_date !== undefined) profileFields[F.LOCK_LOCK_DATE] = assessor.lock.lk_lock_date || null;
+      }
+    }
+  }
+
   await patchProfile(profile.id, profileFields);
 
+  // ── BASELINE SCORES table ──
   if (Array.isArray(baseline)) {
     const existing = await listAllRecords(TABLES.BASELINE_SCORES);
     const byNum = {};
@@ -449,6 +685,7 @@ async function handleUpdate(payload) {
     await batchCreate(TABLES.BASELINE_SCORES, ops.filter((o) => !o.id));
   }
 
+  // ── ENDLINE SCORES table ──
   if (Array.isArray(endline)) {
     const existing = await listAllRecords(TABLES.ENDLINE_SCORES);
     const byNum = {};
@@ -467,6 +704,7 @@ async function handleUpdate(payload) {
     await batchCreate(TABLES.ENDLINE_SCORES, ops.filter((o) => !o.id));
   }
 
+  // ── SMART table ──
   if (Array.isArray(smart)) {
     const existing = await listAllRecords(TABLES.SMART);
     const toDelete = existing.filter((r) => r.fields[F.SM_ORG] === code).map((r) => r.id);
@@ -485,6 +723,7 @@ async function handleUpdate(payload) {
     await batchCreate(TABLES.SMART, creates);
   }
 
+  // ── CONSULTING table ──
   if (Array.isArray(consulting)) {
     const existing = await listAllRecords(TABLES.CONSULTING);
     const byCode = {};
@@ -517,6 +756,7 @@ async function handleUpdate(payload) {
     await batchCreate(TABLES.CONSULTING, creates);
   }
 
+  // ── COACHING table ──
   if (Array.isArray(coaching)) {
     const existing = await listAllRecords(TABLES.COACHING);
     const byCode = {};
@@ -532,7 +772,7 @@ async function handleUpdate(payload) {
         [F.CC_COACH]: c.coach || "",
         [F.CC_HOURS]: c.hours || "",
         [F.CC_THEME]: c.theme || "",
-        [F.CC_ACTION]: c.action || "",
+        [F.CC_ACTION]: c.action || c.actionAgreed || "",
         [F.CC_DONE]: !!c.completed,
       };
       const exists = byCode[c.code];
@@ -543,50 +783,86 @@ async function handleUpdate(payload) {
     await batchCreate(TABLES.COACHING, creates);
   }
 
-  if (Array.isArray(checklist)) {
+  // ── CHECKLIST table (12 SOP items, indexed 0–11; from assessor.checklist) ──
+  if (assessorObj && assessorObj.checklist && typeof assessorObj.checklist === "object") {
     const existing = await listAllRecords(TABLES.CHECKLIST);
     const byIdx = {};
     existing.filter((r) => r.fields[F.CK_ORG] === code).forEach((r) => (byIdx[r.fields[F.CK_INDEX]] = r));
     const updates = [];
     const creates = [];
-    checklist.forEach((c) => {
+    // Iterate ck0..ck11 keys
+    for (let i = 0; i < 12; i++) {
+      const key = "ck" + i;
+      if (assessorObj.checklist[key] === undefined) continue;
+      const done = !!assessorObj.checklist[key];
+      const ts = assessorObj.checklist[key + "_ts"] || "";
       const fields = {
         [F.CK_ORG]: code,
-        [F.CK_PHASE]: c.phase || "",
-        [F.CK_ITEM]: c.item || "",
-        [F.CK_INDEX]: c.index,
-        [F.CK_DONE]: !!c.completed,
-        [F.CK_AT]: c.completedAt || "",
+        [F.CK_INDEX]: i,
+        [F.CK_DONE]: done,
+        [F.CK_AT]: ts,
       };
-      const exists = byIdx[c.index];
+      const exists = byIdx[i];
       if (exists) updates.push({ id: exists.id, fields });
       else creates.push({ fields });
-    });
+    }
     await batchUpdate(TABLES.CHECKLIST, updates);
     await batchCreate(TABLES.CHECKLIST, creates);
   }
 
-  if (Array.isArray(validation)) {
+  // ── VALIDATION table (vn1..vn5 notes, from assessor.validation) ──
+  if (assessorObj && assessorObj.validation && typeof assessorObj.validation === "object") {
     const existing = await listAllRecords(TABLES.VALIDATION);
     const byNum = {};
     existing.filter((r) => r.fields[F.V_ORG] === code).forEach((r) => (byNum[r.fields[F.V_NUM]] = r));
     const updates = [];
     const creates = [];
-    validation.forEach((v) => {
+    for (let n = 1; n <= 5; n++) {
+      const key = "vn" + n;
+      if (assessorObj.validation[key] === undefined) continue;
       const fields = {
         [F.V_ORG]: code,
-        [F.V_NUM]: v.num,
-        [F.V_TITLE]: v.title || "",
-        [F.V_NOTES]: v.notes || "",
+        [F.V_NUM]: n,
+        [F.V_NOTES]: assessorObj.validation[key] || "",
       };
-      const exists = byNum[v.num];
+      const exists = byNum[n];
       if (exists) updates.push({ id: exists.id, fields });
       else creates.push({ fields });
-    });
+    }
     await batchUpdate(TABLES.VALIDATION, updates);
     await batchCreate(TABLES.VALIDATION, creates);
   }
 
+  // ── ATTENDANCE table (NEW) ──
+  if (Array.isArray(attendance)) {
+    const existing = await listAllRecords(TABLES.ATTENDANCE);
+    const byCode = {};
+    existing.filter((r) => r.fields[F.AT_ORG] === code).forEach((r) => (byCode[r.fields[F.AT_CODE]] = r));
+    const updates = [];
+    const creates = [];
+    attendance.forEach((a) => {
+      const sessionCode = a.code || "";
+      if (!sessionCode) return;
+      const fields = {
+        [F.AT_ORG]: code,
+        [F.AT_CODE]: sessionCode,
+        [F.AT_TITLE]: a.title || "",
+        [F.AT_DATE]: a.date || "",
+        [F.AT_PHASE]: a.phase || "",
+        [F.AT_ATTENDED]: !!a.attended,
+        [F.AT_APOLOGY]: !!a.apology,
+        [F.AT_FORMAT]: a.format || "",
+        [F.AT_NOTES]: a.notes || "",
+      };
+      const exists = byCode[sessionCode];
+      if (exists) updates.push({ id: exists.id, fields });
+      else creates.push({ fields });
+    });
+    await batchUpdate(TABLES.ATTENDANCE, updates);
+    await batchCreate(TABLES.ATTENDANCE, creates);
+  }
+
+  // ── NOTES table (progress + general notes) ──
   if (Array.isArray(progress) || Array.isArray(notes)) {
     const existingNotes = await listAllRecords(TABLES.NOTES);
     const toDelete = existingNotes
