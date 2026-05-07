@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- SELECT SMART Tracker v3.3 - 2026-05-07 - Baseline header corrected to 9 Domains -->
+<!-- SELECT SMART Tracker v3.4 - 2026-05-07 - Baseline header to 9 Domains + auto-normalise stale domain labels -->
 <title>SELECT — SMART Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -1502,7 +1502,34 @@ switchTab('profile',document.querySelector('[data-tab="profile"]'));
 renderAll(org);
 }
 
+function normaliseBaselineDomains(org){
+  if(!org||!Array.isArray(org.baseline))return;
+  var changed=false;
+  // Ensure baseline has exactly 9 rows matching DOMAINS, preserving score/evidence
+  var fixed=DOMAINS.map(function(d,i){
+    var existing=org.baseline[i]||{};
+    if(existing.domain!==d.name){changed=true;}
+    return {
+      domain:d.name,
+      score:existing.score||'',
+      evidence:existing.evidence||''
+    };
+  });
+  // Detect length mismatch as a change too
+  if(org.baseline.length!==DOMAINS.length)changed=true;
+  if(changed){
+    org.baseline=fixed;
+    var data=loadData();
+    var stored=data.orgs.find(function(o){return o.code===org.code;});
+    if(stored){stored.baseline=fixed;saveData(data);}
+  }
+}
+
 function renderAll(org){
+// One-time normalisation: ensure baseline domain names match canonical DOMAINS list.
+// Older Airtable records may have stale domain labels from a previous framework version.
+// This repairs labels while preserving any scores/evidence already entered.
+normaliseBaselineDomains(org);
 // Jurisdiction banner
 var jBanner=document.getElementById('jurisdictionBanner');
 if(jBanner){
