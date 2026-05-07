@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- SELECT SMART Tracker v3.4 - 2026-05-07 - Baseline header to 9 Domains + auto-normalise stale domain labels -->
+<!-- SELECT SMART Tracker v3.5 - 2026-05-07 - Added assessor free-text notes field on Baseline tab -->
 <title>SELECT — SMART Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -426,6 +426,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- BASELINE TAB -->
 <div class="tab-panel" id="tab-baseline">
+<div class="section-title">Assessor Notes</div>
+<div class="section-note">Free-text notes for this organisation's baseline. Saves automatically as you type. Use for overall observations, validation flags, or context that sits across domains.</div>
+<div id="baselineNotesSlot" style="margin-bottom:24px"></div>
 <div class="section-title">Baseline Scores — 9 Domains (Locked 2b)</div>
 <div class="section-note">Scores fixed after baseline lock. 9 domains with percentage weights. Scored 0–5.</div>
 <table class="score-table" id="baselineTable">
@@ -1546,7 +1549,7 @@ if(jBanner){
   }
 }
 renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
-renderBaseline(org);renderDiagnosis(org);renderValidation(org);renderSMART(org);
+renderBaselineNotes(org);renderBaseline(org);renderDiagnosis(org);renderValidation(org);renderSMART(org);
 renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
 renderAttendance(org);renderFinancial(org);
 }
@@ -1677,6 +1680,31 @@ function saveRagField(key,val){
   if(!org)return;
   if(!org.kpi)org.kpi={};
   org.kpi[key]=val;
+  saveData(data);
+}
+
+// ═══════════════════════════════════════
+// BASELINE ASSESSOR NOTES - free text, autosave on blur
+// ═══════════════════════════════════════
+function renderBaselineNotes(org){
+  var slot=document.getElementById('baselineNotesSlot');
+  if(!slot)return;
+  var val=(org.baselineNotes!==undefined&&org.baselineNotes!==null)?org.baselineNotes:'';
+  if(isAssessor){
+    slot.innerHTML='<textarea onchange="saveBaselineNotes(this.value)" placeholder="Overall assessor observations, validation flags, contextual notes..." style="min-height:120px;width:100%;padding:12px 14px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp);line-height:1.5">'+esc(val)+'</textarea>';
+  }else{
+    if(val){
+      slot.innerHTML='<div style="padding:12px 14px;background:var(--bg2);border-left:3px solid var(--navy);border-radius:var(--r);font-size:14px;color:var(--ts2);white-space:pre-wrap;line-height:1.6">'+esc(val)+'</div>';
+    }else{
+      slot.innerHTML='<div style="padding:12px 14px;color:var(--tt);font-size:13px;font-style:italic">No assessor notes recorded.</div>';
+    }
+  }
+}
+function saveBaselineNotes(val){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  org.baselineNotes=val;
   saveData(data);
 }
 
