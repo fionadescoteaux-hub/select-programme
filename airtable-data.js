@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // SELECT Programme — Airtable Data Layer
+// Version: 2026-05-07-v2 (baselineNotes added to save payload)
 // Shared by assessor.html and tracker.html
 // Replaces localStorage with Airtable via Netlify Functions proxy
 // Falls back to localStorage if offline or Airtable unavailable
@@ -104,6 +105,7 @@ var AT = (function() {
             if (!o.diagnosis) o.diagnosis = {};
             if (!o.sop) o.sop = {};
             if (!o.crossBorder) o.crossBorder = {};
+            if (typeof o.baselineNotes !== 'string') o.baselineNotes = '';
           });
         }
         cacheSet(data);
@@ -182,6 +184,7 @@ var AT = (function() {
         notes: org.notes || [],
         baselineLocked: org.baselineLocked || false,
         intensity: org.intensity || '',
+        baselineNotes: org.baselineNotes || '',
         // Send full assessor object (rich form: assessor lead + checklist + validation + goals + priorities + lock)
         assessor: org.assessor || {}
       };

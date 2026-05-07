@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-05-v4 (batchUpdate dedupe + dedupe action)
+// Version: 2026-05-07-v5 (BaselineNotes field added)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -39,6 +39,7 @@ const F = {
   CB_TARGET: "fld5ebS4shD6ndmpb",
   CB_ENDLINE: "fld486HdK2hxqPQaH",
   BASELINE_LOCKED: "fld8UegLqlAhxOQn5",
+  BASELINE_NOTES: "fldIxpNkCRpdtsc7O",
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -306,6 +307,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
     code: orgCode,
     password: orgCode,
     intensity: f[F.INTENSITY] || "",
+    baselineNotes: f[F.BASELINE_NOTES] || "",
     assessor: assessorObj,
     kpi: {
       jurisdiction: f[F.JURISDICTION] || "",
@@ -585,7 +587,7 @@ async function batchDelete(tableId, ids) {
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
@@ -703,6 +705,7 @@ async function handleUpdate(payload) {
 
   if (intensity !== undefined) profileFields[F.INTENSITY] = intensity;
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
+  if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
 
   // Assessor: NEW supports rich object {assessor (lead name), checklist, validation, goals, priorities, lock}
   // OR legacy plain string. Detect and handle both.
