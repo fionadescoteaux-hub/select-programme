@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-05-v3 (scrubFields safety net + selectVal helper)
+// Version: 2026-05-07-v5 (BaselineNotes field added)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -39,6 +39,7 @@ const F = {
   CB_TARGET: "fld5ebS4shD6ndmpb",
   CB_ENDLINE: "fld486HdK2hxqPQaH",
   BASELINE_LOCKED: "fld8UegLqlAhxOQn5",
+  BASELINE_NOTES: "fldIxpNkCRpdtsc7O",
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -306,6 +307,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
     code: orgCode,
     password: orgCode,
     intensity: f[F.INTENSITY] || "",
+    baselineNotes: f[F.BASELINE_NOTES] || "",
     assessor: assessorObj,
     kpi: {
       jurisdiction: f[F.JURISDICTION] || "",
@@ -546,8 +548,22 @@ async function patchProfile(profileId, fields) {
   await airtableFetch(TABLES.ORG_PROFILE, { method: "PATCH", body: JSON.stringify({ records: [{ id: profileId, fields: clean }] }) });
 }
 
+// ── FIX: dedupe by record id before sending. Airtable rejects same id
+// twice in one PATCH with INVALID_RECORDS / "You cannot update the same
+// record multiple times in a single request."
 async function batchUpdate(tableId, updates) {
-  const clean = updates.map((u) => ({ id: u.id, fields: scrubFields(u.fields) }));
+  const seen = new Set();
+  const deduped = [];
+  for (const u of updates) {
+    if (!u || !u.id) continue;
+    if (seen.has(u.id)) {
+      console.warn(`[SELECT API] batchUpdate: dropped duplicate update for ${tableId}/${u.id}`);
+      continue;
+    }
+    seen.add(u.id);
+    deduped.push(u);
+  }
+  const clean = deduped.map((u) => ({ id: u.id, fields: scrubFields(u.fields) }));
   for (let i = 0; i < clean.length; i += 10) {
     await airtableFetch(tableId, { method: "PATCH", body: JSON.stringify({ records: clean.slice(i, i + 10) }) });
   }
@@ -561,15 +577,17 @@ async function batchCreate(tableId, creates) {
 }
 
 async function batchDelete(tableId, ids) {
-  for (let i = 0; i < ids.length; i += 10) {
-    const batch = ids.slice(i, i + 10);
+  // Dedupe ids defensively
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  for (let i = 0; i < uniqueIds.length; i += 10) {
+    const batch = uniqueIds.slice(i, i + 10);
     const qs = batch.map((id) => `records[]=${id}`).join("&");
     await airtableFetch(`${tableId}?${qs}`, { method: "DELETE" });
   }
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
@@ -687,6 +705,7 @@ async function handleUpdate(payload) {
 
   if (intensity !== undefined) profileFields[F.INTENSITY] = intensity;
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
+  if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
 
   // Assessor: NEW supports rich object {assessor (lead name), checklist, validation, goals, priorities, lock}
   // OR legacy plain string. Detect and handle both.
@@ -802,7 +821,17 @@ async function handleUpdate(payload) {
     existing.filter((r) => r.fields[F.CO_ORG] === code).forEach((r) => (byCode[r.fields[F.CO_CODE]] = r));
     const updates = [];
     const creates = [];
+    const seenCodes = new Set();
     consulting.forEach((c) => {
+      // Dedupe incoming payload by session code — guard against client cache
+      // having shipped two rows for the same cycle (the original cause of the bug).
+      if (!c.code) return;
+      if (seenCodes.has(c.code)) {
+        console.warn(`[SELECT API] handleUpdate: dropped duplicate incoming consulting row ${code}/${c.code}`);
+        return;
+      }
+      seenCodes.add(c.code);
+
       const fields = {
         [F.CO_ORG]: code,
         [F.CO_CODE]: c.code || "",
@@ -841,7 +870,15 @@ async function handleUpdate(payload) {
     existing.filter((r) => r.fields[F.CC_ORG] === code).forEach((r) => (byCode[r.fields[F.CC_CODE]] = r));
     const updates = [];
     const creates = [];
+    const seenCodes = new Set();
     coaching.forEach((c) => {
+      if (!c.code) return;
+      if (seenCodes.has(c.code)) {
+        console.warn(`[SELECT API] handleUpdate: dropped duplicate incoming coaching row ${code}/${c.code}`);
+        return;
+      }
+      seenCodes.add(c.code);
+
       const fields = {
         [F.CC_ORG]: code,
         [F.CC_CODE]: c.code || "",
@@ -914,16 +951,23 @@ async function handleUpdate(payload) {
     await batchCreate(TABLES.VALIDATION, creates);
   }
 
-  // ── ATTENDANCE table (NEW) ──
+  // ── ATTENDANCE table ──
   if (Array.isArray(attendance)) {
     const existing = await listAllRecords(TABLES.ATTENDANCE);
     const byCode = {};
     existing.filter((r) => r.fields[F.AT_ORG] === code).forEach((r) => (byCode[r.fields[F.AT_CODE]] = r));
     const updates = [];
     const creates = [];
+    const seenCodes = new Set();
     attendance.forEach((a) => {
       const sessionCode = a.code || "";
       if (!sessionCode) return;
+      if (seenCodes.has(sessionCode)) {
+        console.warn(`[SELECT API] handleUpdate: dropped duplicate incoming attendance row ${code}/${sessionCode}`);
+        return;
+      }
+      seenCodes.add(sessionCode);
+
       const fields = {
         [F.AT_ORG]: code,
         [F.AT_CODE]: sessionCode,
@@ -979,8 +1023,103 @@ async function handleUpdate(payload) {
   return jsonResponse(200, { ok: true });
 }
 
+// ── Score how "filled in" a record is, so dedupe can keep the better row ──
+function recordRichness(record, fieldIds) {
+  let score = 0;
+  if (!record || !record.fields) return 0;
+  for (const fid of fieldIds) {
+    const v = record.fields[fid];
+    if (v === undefined || v === null) continue;
+    if (typeof v === "string") {
+      if (v.trim() !== "") score += v.trim().length > 30 ? 2 : 1;
+    } else if (typeof v === "boolean") {
+      if (v) score += 1;
+    } else if (typeof v === "number") {
+      score += 1;
+    } else if (Array.isArray(v)) {
+      if (v.length) score += 1;
+    } else {
+      score += 1;
+    }
+  }
+  return score;
+}
+
+// ── Dedupe a single table by (orgField, codeField) ──
+async function dedupeTable(tableId, orgField, codeField, allDataFields) {
+  const records = await listAllRecords(tableId);
+  // Group by orgCode + sessionCode
+  const groups = new Map();
+  for (const r of records) {
+    const orgCode = r.fields[orgField];
+    const sessionCode = r.fields[codeField];
+    if (!orgCode || !sessionCode) continue;
+    const key = `${orgCode}::${sessionCode}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  const idsToDelete = [];
+  const groupReports = [];
+  for (const [key, rows] of groups) {
+    if (rows.length <= 1) continue;
+    // Sort by richness desc, then by createdTime asc as tiebreaker (oldest wins on tie)
+    rows.sort((a, b) => {
+      const sa = recordRichness(a, allDataFields);
+      const sb = recordRichness(b, allDataFields);
+      if (sb !== sa) return sb - sa;
+      // Airtable record IDs are roughly time-ordered; fall back to id compare
+      return String(a.id).localeCompare(String(b.id));
+    });
+    const keep = rows[0];
+    const drop = rows.slice(1);
+    drop.forEach((r) => idsToDelete.push(r.id));
+    groupReports.push({
+      key,
+      kept: keep.id,
+      keptScore: recordRichness(keep, allDataFields),
+      deleted: drop.map((r) => ({ id: r.id, score: recordRichness(r, allDataFields) })),
+    });
+  }
+
+  if (idsToDelete.length) {
+    await batchDelete(tableId, idsToDelete);
+  }
+
+  return {
+    table: tableId,
+    duplicateGroups: groupReports.length,
+    rowsDeleted: idsToDelete.length,
+    details: groupReports,
+  };
+}
+
+async function handleDedupe() {
+  const consultingFields = [F.CO_TITLE, F.CO_DATE, F.CO_PHASE, F.CO_FOCUS, F.CO_BY, F.CO_FORMAT, F.CO_SMART, F.CO_ACTIONS, F.CO_OUTPUTS, F.CO_DAYS, F.CO_MOVEMENT, F.CO_RAG, F.CO_DONE];
+  const coachingFields = [F.CC_TITLE, F.CC_DATE, F.CC_COACH, F.CC_HOURS, F.CC_THEME, F.CC_ACTION, F.CC_DONE];
+  const attendanceFields = [F.AT_TITLE, F.AT_DATE, F.AT_PHASE, F.AT_ATTENDED, F.AT_APOLOGY, F.AT_FORMAT, F.AT_NOTES];
+
+  const consultingReport = await dedupeTable(TABLES.CONSULTING, F.CO_ORG, F.CO_CODE, consultingFields);
+  const coachingReport = await dedupeTable(TABLES.COACHING, F.CC_ORG, F.CC_CODE, coachingFields);
+  const attendanceReport = await dedupeTable(TABLES.ATTENDANCE, F.AT_ORG, F.AT_CODE, attendanceFields);
+
+  return jsonResponse(200, {
+    ok: true,
+    summary: {
+      consulting: { duplicateGroups: consultingReport.duplicateGroups, rowsDeleted: consultingReport.rowsDeleted },
+      coaching: { duplicateGroups: coachingReport.duplicateGroups, rowsDeleted: coachingReport.rowsDeleted },
+      attendance: { duplicateGroups: attendanceReport.duplicateGroups, rowsDeleted: attendanceReport.rowsDeleted },
+    },
+    detail: {
+      consulting: consultingReport,
+      coaching: coachingReport,
+      attendance: attendanceReport,
+    },
+  });
+}
+
 exports.handler = async (event) => {
-  console.log("[SELECT API v3] Invoked - method:", event.httpMethod, "action:", (() => { try { return JSON.parse(event.body || "{}").action; } catch { return "?"; } })());
+  console.log("[SELECT API v4] Invoked - method:", event.httpMethod, "action:", (() => { try { return JSON.parse(event.body || "{}").action; } catch { return "?"; } })());
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: corsHeaders(), body: "" };
   if (event.httpMethod !== "POST") return jsonResponse(405, { error: "Method not allowed" });
   if (!process.env.AIRTABLE_PAT || !process.env.AIRTABLE_BASE_ID) return jsonResponse(500, { error: "Server misconfigured — missing env vars" });
@@ -992,7 +1131,7 @@ exports.handler = async (event) => {
   const masterPw = process.env.TRACKER_MASTER_PW || "SELECT2026";
   const authHeader = event.headers['x-auth'] || event.headers['X-Auth'] || '';
   const isAssessor = body.password === masterPw || authHeader === masterPw;
-  const writeActions = new Set(["create", "update", "remove", "seed"]);
+  const writeActions = new Set(["create", "update", "remove", "seed", "dedupe"]);
   if (writeActions.has(body.action) && !isAssessor) return jsonResponse(403, { error: "Assessor password required for this action" });
 
   try {
@@ -1002,6 +1141,7 @@ exports.handler = async (event) => {
       case "create": return await handleCreate(body);
       case "update": return await handleUpdate(body);
       case "remove": return await handleRemove(body.code);
+      case "dedupe": return await handleDedupe();
       case "seed": {
         // Seed consulting+coaching templates for an existing org
         const code = body.code;
