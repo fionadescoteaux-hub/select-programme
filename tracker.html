@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- SELECT SMART Tracker v3.5 - 2026-05-07 - Added assessor free-text notes field on Baseline tab -->
+<!-- SELECT SMART Tracker v3.6 - 2026-05-07 - Excel export fixed: canonical domain names, correct weights, evidence field, baseline notes column -->
 <title>SELECT — SMART Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -841,23 +841,33 @@ function exportToExcel(){
   XLSX.utils.book_append_sheet(wb,ws1,'Programme Summary');
 
   // ── SHEET 2: Baseline Scores ──
-  var bl=[['Organisation','CEO','Domain','Weight','Score (0-5)','Weighted Score','Notes']];
-  var DOMAIN_NAMES=['Business Model & Revenue Mix','Products & Unit Economics','Financial Management & Cash',
-    'Commercial Strategy & Market Focus','Go-to-Market & Sales','Operations & Delivery Capacity',
-    'Cross-Border Readiness','Leadership & Execution Capacity','Organisational Readiness'];
+  // Uses canonical DOMAINS array as source of truth for names + weights.
+  // Reads evidence (correct field) not notes. Weighted score = score × weight%.
+  var bl=[['Organisation','CEO','Domain','Tier','Weight','Score (0-5)','Weighted Score','Evidence','Assessor Notes']];
   orgs.forEach(function(o){
     if(o.baseline&&o.baseline.length){
       o.baseline.forEach(function(b,i){
-        bl.push([o.name||'',o.ceo||'',DOMAIN_NAMES[i]||('Domain '+(i+1)),
-          b.weight||1,b.score||'',
-          b.score&&b.weight?parseFloat((b.score*b.weight).toFixed(2)):'',
-          b.notes||'']);
+        var d=DOMAINS[i]||{name:'Domain '+(i+1),wt:0,cluster:''};
+        var score=parseFloat(b.score);
+        var weightPct=d.wt||0;
+        var weighted=(!isNaN(score)&&weightPct)?parseFloat((score*(weightPct/100)).toFixed(2)):'';
+        bl.push([
+          o.name||'',
+          o.ceo||'',
+          d.name,
+          d.cluster||'',
+          weightPct?(weightPct+'%'):'',
+          isNaN(score)?'':score,
+          weighted,
+          b.evidence||'',
+          (i===0?(o.baselineNotes||''):'')
+        ]);
       });
-      bl.push(['','','','','','','']);
+      bl.push(['','','','','','','','','']);
     }
   });
   var ws2=XLSX.utils.aoa_to_sheet(bl);
-  ws2['!cols']=[{wch:28},{wch:18},{wch:35},{wch:8},{wch:12},{wch:14},{wch:40}];
+  ws2['!cols']=[{wch:28},{wch:18},{wch:38},{wch:12},{wch:8},{wch:10},{wch:14},{wch:50},{wch:50}];
   XLSX.utils.book_append_sheet(wb,ws2,'Baseline Scores');
 
   // ── SHEET 3: Consulting Log ──
