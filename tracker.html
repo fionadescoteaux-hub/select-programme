@@ -429,6 +429,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="section-title">Assessor Notes</div>
 <div class="section-note">Free-text notes for this organisation's baseline. Saves automatically as you type. Use for overall observations, validation flags, or context that sits across domains.</div>
 <div id="baselineNotesSlot" style="margin-bottom:24px"></div>
+<div class="section-title">Baseline Report</div>
+<div class="section-note">Attach the CEO's completed baseline overview document. Paste a shareable link (Google Drive, Dropbox, etc.).</div>
+<div id="baselineReportSlot" style="margin-bottom:24px"></div>
 <div class="section-title">Baseline Scores — 9 Domains (Locked 2b)</div>
 <div class="section-note">Scores fixed after baseline lock. 9 domains with percentage weights. Scored 0–5.</div>
 <table class="score-table" id="baselineTable">
@@ -1556,7 +1559,7 @@ if(jBanner){
   }
 }
 renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
-renderBaselineNotes(org);renderBaseline(org);renderDiagnosis(org);renderValidation(org);renderSMART(org);
+renderBaselineNotes(org);renderBaselineReport(org);renderBaseline(org);renderDiagnosis(org);renderValidation(org);renderSMART(org);
 renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
 renderAttendance(org);renderFinancial(org);
 }
@@ -1713,6 +1716,47 @@ function saveBaselineNotes(val){
   if(!org)return;
   org.baselineNotes=val;
   saveData(data);
+}
+
+function renderBaselineReport(org){
+  var slot=document.getElementById('baselineReportSlot');
+  if(!slot)return;
+  var url=(org.baselineReportUrl||'').trim();
+  var html='';
+  if(url){
+    html+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">';
+    html+='<a href="'+esc(url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--navy);color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; Open Baseline Report</a>';
+    if(isAssessor)html+='<button onclick="clearBaselineReport()" style="background:none;border:none;color:var(--tt);font-size:12px;cursor:pointer;text-decoration:underline">Remove link</button>';
+    html+='</div>';
+  }
+  if(isAssessor){
+    html+='<div style="display:flex;gap:8px;align-items:center">';
+    html+='<input id="baselineReportInput" type="url" placeholder="Paste shareable link here (Google Drive, Dropbox, etc.)" value="'+esc(url)+'" style="flex:1;padding:9px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+    html+='<button onclick="saveBaselineReport()" style="padding:9px 16px;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer">'+(url?'Update':'Save link')+'</button>';
+    html+='</div>';
+  } else if(!url){
+    html+='<div style="padding:12px 14px;color:var(--tt);font-size:13px;font-style:italic">No baseline report attached.</div>';
+  }
+  slot.innerHTML=html;
+}
+function saveBaselineReport(){
+  var input=document.getElementById('baselineReportInput');
+  if(!input)return;
+  var val=input.value.trim();
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  org.baselineReportUrl=val;
+  saveData(data);
+  renderBaselineReport(org);
+}
+function clearBaselineReport(){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  org.baselineReportUrl='';
+  saveData(data);
+  renderBaselineReport(org);
 }
 
 // ═══════════════════════════════════════
