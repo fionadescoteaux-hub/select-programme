@@ -1371,11 +1371,11 @@ showDash();
 return;
 }
 var data=loadData();
-// Map CEO password to org code (SL-SBI2026 -> siel-bleu)
+// Map CEO password to org code (matches passwords stored in Airtable)
 var CEO_PASSWORDS_MAP={
-'SL-LNT2026':'leave-no-trace','SL-SBI2026':'siel-bleu','SL-WMK2026':'waymaker',
-'SL-CON2026':'connections-arts','SL-COD2026':'codema','SL-PSY2026':'psycare',
-'SL-INC2026':'incredible','SL-CRT2026':'community-roots','SL-PAC2026':'pace','SL-YLK2026':'youthlink'
+'SL-LNT2026':'leave-no-trace','SL-SBI2026':'siel-bleu','SL-WMC2026':'waymaker',
+'SL-CON2026':'connections-arts','SL-CDE2026':'codema','SL-PSY2026':'psycare',
+'SL-INC2026':'incredible','SL-CRT2026':'community-roots','SL-PSE2026':'pace','SL-YTL2026':'youthlink'
 };
 var mappedCode=CEO_PASSWORDS_MAP[pw]||null;
 // If direct link, only check password for that specific org
