@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- SELECT SMART Tracker v3.6 - 2026-05-07 - Excel export fixed: canonical domain names, correct weights, evidence field, baseline notes column -->
-<title>SELECT — SMART Tracker (v2026-05-11-pw-fix)</title>
+<title>SELECT — SMART Tracker (v2026-05-11-codes-fixed)</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1371,11 +1371,18 @@ showDash();
 return;
 }
 var data=loadData();
-// Map CEO password to org code (matches passwords stored in Airtable)
+// Map CEO password to org code (matches Code field in Airtable ORGANISATIONS table)
 var CEO_PASSWORDS_MAP={
-'SL-LNT2026':'leave-no-trace','SL-SBI2026':'siel-bleu','SL-WMC2026':'waymaker',
-'SL-CON2026':'connections-arts','SL-CDE2026':'codema','SL-PSY2026':'psycare',
-'SL-INC2026':'incredible','SL-CRT2026':'community-roots','SL-PSE2026':'pace','SL-YTL2026':'youthlink'
+'SL-LNT2026':'leave-no-trace-ireland',
+'SL-SBI2026':'siel-bleu',
+'SL-WMC2026':'waymaker-child-therapy-cic',
+'SL-CON2026':'connections-arts',
+'SL-CDE2026':'codema-dublins-energy-agency',
+'SL-PSY2026':'psycare-ireland-welfare-and-harm-reduction-clg',
+'SL-INC2026':'incredable',
+'SL-CRT2026':'community-roots',
+'SL-PSE2026':'pace-social-enterprise',
+'SL-YTL2026':'youth-link'
 };
 var mappedCode=CEO_PASSWORDS_MAP[pw]||null;
 // If direct link, only check password for that specific org
