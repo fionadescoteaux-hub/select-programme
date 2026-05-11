@@ -737,7 +737,7 @@ function renderRagReport(){
     var growthCol=tradGrowth===null?'color:var(--tt)':tradGrowth>=15?'color:#2e7d32;font-weight:700':tradGrowth>=0?'color:#ed6c02;font-weight:600':'color:#c62828;font-weight:600';
     // Baseline score
     var blScore='';
-    if(org.baseline&&org.baseline.length){var tot=0,wt=0;org.baseline.forEach(function(b){tot+=parseFloat(b.score||0)*parseFloat(b.weight||1);wt+=parseFloat(b.weight||1);});blScore=wt?parseFloat((tot/wt).toFixed(1)):'';}
+    if(org.baseline&&org.baseline.length){var tot=0;org.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;});blScore=tot?parseFloat(tot.toFixed(2)):'';}
     var cbs=(org.kpi&&org.kpi.ragCbSales)?(sym+(org.kpi.ragCbSales)):'-';
     var nxt=(org.kpi&&org.kpi.ragNextActions)?org.kpi.ragNextActions:'';
     rows+='<tr>';
@@ -838,7 +838,7 @@ function exportToExcel(){
     var blScore='';
     if(o.baseline&&o.baseline.length){
       var tot=0,wt=0;
-      o.baseline.forEach(function(b){tot+=parseFloat(b.score||0)*parseFloat(b.weight||1);wt+=parseFloat(b.weight||1);});
+      o.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;wt+=w;});
       blScore=wt?parseFloat((tot/wt).toFixed(2)):'';
     }
     sum.push([
@@ -1646,7 +1646,7 @@ var tbody=document.querySelector('#baselineTable tbody');
 var html='';
 org.baseline.forEach(function(b,i){
 var d=DOMAINS[i];var score=parseFloat(b.score)||0;var wt=d?d.wt:0;
-var wtdScore=(score*(wt/100)*5).toFixed(2);var pct=score?(score/5*100):0;
+var wtdScore=(score*(wt/100)).toFixed(2);var pct=score?(score/5*100):0;
 html+='<tr><td class="domain-name">'+b.domain+'<span class="cluster-label '+d.clCss+'">'+d.cluster+'</span></td>';
 html+='<td class="wt">'+wt+'%</td>';
 if(isAssessor&&!org.baselineLocked){
@@ -1661,8 +1661,8 @@ html+='<td><div class="score-bar"><div class="score-bar-fill" style="width:'+pct
 tbody.innerHTML=html;
 var totalWtd=0;var hasScores=false;
 org.baseline.forEach(function(b,i){var s=parseFloat(b.score)||0;if(s>0)hasScores=true;totalWtd+=s*(DOMAINS[i].wt/100);});
-var overall=(totalWtd*5).toFixed(2);
-var maturity=totalWtd<1?'Fragile':totalWtd<2?'Foundational':totalWtd<3?'Developing':totalWtd<4?'Established':'Optimised';
+var overall=totalWtd.toFixed(2);
+var maturity=totalWtd<2?'Fragile':totalWtd<3?'Emerging':totalWtd<3.75?'Defined':totalWtd<4.5?'Embedded':'Optimised';
 var foot='<tr style="background:var(--bg2);font-weight:700"><td>Overall Weighted Score</td><td>100%</td><td colspan="2" style="text-align:center;font-family:var(--serif);font-size:18px;color:var(--navy)">'+(hasScores?overall:'--')+'</td><td style="font-size:13px;color:var(--teal)">'+(hasScores?maturity:'--')+'</td><td></td></tr>';
 if(isAssessor&&!org.baselineLocked){foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';}
 document.getElementById('baselineFoot').innerHTML=foot;
