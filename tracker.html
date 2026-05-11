@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <!-- SELECT SMART Tracker v3.6 - 2026-05-07 - Excel export fixed: canonical domain names, correct weights, evidence field, baseline notes column -->
-<title>SELECT — SMART Tracker</title>
+<title>SELECT — SMART Tracker (v2026-05-11-pw-fix)</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1386,7 +1386,15 @@ isAssessor=false;currentOrg=org.code;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
 AT.loadData(function(){openTracker(org.code);});
-openTracker(org.code);
+return;
+}
+// Fallback: if the password is in CEO_PASSWORDS_MAP and matches the URL target, accept it
+// (handles case where cache is empty/stale)
+if(mappedCode&&mappedCode===targetOrgId){
+isAssessor=false;currentOrg=mappedCode;
+AT.setAuth(MASTER_PW);
+document.getElementById('authScreen').style.display='none';
+AT.loadData(function(){openTracker(mappedCode);});
 return;
 }
 document.getElementById('authErr').style.display='block';return;
@@ -1400,8 +1408,16 @@ isAssessor=false;currentOrg=o.code;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
 AT.loadData(function(){openTracker(o.code);});
-openTracker(o.code);
 return;}
+}
+// Fallback: if the password is in CEO_PASSWORDS_MAP but cache is empty/stale,
+// accept the login and wait for Airtable to load before opening the tracker.
+if(mappedCode){
+isAssessor=false;currentOrg=mappedCode;
+AT.setAuth(MASTER_PW);
+document.getElementById('authScreen').style.display='none';
+AT.loadData(function(){openTracker(mappedCode);});
+return;
 }
 document.getElementById('authErr').style.display='block';
 }
