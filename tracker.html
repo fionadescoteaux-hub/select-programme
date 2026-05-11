@@ -1,12 +1,8 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<!-- SELECT SMART Tracker v3.6 - 2026-05-07 - Excel export fixed: canonical domain names, correct weights, evidence field, baseline notes column -->
 <title>SELECT — SMART Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -41,8 +37,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .header .back{position:absolute;right:32px;top:50%;transform:translateY(-50%);font-size:12px;color:rgba(255,255,255,0.4);text-decoration:none;border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:var(--r);transition:all .2s}
 .header .back:hover{color:rgba(255,255,255,0.8);border-color:rgba(255,255,255,0.3)}
 
-.wrap{max-width:1040px;margin:0 auto;padding:32px 24px 60px}
+.wrap{max-width:960px;margin:0 auto;padding:32px 24px 60px}
 
+/* Auth screen */
 .auth-box{max-width:400px;margin:80px auto;text-align:center}
 .auth-box h2{font-family:var(--serif);font-size:24px;color:var(--navy);margin-bottom:8px}
 .auth-box p{font-size:14px;color:var(--ts);margin-bottom:24px}
@@ -51,6 +48,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .auth-box button:hover{background:var(--navy-mid)}
 .auth-err{color:var(--coral);font-size:13px;margin-top:8px;display:none}
 
+/* Dashboard (assessor) */
 .dash{display:none}
 .dash-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
 .dash-head h2{font-family:var(--serif);font-size:22px;color:var(--navy)}
@@ -61,144 +59,84 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .btn-coral{background:var(--coral);color:#fff}.btn-coral:hover{opacity:0.9}
 .btn-sm{padding:5px 12px;font-size:11px}
 
-/* Cohort summary bar */
-.cohort-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px}
-.cohort-stat{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:14px;text-align:center}
-.cohort-stat .stat-val{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy)}
-.cohort-stat .stat-lbl{font-size:10px;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
-
 .org-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .org-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:20px;cursor:pointer;transition:all .2s;position:relative}
 .org-card:hover{border-color:var(--teal);box-shadow:0 4px 16px rgba(10,107,90,0.08);transform:translateY(-1px)}
 .org-card h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:2px}
 .org-card .org-ceo{font-size:13px;color:var(--ts);margin-bottom:8px}
-.org-card .org-status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;margin-right:6px}
+.org-card .org-status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px}
 .os-active{background:var(--teal-light);color:var(--teal)}
 .os-pending{background:var(--gold-light);color:var(--gold)}
-.os-stabilise{background:var(--coral-light);color:var(--coral)}
-.os-strengthen{background:var(--gold-light);color:var(--gold)}
-.os-scale{background:var(--teal-light);color:var(--teal)}
-.org-card .org-meta-row{font-size:11px;color:var(--tt);margin-top:4px}
-.org-card .org-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.org-card .org-link{font-size:11px;color:var(--tt);margin-top:10px;word-break:break-all}
+.org-card .org-actions{margin-top:12px;display:flex;gap:8px}
 
+/* Add org modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--card);border-radius:var(--r2);padding:32px;max-width:560px;width:90%;max-height:90vh;overflow-y:auto}
+.modal{background:var(--card);border-radius:var(--r2);padding:32px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto}
 .modal h3{font-family:var(--serif);font-size:20px;color:var(--navy);margin-bottom:16px}
 .form-row{margin-bottom:14px}
 .form-row label{display:block;font-size:12px;font-weight:600;color:var(--ts);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
 .form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)}
 .form-row textarea{min-height:80px;resize:vertical}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:500px){.form-grid{grid-template-columns:1fr}}
 .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-.form-divider{border-top:1px solid var(--tb);margin:18px 0 14px;font-size:11px;font-weight:700;color:var(--tt);text-transform:uppercase;letter-spacing:1px;padding-top:14px}
 
 /* Tracker view */
 .tracker{display:none}
 .tracker-head{margin-bottom:28px}
 .tracker-head h2{font-family:var(--serif);font-size:24px;color:var(--navy)}
 .tracker-head .org-meta{font-size:14px;color:var(--ts);margin-top:4px}
-.tracker-head .tracker-nav{display:flex;gap:6px;margin-top:16px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:none}
-.tracker-head .tracker-nav::-webkit-scrollbar{display:none}
+.tracker-head .tracker-nav{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .tracker-head .back-dash{font-size:13px;color:var(--teal);text-decoration:none;cursor:pointer;margin-bottom:8px;display:inline-block}
 .tracker-head .back-dash:hover{text-decoration:underline}
 
-/* Phase ribbon */
-.phase-ribbon{display:flex;gap:2px;border-radius:var(--r);overflow:hidden;margin-bottom:20px}
-.phase-ribbon .ph{flex:1;padding:10px 6px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#fff;opacity:0.5;transition:opacity .2s}
-.phase-ribbon .ph.current{opacity:1;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
-.ph-diag{background:var(--teal)}.ph-trans{background:var(--navy-mid)}.ph-str{background:var(--navy)}.ph-sust{background:var(--gold)}
-
-.tab-btn{padding:8px 14px;border-radius:var(--r);font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
+.tab-btn{padding:8px 16px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
 .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .tab-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
-.tab-panel{display:none}.tab-panel.active{display:block}
 
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-@media(max-width:700px){.kpi-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:500px){.kpi-grid{grid-template-columns:1fr}}
-.kpi-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:14px}
-.kpi-card label{font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px}
-.kpi-card .kpi-val{font-size:17px;font-weight:700;color:var(--navy)}
-.kpi-card select,.kpi-card input{margin-top:4px;width:100%;padding:7px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
 
+/* KPI panel */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.kpi-grid{grid-template-columns:1fr}}
+.kpi-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px}
+.kpi-card label{font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px}
+.kpi-card .kpi-val{font-size:18px;font-weight:700;color:var(--navy)}
+.kpi-card select,.kpi-card input{margin-top:4px;width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)}
+
+/* Scores table */
 .score-table{width:100%;border-collapse:collapse;margin-top:12px}
 .score-table th{text-align:left;padding:10px 12px;background:var(--bg2);font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--tb2)}
 .score-table td{padding:10px 12px;border-bottom:1px solid var(--tb);font-size:14px;vertical-align:top}
 .score-table input[type=number]{width:60px;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;text-align:center;font-family:var(--sans);background:var(--card);color:var(--tp)}
-.score-table textarea{width:100%;min-height:40px;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);resize:vertical;background:var(--card);color:var(--tp)}
 .score-table .domain-name{font-weight:600;color:var(--ts2)}
-.score-table .wt{font-size:12px;color:var(--tt);white-space:nowrap}
-.score-bar{height:6px;border-radius:3px;background:var(--bg3);margin-top:6px;overflow:hidden;min-width:60px}
+.score-bar{height:6px;border-radius:3px;background:var(--bg3);margin-top:6px;overflow:hidden}
 .score-bar-fill{height:100%;border-radius:3px;background:var(--teal);transition:width .3s}
 
-/* Cluster badges */
-.cluster-label{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;color:#fff;letter-spacing:0.3px;text-transform:uppercase;vertical-align:middle;margin-left:6px}
-.cl-found{background:var(--teal)}.cl-engine{background:var(--navy-mid)}.cl-enable{background:var(--coral)}
-
+/* SMART objectives */
 .smart-obj{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .smart-obj .obj-num{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
 .smart-obj textarea,.smart-obj input{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;background:var(--card);color:var(--tp)}
-.smart-obj .obj-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:8px}
-@media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr 1fr}}
+.smart-obj .obj-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px}
+@media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr}}
 .smart-obj label{font-size:10px;font-weight:600;color:var(--tt);text-transform:uppercase;letter-spacing:0.3px}
 
+/* Progress log */
 .log-entry{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .log-entry .log-date{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px}
 .log-entry textarea{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;min-height:60px;resize:vertical;background:var(--card);color:var(--tp)}
 .log-entry .log-text{font-size:14px;color:var(--ts2);margin-top:6px;line-height:1.6;white-space:pre-wrap}
 
+/* Notes log */
 .note-entry{background:var(--card);border-left:3px solid var(--navy);border-radius:0 var(--r) var(--r) 0;padding:14px 16px;margin-bottom:10px;border-top:1px solid var(--tb);border-right:1px solid var(--tb);border-bottom:1px solid var(--tb)}
 .note-entry .note-meta{font-size:11px;color:var(--tt);margin-bottom:4px}
 .note-entry .note-type{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-right:6px}
 .nt-consult{background:var(--teal-light);color:var(--teal)}
-.nt-form{background:var(--gold-light);color:var(--gold)}
-.coaching-stat-flex{background:var(--teal-light);border:1px solid rgba(0,140,130,0.2);border-radius:var(--r);padding:12px 16px}
-.coaching-stat-flex .cs-val{color:var(--teal)}
-.coaching-stat-flex .cs-lbl{color:var(--teal);opacity:0.8}
 .nt-coach{background:var(--coral-light);color:var(--coral)}
-.nt-session{background:var(--navy-light);color:var(--navy)}
-
-/* Problem statement card */
-.problem-card{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:20px;margin-bottom:16px}
-.problem-card .pc-label{font-size:11px;font-weight:700;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
-.problem-card textarea{width:100%;min-height:60px;padding:8px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);resize:vertical;background:var(--card);color:var(--tp)}
-.problem-card .pc-val{font-size:14px;color:var(--ts2);line-height:1.6;white-space:pre-wrap}
-.constraint-row{display:flex;gap:12px;margin-bottom:10px;align-items:center}
-.constraint-row .c-num{background:var(--coral);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.constraint-row input,.constraint-row select{flex:1;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)}
-
-/* Coaching hours */
-.coaching-summary{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.coaching-stat{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:14px 18px;text-align:center;min-width:120px}
-.coaching-stat .cs-val{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy)}
-.coaching-stat .cs-lbl{font-size:10px;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
-
-/* SOP checklist */
-.sop-grid{display:grid;gap:8px}
-.sop-phase{background:var(--navy);color:#fff;padding:10px 14px;border-radius:var(--r);font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-top:8px}
-.sop-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;color:var(--ts2)}
-.sop-item input[type=checkbox]{accent-color:var(--teal);width:16px;height:16px;cursor:pointer}
-.sop-item label{cursor:pointer;flex:1}
-.sop-item .sop-date{font-size:11px;color:var(--tt);min-width:80px;text-align:right}
-
-/* Intensity pills */
-.intensity-pills{display:flex;gap:6px;margin:8px 0}
-.int-pill{padding:8px 16px;border:1px solid var(--tb2);border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;color:var(--ts2);transition:all .2s;user-select:none}
-.int-pill:hover{border-color:var(--navy)}
-.int-pill.selected{color:#fff;border-color:transparent}
-.int-pill.sel-stabilise{background:var(--coral)}
-.int-pill.sel-strengthen{background:var(--gold)}
-.int-pill.sel-scale{background:var(--teal)}
-
-/* Cross-border tracking */
-.cb-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:12px}
-@media(max-width:600px){.cb-row{grid-template-columns:1fr}}
 
 .section-title{font-family:var(--serif);font-size:18px;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--tb)}
 .section-note{font-size:13px;color:var(--ts);margin-bottom:16px;font-style:italic}
-.sub-section{font-size:14px;font-weight:700;color:var(--ts2);margin:20px 0 10px;padding-top:16px;border-top:1px solid var(--tb)}
 
 .readonly-notice{background:var(--gold-light);border:1px solid rgba(184,134,11,0.15);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--gold);margin-bottom:20px}
 
@@ -206,326 +144,109 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .save-bar.hidden{display:none}
 .save-msg{font-size:13px;color:var(--teal);font-weight:600;align-self:center;margin-right:auto;opacity:0;transition:opacity .3s}
 .save-msg.show{opacity:1}
-
-/* Data portability */
-.data-bar{display:flex;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--tb);margin-bottom:16px;flex-wrap:wrap}
-.data-bar .data-label{font-size:12px;color:var(--ts);font-weight:600;letter-spacing:0.3px;text-transform:uppercase}
-.data-bar .dbtn{padding:5px 12px;font-size:11px;font-weight:600;border-radius:4px;border:none;cursor:pointer;font-family:var(--sans);transition:all .2s}
-.data-bar .dbtn-exp{background:var(--teal);color:#fff}
-.data-bar .dbtn-imp{background:var(--bg2);color:var(--ts2);border:1px solid var(--tb2)}
-.data-bar .data-warn{font-size:11px;color:var(--tt);font-style:italic;margin-left:auto}
-.data-bar input[type="file"]{display:none}
-
-/* Mobile tab scroll */
-@media(max-width:640px){
-  .tracker-head .tracker-nav{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:4px}
-  .tab-btn{white-space:nowrap;flex-shrink:0}
-}
-
-/* RAG REPORT */
-.dash-view-toggle{display:flex;gap:6px;margin-bottom:20px}
-.view-btn{padding:7px 16px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans)}
-.view-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.view-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
-.dash-view{display:none}.dash-view.active{display:block}
-.rag-wrap{margin-top:0}
-.rag-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
-.rag-header h3{font-family:var(--serif);font-size:20px;color:var(--navy)}
-.rag-legend{display:flex;gap:16px;font-size:12px;color:var(--ts)}
-.rag-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
-.rag-g{background:#2e7d32}.rag-a{background:#ed6c02}.rag-r{background:#c62828}
-.rag-summary-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.rag-sum-card{border-radius:var(--r);padding:14px 16px;text-align:center}
-.rag-sum-card.green-card{background:#e8f5e9;border:1px solid rgba(46,125,50,0.15)}
-.rag-sum-card.amber-card{background:#fff4e5;border:1px solid rgba(237,108,2,0.15)}
-.rag-sum-card.red-card{background:#fdecea;border:1px solid rgba(198,40,40,0.15)}
-.rag-sum-num{font-size:28px;font-weight:700;line-height:1}
-.green-card .rag-sum-num{color:#2e7d32}.amber-card .rag-sum-num{color:#ed6c02}.red-card .rag-sum-num{color:#c62828}
-.rag-sum-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;color:var(--ts)}
-.rag-table-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--tb2)}
-.rag-table{width:100%;border-collapse:collapse;min-width:900px}
-.rag-table th{padding:10px 12px;background:var(--navy);color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;text-align:left;white-space:nowrap}
-.rag-table td{padding:11px 12px;border-bottom:1px solid var(--tb);font-size:13px;vertical-align:middle}
-.rag-table tr:last-child td{border-bottom:none}
-.rag-table tr:hover td{background:var(--bg2)}
-.rag-org-link{color:var(--teal);cursor:pointer;font-weight:700;text-decoration:none;background:none;border:none;font-family:var(--sans);font-size:13px;padding:0}
-.rag-org-link:hover{text-decoration:underline}
-.region-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.5px;padding:2px 7px;border-radius:3px;margin-left:6px;text-transform:uppercase}
-.rb-roi{background:var(--teal-light);color:var(--teal)}.rb-ni{background:var(--navy-light);color:var(--navy)}
-.rag-right{text-align:right}
-.prog-bar-wrap{display:flex;align-items:center;gap:8px}
-.prog-bar-bg{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px}
-.prog-bar-fill{height:100%;border-radius:3px}
-.pbf-green{background:#2e7d32}.pbf-amber{background:#ed6c02}.pbf-red{background:#c62828}
-.prog-pos{color:#2e7d32;font-weight:700}.prog-neg{color:#c62828;font-weight:700}.prog-neu{color:var(--ts);font-weight:700}
-.rag-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.rag-pill.green{background:#e8f5e9;color:#2e7d32}.rag-pill.amber{background:#fff4e5;color:#ed6c02}
-.rag-pill.red{background:#fdecea;color:#c62828}.rag-pill.na{background:var(--bg3);color:var(--tt)}
-.rag-summary-row td{background:var(--navy-light);font-weight:700;font-size:12px;color:var(--navy)}
-.rag-last-updated{font-size:11px;color:var(--tt);margin-top:12px;text-align:right}
 </style>
 </head>
 <body>
 
 <div class="header">
 <h1>SMART Tracker</h1>
-<div class="sub">SELECT Programme 2026–27  ·  Built to Scale  ·  InterTradeIreland</div>
+<div class="sub">SELECT Programme 2026–27</div>
 <a class="back" href="/">← Programme Hub</a>
 </div>
 
-<!-- Auth -->
+<!-- Auth Screen -->
 <div class="wrap" id="authScreen">
 <div class="auth-box">
 <h2>Access your tracker</h2>
-<p id="authSubtitle">Programme team: enter your assessor password. CEOs: enter your personal password.</p>
+<p>Enter your password to continue.</p>
 <input type="password" id="authPw" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
 <button onclick="doAuth()">Continue</button>
 <div class="auth-err" id="authErr">Incorrect password. Please try again.</div>
 </div>
 </div>
 
-<!-- Dashboard -->
+<!-- Assessor Dashboard -->
 <div class="wrap dash" id="dashScreen">
-<div class="dash-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-<h2 id="dashTitle" style="font-family:var(--serif);font-size:22px;color:var(--navy)">All organisations</h2>
-<div style="display:flex;gap:8px;flex-wrap:wrap" id="dashHeadBtns">
-<button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){if(currentOrg){var o=d.orgs.find(function(x){return x.code===currentOrg;});if(o)renderAll(o);}else{showDash();}})" style="font-size:10px">&#8635; Refresh from Airtable</button>
-<button class="btn btn-sm btn-outline" onclick="exportToExcel()" style="font-size:10px">&#8595; Export to Excel</button>
-<button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px" id="migrateBtn">Migrate local &rarr; Airtable</button>
-<button class="btn btn-teal" onclick="openAddOrg()" id="addOrgBtn">+ Add organisation</button>
+<div class="dash-head">
+<h2>All organisations</h2>
+<div style="display:flex;gap:10px">
+<button class="btn btn-teal" onclick="openAddOrg()">+ Add organisation</button>
+<button class="btn btn-outline" onclick="exportAll()">Export all data</button>
 </div>
 </div>
-<div class="cohort-bar" id="cohortBar"></div>
-<div class="dash-view-toggle">
-<button class="view-btn active" onclick="switchDashView('orgs',this)">Organisation cards</button>
-<button class="view-btn" onclick="switchDashView('rag',this)">Programme RAG Report</button>
-<button class="view-btn" onclick="switchDashView('attendance',this)">Cohort Attendance</button>
-</div>
-<div class="dash-view active" id="dashViewOrgs">
 <div class="org-grid" id="orgGrid"></div>
 </div>
-<div class="dash-view" id="dashViewRag">
-<div class="rag-wrap">
-<div class="rag-header">
-<h3>Programme Summary &mdash; All Organisations</h3>
-<div class="rag-legend">
-<span><span class="rag-dot rag-g"></span>Green &ge;80%</span>
-<span><span class="rag-dot rag-a"></span>Amber 50&ndash;79%</span>
-<span><span class="rag-dot rag-r"></span>Red &lt;50%</span>
-</div>
-</div>
-<div class="rag-summary-bar" style="grid-template-columns:repeat(6,1fr)">
-<div class="rag-sum-card green-card"><div class="rag-sum-num" id="ragCountGreen">-</div><div class="rag-sum-label">On Track</div></div>
-<div class="rag-sum-card amber-card"><div class="rag-sum-num" id="ragCountAmber">-</div><div class="rag-sum-label">Monitor</div></div>
-<div class="rag-sum-card red-card"><div class="rag-sum-num" id="ragCountRed">-</div><div class="rag-sum-label">At Risk</div></div>
-<div class="rag-sum-card" style="background:var(--navy-light);border:1px solid rgba(15,43,76,0.15)"><div class="rag-sum-num" id="ragTotalAtt" style="color:var(--navy)">-</div><div class="rag-sum-label">Session Attendance</div></div>
-<div class="rag-sum-card" style="background:var(--teal-light);border:1px solid rgba(0,140,130,0.15)"><div class="rag-sum-num" id="ragTotalMent" style="color:var(--teal)">-</div><div class="rag-sum-label">Mentoring Hrs</div></div>
-<div class="rag-sum-card" style="background:var(--teal-light);border:1px solid rgba(0,140,130,0.15)"><div class="rag-sum-num" id="ragTotalCoach" style="color:var(--teal)">-</div><div class="rag-sum-label">Coaching Hrs</div></div>
-</div>
-<div class="rag-table-wrap">
-<table class="rag-table">
-<thead><tr>
-<th>Enterprise</th><th>Region</th><th>Baseline</th><th>Locked</th>
-<th class="rag-right">Sessions</th><th class="rag-right">Consult Hrs</th><th class="rag-right">Coach Hrs</th>
-<th class="rag-right">Traded Income</th><th class="rag-right">Growth %</th>
-<th class="rag-right">Progress %</th><th>RAG</th>
-<th class="rag-right">CB Sales</th><th>Next Actions / Risks</th>
-</tr></thead>
-<tbody id="ragTableBody"><tr><td colspan="13" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
-</table>
-</div>
-<div class="rag-last-updated" id="ragLastUpdated"></div>
-</div>
-</div>
-<div class="dash-view" id="dashViewAttendance">
-<div class="rag-wrap">
-<div class="rag-header">
-<h3>Cohort Attendance Matrix</h3>
-<div class="rag-legend">
-<span style="color:var(--ts)">Click cells to mark attendance / format. Auto-saves.</span>
-</div>
-</div>
-<div class="rag-summary-bar" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px">
-<div class="rag-sum-card green-card"><div class="rag-sum-num" id="cohAttTotal">-</div><div class="rag-sum-label">Total Attendances</div></div>
-<div class="rag-sum-card" style="background:var(--navy-light);border:1px solid rgba(15,43,76,0.15)"><div class="rag-sum-num" id="cohAttOnline" style="color:var(--navy)">-</div><div class="rag-sum-label">Online</div></div>
-<div class="rag-sum-card" style="background:var(--teal-light);border:1px solid rgba(0,140,130,0.15)"><div class="rag-sum-num" id="cohAttInPerson" style="color:var(--teal)">-</div><div class="rag-sum-label">In Person</div></div>
-<div class="rag-sum-card amber-card"><div class="rag-sum-num" id="cohAttApologies">-</div><div class="rag-sum-label">Apologies</div></div>
-</div>
-<div class="rag-table-wrap">
-<table class="rag-table" id="cohortAttTable" style="min-width:1100px"></table>
-</div>
-<div style="margin-top:14px;padding:12px 16px;background:var(--bg2);border-radius:var(--r);font-size:12px;color:var(--ts);line-height:1.6">
-<strong>How to use:</strong> Click a cell to cycle through states &mdash; Empty &rarr; Online &rarr; In Person &rarr; Hybrid &rarr; Apology &rarr; Empty. Format is recorded automatically when marked attended. The bottom row shows attendance % per session.
-</div>
-</div>
-</div>
-</div>
-<div class="wrap tracker" id="sopScreen" style="display:none">
-<div class="tracker-head">
-<a class="back-dash" onclick="showDash()">← All organisations</a>
-<h2>Internal SOP Checklist</h2>
-<div class="org-meta">Track 17-step baseline process per organisation</div>
-</div>
-<div id="sopContent"></div>
-</div>
 
-<!-- Tracker -->
+<!-- Individual Tracker -->
 <div class="wrap tracker" id="trackerScreen">
 <div class="tracker-head">
 <a class="back-dash" id="backDash" onclick="showDash()">← All organisations</a>
 <h2 id="trkOrgName"></h2>
 <div class="org-meta" id="trkMeta"></div>
-<div class="phase-ribbon" id="phaseRibbon">
-<div class="ph ph-diag current">① Diagnose<br><span style="font-weight:400;font-size:9px">Apr–May</span></div>
-<div class="ph ph-trans">② Translate<br><span style="font-weight:400;font-size:9px">May–Jun</span></div>
-<div class="ph ph-str">③ Strengthen<br><span style="font-weight:400;font-size:9px">Jun–Nov</span></div>
-<div class="ph ph-sust">④ Sustain<br><span style="font-weight:400;font-size:9px">Dec</span></div>
-</div>
 <div class="tracker-nav">
-<button class="tab-btn active" data-tab="profile" onclick="switchTab('profile',this)">Profile</button>
-<button class="tab-btn" data-tab="baseline" onclick="switchTab('baseline',this)">Baseline</button>
-<button class="tab-btn" data-tab="diagnosis" onclick="switchTab('diagnosis',this)">Diagnosis</button>
-<button class="tab-btn" data-tab="validation" onclick="switchTab('validation',this)">Validation</button>
+<button class="tab-btn active" data-tab="kpi" onclick="switchTab('kpi',this)">KPI Classifications</button>
+<button class="tab-btn" data-tab="baseline" onclick="switchTab('baseline',this)">Baseline Scores</button>
 <button class="tab-btn" data-tab="smart" onclick="switchTab('smart',this)">SMART Objectives</button>
-<button class="tab-btn" data-tab="consulting" onclick="switchTab('consulting',this)">1:1 Consulting</button>
-<button class="tab-btn" data-tab="coaching" onclick="switchTab('coaching',this)">Coaching</button>
+<button class="tab-btn" data-tab="progress" onclick="switchTab('progress',this)">Progress Log</button>
 <button class="tab-btn" data-tab="endline" onclick="switchTab('endline',this)">Endline</button>
-<button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance',this)">Attendance</button>
-<button class="tab-btn" data-tab="financial" onclick="switchTab('financial',this)">Financial</button>
 <button class="tab-btn" data-tab="notes" onclick="switchTab('notes',this)">Notes</button>
 </div>
 </div>
 <div id="readonlyNotice" class="readonly-notice" style="display:none">You are viewing this tracker in read-only mode. Contact Fiona or Clodagh if anything needs updating.</div>
 
-<!-- PROFILE TAB -->
-<div class="tab-panel active" id="tab-profile">
-<div class="section-title">Organisation Profile & KPI Classifications</div>
-<div class="section-note">Application-stage data and ITI reporting classifications. Fixed at programme entry.</div>
-<div class="sub-section">KPI Classifications</div>
+<!-- KPI Tab -->
+<div class="tab-panel active" id="tab-kpi">
+<div class="section-title">KPI Classifications</div>
+<div class="section-note">Fixed at programme entry. Used for ITI reporting.</div>
 <div class="kpi-grid" id="kpiGrid"></div>
-<div class="sub-section">Application-Stage Data</div>
-<div class="kpi-grid" id="appGrid"></div>
-<div class="sub-section">Programme Intensity</div>
-<div class="section-note">Determined after baseline — Stabilise, Strengthen or Scale.</div>
-<div class="intensity-pills" id="intensityPills"></div>
-<div class="sub-section">Cross-Border Tracking</div>
-<div class="cb-row" id="cbGrid"></div>
-<div class="sub-section">RAG Report Data</div>
-<div class="section-note">Populates the Programme RAG Report. Update after each consulting cycle.</div>
-<div class="kpi-grid">
-<div class="kpi-card"><label>Mode of Support</label><div id="ragModeSlot"></div></div>
-<div class="kpi-card"><label>Baseline Turnover (number only, e.g. 120000)</label><div id="ragBaselineSlot"></div></div>
-<div class="kpi-card"><label>Current Turnover (number only)</label><div id="ragCurrentSlot"></div></div>
-<div class="kpi-card"><label>Progress % (0-100, leave blank for auto)</label><div id="ragProgressSlot"></div></div>
-<div class="kpi-card"><label>Op Surplus % (number only, e.g. 7.2)</label><div id="ragSurplusSlot"></div></div>
-<div class="kpi-card"><label>Cross-Border Sales (number only)</label><div id="ragCbSlot"></div></div>
-</div>
-<div style="height:10px"></div>
-<div class="kpi-card" style="margin-top:0"><label>Next Actions / Risks (for RAG report)</label><div id="ragActionsSlot"></div></div>
 </div>
 
-<!-- BASELINE TAB -->
+<!-- Baseline Tab -->
 <div class="tab-panel" id="tab-baseline">
-<div class="section-title">Assessor Notes</div>
-<div class="section-note">Free-text notes for this organisation's baseline. Saves automatically as you type. Use for overall observations, validation flags, or context that sits across domains.</div>
-<div id="baselineNotesSlot" style="margin-bottom:24px"></div>
-<div class="section-title">Baseline Report</div>
-<div class="section-note">Attach the CEO's completed baseline overview document. Paste a shareable link (Google Drive, Dropbox, etc.).</div>
-<div id="baselineReportSlot" style="margin-bottom:24px"></div>
-<div class="section-title">Baseline Scores — 9 Domains (Locked 2b)</div>
-<div class="section-note">Scores fixed after baseline lock. 9 domains with percentage weights. Scored 0–5.</div>
+<div class="section-title">Baseline Scores (Locked 2b)</div>
+<div class="section-note">Scores are fixed after baseline lock and cannot be amended.</div>
 <table class="score-table" id="baselineTable">
-<thead><tr><th>Domain</th><th style="width:55px">Wt.</th><th style="width:70px">Score</th><th style="width:80px">Wtd.</th><th>Evidence</th><th style="min-width:50px">Bar</th></tr></thead>
+<thead><tr><th>Domain</th><th style="width:80px">Score</th><th>Bar</th></tr></thead>
 <tbody></tbody>
-<tfoot id="baselineFoot"></tfoot>
 </table>
 </div>
 
-<!-- DIAGNOSIS TAB -->
-<div class="tab-panel" id="tab-diagnosis">
-<div class="section-title">Commercial Problem Statement & Root Constraints</div>
-<div class="section-note">Captured at validation meeting. Drives the Scale & Change Plan.</div>
-<div id="diagnosisContent"></div>
-</div>
-
-<!-- VALIDATION TAB -->
-<div class="tab-panel" id="tab-validation">
-<div class="section-title">Validation Meeting & Baseline Lock</div>
-<div class="section-note">Internal SOP for the validation meeting and baseline lock-in. Tick boxes record timestamps automatically.</div>
-<div id="validationContent"></div>
-</div>
-
-<!-- SMART TAB -->
+<!-- SMART Tab -->
 <div class="tab-panel" id="tab-smart">
 <div class="section-title">SMART Objectives</div>
-<div class="section-note">Agreed at validation meeting. Linked to baseline domains.</div>
+<div class="section-note">Agreed at validation meeting. These drive programme delivery.</div>
 <div id="smartList"></div>
 <div id="smartAddWrap" style="margin-top:12px"></div>
 </div>
 
-<!-- CONSULTING TAB -->
-<div class="tab-panel" id="tab-consulting">
-<div class="section-title">1:1 Consulting — Outreach Cycles</div>
-<div class="section-note">After each group session, Fiona or Clodagh meets with the CEO to build on their commercial plan for trade. 8 consulting days (35 hours) per enterprise across the programme. An additional 9 flex hours can be allocated to mentoring or coaching as agreed.</div>
-<div class="coaching-summary" id="consultingSummary"></div>
-<div id="consultingList"></div>
+<!-- Progress Tab -->
+<div class="tab-panel" id="tab-progress">
+<div class="section-title">Monthly Progress</div>
+<div class="section-note">Updated monthly against SMART objectives and milestones.</div>
+<div id="progressList"></div>
+<div id="progressAddWrap" style="margin-top:12px"></div>
 </div>
 
-<!-- COACHING TAB -->
-<div class="tab-panel" id="tab-coaching">
-<div class="section-title">Executive Coaching Log</div>
-<div class="section-note">Up to 12 hours per enterprise. Sarah / Aoife — focus themes only (content is confidential). Additional flex hours from the 9-hour pool may be added by agreement.</div>
-<div class="coaching-summary" id="coachingSummary"></div>
-<div id="coachingList"></div>
-<div id="coachingAddWrap" style="margin-top:12px"></div>
-</div>
-
-<!-- ENDLINE TAB -->
+<!-- Endline Tab -->
 <div class="tab-panel" id="tab-endline">
-<div class="section-title">Endline Scores vs. Baseline</div>
-<div class="section-note">Identical 9-domain assessment at programme end. Compared against locked baseline.</div>
+<div class="section-title">Endline Scores</div>
+<div class="section-note">Identical assessment re-run at programme end. Compared against locked baseline.</div>
 <table class="score-table" id="endlineTable">
-<thead><tr><th>Domain</th><th style="width:55px">Wt.</th><th style="width:70px">Baseline</th><th style="width:70px">Endline</th><th style="width:60px">Change</th><th style="min-width:50px">Bar</th></tr></thead>
+<thead><tr><th>Domain</th><th style="width:80px">Baseline</th><th style="width:80px">Endline</th><th>Change</th></tr></thead>
 <tbody></tbody>
 </table>
 </div>
 
-<!-- NOTES TAB -->
+<!-- Notes Tab -->
 <div class="tab-panel" id="tab-notes">
-<div class="section-title">Consulting, Coaching & Session Notes</div>
-<div class="section-note">High-level theme and actions from each engagement.</div>
+<div class="section-title">Consulting &amp; Coaching Notes</div>
+<div class="section-note">High-level theme and actions from each session.</div>
 <div id="notesList"></div>
 <div id="notesAddWrap" style="margin-top:12px"></div>
 </div>
-
-<!-- ATTENDANCE TAB -->
-<div class="tab-panel" id="tab-attendance">
-<div class="section-title">Group Session &amp; Module Attendance</div>
-<div class="section-note">Mandatory attendance record for ITI audit and reporting. 8 group sessions across the programme. Attendance is mandatory — flag apologies immediately.</div>
-<div class="coaching-summary" id="attendanceSummary" style="flex-wrap:wrap"></div>
-<div style="margin-top:20px" id="attendanceList"></div>
 </div>
 
-<!-- FINANCIAL BASELINE TAB -->
-<div class="tab-panel" id="tab-financial">
-<div class="section-title">Financial Baseline & Growth Tracking</div>
-<div class="section-note">Verified financial data captured at baseline lock. ITI requires traded income growth of &ge;15% by programme end. Update current figures each quarter.</div>
-<div class="sub-section">Baseline Financial Data (at lock)</div>
-<div class="kpi-grid" id="finBaselineGrid"></div>
-<div class="sub-section">Current Financial Data (updated quarterly)</div>
-<div class="kpi-grid" id="finCurrentGrid"></div>
-<div class="sub-section">Traded Income Growth</div>
-<div class="coaching-summary" id="finGrowthSummary"></div>
-<div class="sub-section">Leadership Confidence Index</div>
-<div class="section-note">Self-assessed 1-10 scale. Captured at baseline and endline.</div>
-<div class="kpi-grid" id="lciGrid"></div>
-</div>
-
-<!-- ITI KPIs TAB removed - duplicates Profile fields -->
-
-</div><!-- /trackerScreen -->
-
-<!-- Save bar -->
+<!-- Save bar (assessor only) -->
 <div class="save-bar hidden" id="saveBar">
 <div class="save-msg" id="saveMsg">Saved ✓</div>
 <button class="btn btn-navy" onclick="saveTracker()">Save changes</button>
@@ -535,873 +256,118 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="modal-overlay" id="addOrgModal">
 <div class="modal">
 <h3>Add organisation</h3>
-<div class="form-grid">
 <div class="form-row"><label>Organisation name</label><input id="newOrgName"></div>
 <div class="form-row"><label>CEO name</label><input id="newCeoName"></div>
-<div class="form-row"><label>Organisation code (URL slug)</label><input id="newOrgCode" placeholder="e.g. acme"></div>
-<div class="form-row"><label>CEO password (unique)</label><input id="newOrgPw"></div>
-<div class="form-row"><label>Sector</label><input id="newOrgSector"></div>
+<div class="form-row"><label>Organisation code (used in URL)</label><input id="newOrgCode" placeholder="e.g. acme"></div>
+<div class="form-row"><label>CEO password (unique to this CEO)</label><input id="newOrgPw"></div>
 <div class="form-row"><label>Jurisdiction</label><select id="newOrgJuris"><option value="ROI">ROI</option><option value="NI">NI</option></select></div>
-</div>
-<div class="form-divider">Application-Stage Data</div>
-<div class="form-grid">
-<div class="form-row"><label>Annual Turnover</label><input id="newTurnover" placeholder="e.g. €250,000"></div>
-<div class="form-row"><label>Employee Count</label><input id="newEmployees" type="number"></div>
-<div class="form-row"><label>Income Split (Traded %)</label><input id="newTradedPct" placeholder="e.g. 60%"></div>
-<div class="form-row"><label>Cross-Border Sales %</label><input id="newCBPct" placeholder="e.g. 15%"></div>
-<div class="form-row"><label>First-Time Exporter?</label><select id="newFirstExp"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-<div class="form-row"><label>Prior ITI Support?</label><select id="newPriorITI"><option value="">—</option><option>Yes</option><option>No</option></select></div>
-</div>
 <div class="form-actions">
 <button class="btn btn-outline" onclick="closeAddOrg()">Cancel</button>
-<button class="btn btn-teal" onclick="addOrg()">Add organisation</button>
+<button class="btn btn-teal" onclick="addOrg()">Add</button>
 </div>
 </div>
 </div>
 
-<div id="syncStatus" class="sync-status" style="display:none"></div>
-<style>
-.sync-status{position:fixed;top:0;left:50%;transform:translateX(-50%);padding:4px 16px;font-size:11px;font-weight:600;font-family:var(--sans);border-radius:0 0 6px 6px;z-index:300;letter-spacing:0.3px;transition:all .3s}
-.sync-info{background:var(--navy);color:rgba(255,255,255,0.85)}
-.sync-ok{background:var(--teal);color:#fff}
-.sync-warn{background:var(--gold);color:#fff}
-.sync-err{background:var(--coral);color:#fff}
-</style>
-
-<script src="airtable-data.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 var MASTER_PW='SELECT2026';
-// Assessor passwords: Fiona = SELECT2026-FD, Clodagh = SELECT2026-COR
-var ASSESSOR_PASSWORDS=['SELECT2026-FD','SELECT2026-COR','SELECT2026'];
-// Viewer passwords: read-only dashboard access (all orgs, no editing)
-// Steven Egan / ITI = SELECT2026-ITI
-var VIEWER_PASSWORDS=['SELECT2026-ITI'];
-var STORE_KEY='select_tracker_v4';
+var STORE_KEY='select_smart_tracker';
 var isAssessor=false;
-var isViewer=false; // ITI read-only dashboard
 var currentOrg=null;
 
+// Seed roster: ensures every browser can authenticate the 10 CEOs.
+// Each CEO sees their own org only, read-only. Assessor (SELECT2026) sees all.
+var SEED_ORGS=[
+{name:'Leave No Trace Ireland',ceo:'Maura',code:'leave-no-trace',password:'SL-LNT2026',jurisdiction:'ROI'},
+{name:'Siel Bleu Ireland',ceo:'Thomas McCabe',code:'siel-bleu',password:'SL-SBI2026',jurisdiction:'ROI'},
+{name:'Waymaker',ceo:'Eileen',code:'waymaker',password:'SL-WMK2026',jurisdiction:'NI'},
+{name:'Connections Arts',ceo:'Miriam',code:'connections-arts',password:'SL-CON2026',jurisdiction:'ROI'},
+{name:'Codema',ceo:'Donna',code:'codema',password:'SL-COD2026',jurisdiction:'ROI'},
+{name:'PsyCare Ireland',ceo:'Mick',code:'psycare',password:'SL-PSY2026',jurisdiction:'ROI'},
+{name:'IncredABLE',ceo:'Nigel',code:'incredible',password:'SL-INC2026',jurisdiction:'NI'},
+{name:'Community Roots',ceo:'Scott Bryan',code:'community-roots',password:'SL-CRT2026',jurisdiction:'NI'},
+{name:'PACE Organisation',ceo:'Pearse',code:'pace',password:'SL-PAC2026',jurisdiction:'NI'},
+{name:'Youthlink',ceo:'Joseph',code:'youthlink',password:'SL-YLK2026',jurisdiction:'NI'}
+];
+
 var DOMAINS=[
-{name:'1. Business Model & Revenue Mix',wt:15,cluster:'Foundation',clCss:'cl-found'},
-{name:'2. Products & Unit Economics',wt:15,cluster:'Foundation',clCss:'cl-found'},
-{name:'3. Financial Management & Cash',wt:15,cluster:'Foundation',clCss:'cl-found'},
-{name:'4. Commercial Strategy & Market Focus',wt:10,cluster:'Engine',clCss:'cl-engine'},
-{name:'5. Go-To-Market & Sales',wt:10,cluster:'Engine',clCss:'cl-engine'},
-{name:'6. Operations & Delivery Capacity',wt:10,cluster:'Engine',clCss:'cl-engine'},
-{name:'7. Cross-Border Readiness',wt:10,cluster:'Engine',clCss:'cl-engine'},
-{name:'8. Leadership & Execution Capacity',wt:10,cluster:'Enabler',clCss:'cl-enable'},
-{name:'9. Organisational Readiness',wt:5,cluster:'Enabler',clCss:'cl-enable'}
+'Revenue, Pricing & Financial Sustainability',
+'Market Strategy & Cross-Border Trade',
+'Value Proposition & Competitive Positioning',
+'Sales Pipeline & Business Development',
+'Leadership & Governance',
+'Organisational Capacity & Delivery',
+'Financial Management & Systems',
+'Digital Capability & Marketing',
+'Impact Measurement & Reporting'
 ];
 
 var KPI_FIELDS=[
 {key:'newToITI',label:'New to InterTradeIreland',type:'select',opts:['Yes','No']},
-{key:'firstTimeCB',label:'First-Time Cross-Border',type:'select',opts:['Yes','No']},
+{key:'firstTimeCB',label:'First-Time Cross-Border Exporter',type:'select',opts:['Yes','No']},
 {key:'firstTimeExp',label:'First-Time Exporter',type:'select',opts:['Yes','No']},
 {key:'jurisdiction',label:'Jurisdiction',type:'select',opts:['ROI','NI']},
-{key:'sector',label:'Sector',type:'text'},
-{key:'email',label:'CEO Email',type:'text'}
-];
-
-var APP_FIELDS=[
-{key:'turnover',label:'Annual Turnover',type:'text'},
-{key:'employees',label:'Employee Count',type:'text'},
-{key:'tradedPct',label:'Income Split (Traded %)',type:'text'},
 {key:'crossBorderPct',label:'Cross-Border Sales %',type:'text'},
-{key:'priorITI',label:'Prior ITI Support',type:'select',opts:['Yes','No']},
-{key:'crossBorderTarget',label:'Cross-Border Target',type:'text'}
+{key:'turnoverBand',label:'Turnover Band',type:'text'}
 ];
 
-var SOP_STEPS=[
-{phase:'Phase 1 - CEO Pre-Work',items:['CEO pre-work issued','CEO pre-work returned','CEO submission logged']},
-{phase:'Phase 2 - Internal Scoring',items:['CEO submission read end-to-end','Draft internal scoring completed','Draft baseline calculated','Priority issues identified']},
-{phase:'Phase 3 - Validation Meeting',items:['Validation meeting held','Assumptions tested','Score adjustments (if required)']},
-{phase:'Phase 4 - Baseline Lock-In',items:['Final baseline confirmed','Baseline locked']},
-{phase:'Phase 5 - Programme Alignment',items:['Priority focus areas agreed','CEO summary prepared','CEO summary issued']},
-{phase:'Phase 6 - Ongoing Use',items:['Baseline referenced in delivery','Endline scheduled']}
-];
-
-function loadData(){return AT.loadDataSync();}
-function saveData(d){AT.saveData(d, currentOrg);}
-
-function switchDashView(view,btn){
-  document.querySelectorAll('.dash-view').forEach(function(v){v.style.display='none';});
-  document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active');});
-  var targetId=view==='orgs'?'dashViewOrgs':view==='rag'?'dashViewRag':'dashViewAttendance';
-  var target=document.getElementById(targetId);
-  if(target)target.style.display='block';
-  btn.classList.add('active');
-  var titleMap={orgs:'All organisations',rag:'Programme RAG Report',attendance:'Cohort Attendance Matrix'};
-  document.getElementById('dashTitle').textContent=titleMap[view]||'All organisations';
-  if(view==='rag')renderRagReport();
-  if(view==='attendance')renderCohortAttendance();
+function makeOrg(s){
+return {
+name:s.name,ceo:s.ceo,code:s.code,password:s.password,
+kpi:{jurisdiction:s.jurisdiction,newToITI:'',firstTimeCB:'',firstTimeExp:'',crossBorderPct:'',turnoverBand:''},
+baseline:DOMAINS.map(function(d){return{domain:d,score:''};}),
+endline:DOMAINS.map(function(d){return{domain:d,score:''};}),
+smart:[],progress:[],notes:[],baselineLocked:false
+};
 }
 
-// Returns consulting cycle hours, falling back to legacy "days" field × 8.
-// Belt-and-braces: ensureConsulting also migrates days→hours and persists,
-// but this guarantees correct totals even on an un-migrated org payload.
-function getConsultHours(c){
-  if(!c)return 0;
-  var h=parseFloat(c.hours);
-  if(!isNaN(h)&&h>0)return h;
-  var d=parseFloat(c.days||c._legacyDays);
-  if(!isNaN(d)&&d>0)return d*8;
-  return 0;
+function loadData(){
+var d=localStorage.getItem(STORE_KEY);
+var data=d?JSON.parse(d):{orgs:[]};
+// Ensure all seed orgs are present in this browser. Existing data is preserved.
+var changed=false;
+SEED_ORGS.forEach(function(s){
+var exists=false;
+for(var i=0;i<data.orgs.length;i++){
+if(data.orgs[i].code===s.code){exists=true;break;}
 }
-
-function ragCalcProgress(org){
-  if(org.kpi&&org.kpi.progressPct&&org.kpi.progressPct!=='')return parseFloat(org.kpi.progressPct);
-  var done=0;
-  if(org.consulting&&org.consulting.length){
-    org.consulting.forEach(function(c){if(c.completed)done++;});
-    return Math.round((done/8)*100);
-  }
-  return null;
+if(!exists){data.orgs.push(makeOrg(s));changed=true;}
+});
+if(changed){localStorage.setItem(STORE_KEY,JSON.stringify(data));}
+return data;
 }
-
-function ragBadge(p){
-  var s=p===null||isNaN(p)?'na':p>=80?'green':p>=50?'amber':'red';
-  var lbl={green:'Green',amber:'Amber',red:'Red',na:'N/A'};
-  return '<span class="rag-pill '+s+'">'+lbl[s]+'</span>';
-}
-
-function renderRagReport(){
-  var tbody=document.getElementById('ragTableBody');
-  var data=loadData();
-  var orgs=data.orgs||[];
-  if(!orgs.length){
-    tbody.innerHTML='<tr><td colspan="13" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>';
-    ['ragCountGreen','ragCountAmber','ragCountRed'].forEach(function(id){document.getElementById(id).textContent='0';});
-    return;
-  }
-  var counts={green:0,amber:0,red:0,na:0};
-  var rows='';
-  var totalProg=0,progCount=0,totalSurplus=0,surplusCount=0;
-  orgs.forEach(function(org){
-    var juris=(org.kpi&&org.kpi.jurisdiction)?org.kpi.jurisdiction:'ROI';
-    var isNI=juris.toUpperCase()==='NI';
-    var sym=isNI?'&pound;':'&euro;';
-    var mode=(org.kpi&&org.kpi.ragMode)?org.kpi.ragMode:(org.intensity||'-');
-    var obj='';
-    if(org.diagnosis&&org.diagnosis.problem)obj=org.diagnosis.problem;
-    else if(org.smart&&org.smart[0]&&org.smart[0].objective)obj=org.smart[0].objective;
-    if(!obj)obj='-';
-    if(obj.length>70)obj=obj.substring(0,68)+'...';
-    var bt=(org.kpi&&org.kpi.ragBaseline)?org.kpi.ragBaseline:'';
-    var ct=(org.kpi&&org.kpi.ragCurrent)?org.kpi.ragCurrent:'';
-    var ops=(org.kpi&&org.kpi.ragSurplus)?org.kpi.ragSurplus:'';
-    var cbs=(org.kpi&&org.kpi.ragCbSales)?org.kpi.ragCbSales:'';
-    var nxt=(org.kpi&&org.kpi.ragNextActions)?org.kpi.ragNextActions:'';
-    var prog=ragCalcProgress(org);
-    var status=prog===null?'na':prog>=80?'green':prog>=50?'amber':'red';
-    counts[status]++;
-    if(prog!==null){totalProg+=prog;progCount++;}
-    if(ops){totalSurplus+=parseFloat(ops)||0;surplusCount++;}
-    var progStr=prog!==null?(prog>0?'+':'')+prog+'%':'-';
-    var progCls=prog>=80?'prog-pos':prog>=50?'prog-neu':prog!==null?'prog-neg':'';
-    var barCls='pbf-'+(status==='na'?'red':status);
-    var barW=prog!==null?Math.min(100,Math.max(0,prog)):0;
-    // Mentoring hours
-    var mentHrs=0;
-    if(org.consulting&&org.consulting.length){org.consulting.forEach(function(c){mentHrs+=getConsultHours(c);});}
-    mentHrs=parseFloat(mentHrs.toFixed(1));
-    var mentCol=mentHrs>=35?'color:#2e7d32;font-weight:700':mentHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
-    // Coaching hours
-    var coachHrs=0;
-    if(org.coaching&&org.coaching.length){org.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});}
-    coachHrs=parseFloat(coachHrs.toFixed(1));
-    var coachCol=coachHrs>=12?'color:#2e7d32;font-weight:700':coachHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
-    // Attendance
-    var attCount=0,attOnline=0,attInPerson=0,attHybrid=0;
-    if(org.attendance&&org.attendance.length){org.attendance.forEach(function(a){
-      if(a.attended){attCount++;
-        if(a.format==='In Person')attInPerson++;
-        else if(a.format==='Hybrid')attHybrid++;
-        else attOnline++;
-      }
-    });}
-    var attCol=attCount>=8?'color:#2e7d32;font-weight:700':attCount>=6?'color:#ed6c02;font-weight:600':attCount>0?'color:#c62828;font-weight:600':'color:var(--tt)';
-    var attBreakdown='';
-    if(attCount>0){
-      var parts=[];
-      if(attOnline>0)parts.push(attOnline+' online');
-      if(attInPerson>0)parts.push(attInPerson+' in-person');
-      if(attHybrid>0)parts.push(attHybrid+' hybrid');
-      attBreakdown='<div style="font-size:9px;font-weight:400;color:var(--ts);margin-top:1px">'+parts.join(', ')+'</div>';
-    }
-    // Financial
-    var finObj=org.financial||{};
-    var blTrad=parseFloat(finObj.blTradedIncome)||0;
-    var curTrad=parseFloat(finObj.curTradedIncome)||0;
-    var tradGrowth=blTrad>0?parseFloat(((curTrad-blTrad)/blTrad*100).toFixed(1)):null;
-    var growthCol=tradGrowth===null?'color:var(--tt)':tradGrowth>=15?'color:#2e7d32;font-weight:700':tradGrowth>=0?'color:#ed6c02;font-weight:600':'color:#c62828;font-weight:600';
-    // Baseline score
-    var blScore='';
-    if(org.baseline&&org.baseline.length){var tot=0;org.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;});blScore=tot?parseFloat(tot.toFixed(2)):'';}
-    var cbs=(org.kpi&&org.kpi.ragCbSales)?(sym+(org.kpi.ragCbSales)):'-';
-    var nxt=(org.kpi&&org.kpi.ragNextActions)?org.kpi.ragNextActions:'';
-    rows+='<tr>';
-    rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button>';
-    rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
-    rows+='<td class="rag-right" style="font-weight:600;color:var(--navy)">'+(blScore?blScore+'/5':'-')+'</td>';
-    rows+='<td style="text-align:center">'+(org.baselineLocked?'<span style="color:#2e7d32;font-weight:700;font-size:11px">LOCKED</span>':'<span style="color:#ed6c02;font-size:11px">Pending</span>')+'</td>';
-    rows+='<td class="rag-right" style="'+attCol+'">'+attCount+' / 8'+attBreakdown+'</td>';
-    rows+='<td class="rag-right" style="'+mentCol+'">'+mentHrs+' / 35</td>';
-    rows+='<td class="rag-right" style="'+coachCol+'">'+coachHrs+' / 12</td>';
-    rows+='<td class="rag-right" style="font-weight:600">'+(blTrad?sym+blTrad.toLocaleString():'-')+'</td>';
-    rows+='<td class="rag-right" style="'+growthCol+'">'+(tradGrowth!==null?(tradGrowth>=0?'+':'')+tradGrowth+'%':'-')+'</td>';
-    rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
-    rows+='<td>'+ragBadge(prog)+'</td>';
-    rows+='<td class="rag-right">'+cbs+'</td>';
-    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
-    rows+='</tr>';
-  });
-  var avgProg=progCount?Math.round(totalProg/progCount):null;
-  var avgSurplus=surplusCount?(totalSurplus/surplusCount).toFixed(1):null;
-  // Programme totals
-  var totalMentHrs=0,totalCoachHrs=0,totalAtt=0;
-  orgs.forEach(function(o){
-    if(o.consulting)o.consulting.forEach(function(c){totalMentHrs+=getConsultHours(c);});
-    if(o.coaching)o.coaching.forEach(function(c){totalCoachHrs+=parseFloat(c.hours||0);});
-    if(o.attendance)o.attendance.forEach(function(a){if(a.attended)totalAtt++;});
-  });
-  rows+='<tr class="rag-summary-row">';
-  rows+='<td colspan="2"><strong>Programme Totals ('+orgs.length+' orgs)</strong></td>';
-  rows+='<td></td><td></td>';
-  rows+='<td class="rag-right"><strong>'+totalAtt+' / '+(orgs.length*8)+'</strong></td>';
-  rows+='<td class="rag-right"><strong>'+parseFloat(totalMentHrs.toFixed(1))+' / '+(orgs.length*35)+'</strong></td>';
-  rows+='<td class="rag-right"><strong>'+parseFloat(totalCoachHrs.toFixed(1))+' / '+(orgs.length*12)+'</strong></td>';
-  rows+='<td></td>';
-  rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'-')+'</strong></td>';
-  rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'%':'-')+'</strong></td>';
-  rows+='<td>'+ragBadge(avgProg)+'</td>';
-  rows+='<td></td>';
-  rows+='<td style="font-size:12px;color:var(--ts)">All figures cumulative across cohort</td>';
-  rows+='</tr>';
-  tbody.innerHTML=rows;
-  document.getElementById('ragCountGreen').textContent=counts.green;
-  document.getElementById('ragCountAmber').textContent=counts.amber;
-  document.getElementById('ragCountRed').textContent=counts.red+(counts.na>0?' ('+counts.na+' N/A)':'');
-  var ragTotMent=0,ragTotCoach=0,ragTotAtt=0,ragTotOnline=0,ragTotInPerson=0,ragTotHybrid=0;
-  orgs.forEach(function(o){
-    if(o.consulting)o.consulting.forEach(function(c){ragTotMent+=getConsultHours(c);});
-    if(o.coaching)o.coaching.forEach(function(c){ragTotCoach+=parseFloat(c.hours||0);});
-    if(o.attendance)o.attendance.forEach(function(a){
-      if(a.attended){ragTotAtt++;
-        if(a.format==='In Person')ragTotInPerson++;
-        else if(a.format==='Hybrid')ragTotHybrid++;
-        else ragTotOnline++;
-      }
-    });
-  });
-  var attEl=document.getElementById('ragTotalAtt');
-  var mentEl=document.getElementById('ragTotalMent');
-  var coachEl=document.getElementById('ragTotalCoach');
-  if(attEl){
-    var attHtml=ragTotAtt+' / '+(orgs.length*8);
-    if(ragTotAtt>0){
-      var bd=[];
-      if(ragTotOnline>0)bd.push(ragTotOnline+' online');
-      if(ragTotInPerson>0)bd.push(ragTotInPerson+' in-person');
-      if(ragTotHybrid>0)bd.push(ragTotHybrid+' hybrid');
-      attHtml+='<div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px;text-transform:none;letter-spacing:0">'+bd.join(' &middot; ')+'</div>';
-    }
-    attEl.innerHTML=attHtml;
-  }
-  if(mentEl)mentEl.textContent=parseFloat(ragTotMent.toFixed(1))+' / '+(orgs.length*35);
-  if(coachEl)coachEl.textContent=parseFloat(ragTotCoach.toFixed(1))+' / '+(orgs.length*12);
-  document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-
-
-function exportToExcel(){
-  var data=loadData();
-  var orgs=data.orgs||[];
-  if(!orgs.length){alert('No organisations to export.');return;}
-  var wb=XLSX.utils.book_new();
-
-  // ── SHEET 1: Programme Summary ──
-  var sum=[['SELECT Programme Export','','','','','','','','','','',''],
-    ['Generated: '+new Date().toLocaleString('en-IE'),'','','','','','','','','','',''],
-    ['','','','','','','','','','','',''],
-    ['Organisation','CEO','Jurisdiction','Intensity','Baseline Score','Baseline Locked','Phase',
-     'Mentoring Hrs Used','Mentoring Hrs Remaining','Coaching Hrs Used','Coaching Hrs Remaining','Flex Pool (hrs)','Progress %','RAG Status']];
-  orgs.forEach(function(o){
-    var mentHrs=0,coachHrs=0;
-    if(o.consulting)o.consulting.forEach(function(c){mentHrs+=getConsultHours(c);});
-    if(o.coaching)o.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});
-    mentHrs=parseFloat(mentHrs.toFixed(1));
-    var mentHrs=mentHrs;
-    coachHrs=parseFloat(coachHrs.toFixed(1));
-    var prog=ragCalcProgress(o);
-    var ragStatus=prog===null?'N/A':prog>=80?'Green':prog>=50?'Amber':'Red';
-    var blScore='';
-    if(o.baseline&&o.baseline.length){
-      var tot=0,wt=0;
-      o.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;wt+=w;});
-      blScore=wt?parseFloat((tot/wt).toFixed(2)):'';
-    }
-    sum.push([
-      o.name||'',o.ceo||'',(o.kpi&&o.kpi.jurisdiction)||'ROI',o.intensity||'',
-      blScore,o.baselineLocked?'Yes':'No',
-      (o.kpi&&o.kpi.ragMode)||'',
-      mentHrs,parseFloat((35-mentHrs).toFixed(1)),
-      coachHrs,parseFloat((12-coachHrs).toFixed(1)),9,
-      prog!==null?prog:'',ragStatus
-    ]);
-  });
-  var ws1=XLSX.utils.aoa_to_sheet(sum);
-  ws1['!cols']=[{wch:28},{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:18},
-    {wch:16},{wch:16},{wch:18},{wch:16},{wch:18},{wch:14},{wch:12},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws1,'Programme Summary');
-
-  // ── SHEET 2: Baseline Scores ──
-  // Uses canonical DOMAINS array as source of truth for names + weights.
-  // Reads evidence (correct field) not notes. Weighted score = score × weight%.
-  var bl=[['Organisation','CEO','Domain','Tier','Weight','Score (0-5)','Weighted Score','Evidence','Assessor Notes']];
-  orgs.forEach(function(o){
-    if(o.baseline&&o.baseline.length){
-      o.baseline.forEach(function(b,i){
-        var d=DOMAINS[i]||{name:'Domain '+(i+1),wt:0,cluster:''};
-        var score=parseFloat(b.score);
-        var weightPct=d.wt||0;
-        var weighted=(!isNaN(score)&&weightPct)?parseFloat((score*(weightPct/100)).toFixed(2)):'';
-        bl.push([
-          o.name||'',
-          o.ceo||'',
-          d.name,
-          d.cluster||'',
-          weightPct?(weightPct+'%'):'',
-          isNaN(score)?'':score,
-          weighted,
-          b.evidence||'',
-          (i===0?(o.baselineNotes||''):'')
-        ]);
-      });
-      bl.push(['','','','','','','','','']);
-    }
-  });
-  var ws2=XLSX.utils.aoa_to_sheet(bl);
-  ws2['!cols']=[{wch:28},{wch:18},{wch:38},{wch:12},{wch:8},{wch:10},{wch:14},{wch:50},{wch:50}];
-  XLSX.utils.book_append_sheet(wb,ws2,'Baseline Scores');
-
-  // ── SHEET 3: Consulting Log ──
-  var cl=[['Organisation','CEO','Cycle','Date','Phase','Focus','Consultant',
-    'Format','Hours Used','SMART Progressed','Actions Agreed','Key Outputs','Domain Movement','RAG','Completed']];
-  orgs.forEach(function(o){
-    if(o.consulting&&o.consulting.length){
-      o.consulting.forEach(function(c){
-        cl.push([o.name||'',o.ceo||'',c.title||'',c.date||'',c.phase||'',
-          c.defaultFocus||'',c.consultedBy||'',c.format||'',
-          getConsultHours(c)||'',c.smartProgressed||'',
-          c.actionsAgreed||'',c.keyOutputs||'',c.domainMovement||'',
-          c.rag||'',c.completed?'Yes':'No']);
-      });
-    }
-  });
-  var ws3=XLSX.utils.aoa_to_sheet(cl);
-  ws3['!cols']=[{wch:28},{wch:18},{wch:20},{wch:12},{wch:12},{wch:30},{wch:18},
-    {wch:14},{wch:8},{wch:8},{wch:20},{wch:30},{wch:30},{wch:20},{wch:10},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws3,'Consulting Log');
-
-  // ── SHEET 4: Coaching Log ──
-  var ch=[['Organisation','CEO','Cycle','Date','Focus','Coach','Hours','Actions Agreed','Completed']];
-  orgs.forEach(function(o){
-    if(o.coaching&&o.coaching.length){
-      o.coaching.forEach(function(c){
-        ch.push([o.name||'',o.ceo||'',c.title||'',c.date||'',
-          c.defaultFocus||'',c.coach||'Sarah / Aoife',
-          c.hours||'',c.actionAgreed||'',c.completed?'Yes':'No']);
-      });
-    }
-  });
-  var ws4=XLSX.utils.aoa_to_sheet(ch);
-  ws4['!cols']=[{wch:28},{wch:18},{wch:20},{wch:12},{wch:30},{wch:18},{wch:8},{wch:35},{wch:10}];
-  XLSX.utils.book_append_sheet(wb,ws4,'Coaching Log');
-
-  // ── SHEET 5: SMART Objectives ──
-  var sm=[['Organisation','CEO','Objective','Metric','Baseline Value','Target','Deadline','Status','Progress %']];
-  orgs.forEach(function(o){
-    if(o.smart&&o.smart.length){
-      o.smart.forEach(function(s){
-        sm.push([o.name||'',o.ceo||'',s.objective||'',s.metric||'',
-          s.baseline||'',s.target||'',s.deadline||'',s.status||'',s.progress||'']);
-      });
-    }
-  });
-  var ws5=XLSX.utils.aoa_to_sheet(sm);
-  ws5['!cols']=[{wch:28},{wch:18},{wch:40},{wch:25},{wch:15},{wch:15},{wch:12},{wch:12},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws5,'SMART Objectives');
-
-  // ── SHEET 6: Hours Summary ──
-  var hrs=[['SELECT Programme Hours Summary','','','','',''],
-    ['Generated: '+new Date().toLocaleString('en-IE'),'','','','',''],
-    ['','','','','',''],
-    ['','Mentoring (hrs)','Mentoring Remaining','Coaching (hrs)','Coaching Remaining','Flex Pool (hrs)'],
-    ['TOTAL ALLOCATED','35 hrs','','12 hrs','','9 hrs'],
-    ['','','','','','']];
-  orgs.forEach(function(o){
-    var mh=0,ch2=0;
-    if(o.consulting)o.consulting.forEach(function(c){mh+=getConsultHours(c);});
-    if(o.coaching)o.coaching.forEach(function(c){ch2+=parseFloat(c.hours||0);});
-    mh=parseFloat(mh.toFixed(1));
-    ch2=parseFloat(ch2.toFixed(1));
-    hrs.push([o.name||'',mh,parseFloat((35-mh).toFixed(1)),ch2,parseFloat((12-ch2).toFixed(1)),9]);
-  });
-  // Totals row
-  hrs.push(['PROGRAMME TOTALS',
-    '=SUM(B7:B'+(6+orgs.length)+')',
-    '=SUM(C7:C'+(6+orgs.length)+')',
-    '=SUM(D7:D'+(6+orgs.length)+')',
-    '=SUM(E7:E'+(6+orgs.length)+')',
-    '=SUM(F7:F'+(6+orgs.length)+')']);
-  var ws6=XLSX.utils.aoa_to_sheet(hrs);
-  ws6['!cols']=[{wch:28},{wch:16},{wch:16},{wch:20},{wch:16},{wch:20},{wch:14}];
-  XLSX.utils.book_append_sheet(wb,ws6,'Hours Summary');
-
-  // ── SHEET 7: Attendance ──
-  var att=[['Organisation','CEO','Session','Date','Phase','Attended','Apology','Notes']];
-  orgs.forEach(function(o){
-    if(o.attendance&&o.attendance.length){
-      o.attendance.forEach(function(s){
-        att.push([o.name||'',o.ceo||'',s.title||'',s.date||'',s.phase||'',
-          s.attended?'Yes':'No',s.apology?'Yes':'No',s.notes||'']);
-      });
-    }
-  });
-  var ws7=XLSX.utils.aoa_to_sheet(att);
-  ws7['!cols']=[{wch:28},{wch:18},{wch:45},{wch:14},{wch:12},{wch:10},{wch:10},{wch:30}];
-  XLSX.utils.book_append_sheet(wb,ws7,'Attendance');
-
-  // ── SHEET 8: Financial Baseline ──
-  var fin=[['Organisation','CEO','Juris','Baseline Turnover','Baseline Traded Income',
-    'Traded Income %','Operating Surplus/Deficit','Cash Position','Runway (mths)',
-    'CB Sales %','CB Sales Value','Export Status',
-    'Current Turnover','Current Traded Income','Current CB Sales %','Current CB Sales Value',
-    'Traded Income Growth %','Target (15%)','LCI Baseline','LCI Midpoint','LCI Endline']];
-  orgs.forEach(function(o){
-    var f=o.financial||{};
-    var juris=(o.kpi&&o.kpi.jurisdiction)||'ROI';
-    var bl=parseFloat(f.blTradedIncome)||0;
-    var cur=parseFloat(f.curTradedIncome)||0;
-    var growth=bl>0?parseFloat(((cur-bl)/bl*100).toFixed(1)):'';
-    var target=bl>0?Math.round(bl*1.15):'';
-    fin.push([o.name||'',o.ceo||'',juris,
-      f.blTurnover||'',f.blTradedIncome||'',f.blTradedPct||'',f.blOpSurplus||'',
-      f.blCashPosition||'',f.blRunway||'',f.blCbSalesPct||'',f.blCbSalesVal||'',f.blExportStatus||'',
-      f.curTurnover||'',f.curTradedIncome||'',f.curCbSalesPct||'',f.curCbSalesVal||'',
-      growth,target,f.lciBaseline||'',f.lciMidpoint||'',f.lciEndline||'']);
-  });
-  var ws8=XLSX.utils.aoa_to_sheet(fin);
-  ws8['!cols']=[{wch:28},{wch:18},{wch:8},{wch:16},{wch:18},{wch:14},{wch:20},{wch:14},
-    {wch:12},{wch:12},{wch:16},{wch:14},{wch:16},{wch:18},{wch:16},{wch:18},{wch:18},{wch:14},{wch:12},{wch:12},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws8,'Financial Baseline');
-
-  // ── Export ──
-  var date=new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb,'SELECT_Programme_Export_'+date+'.xlsx');
-}
-
-
-// ═══════════════════════════════════════
-// GROUP SESSION ATTENDANCE
-// ═══════════════════════════════════════
-var GROUP_SESSIONS=[
-  {code:'GS1',title:'Group Session 1 - Programme Launch & Baseline',date:'30 Apr 2026',phase:'Diagnose'},
-  {code:'GS2',title:'Group Session 2 - Taking Ownership & Driving Forward',date:'May 2026',phase:'Translate'},
-  {code:'GS3',title:'Group Session 3 - Strategic Development & Innovation',date:'Jun 2026',phase:'Translate'},
-  {code:'GS4',title:'Group Session 4 - Change Management for Scaling 1',date:'Jul 2026',phase:'Strengthen'},
-  {code:'GS5',title:'Group Session 5 - Change Management for Scaling 2',date:'Aug 2026',phase:'Strengthen'},
-  {code:'GS6',title:'Group Session 6 - Digital Marketing & Cross-Border',date:'Sep 2026',phase:'Strengthen'},
-  {code:'GS7',title:'Group Session 7 - Governance, Leadership & Investment Readiness (1)',date:'Oct 2026',phase:'Strengthen'},
-  {code:'GS8',title:'Group Session 8 - Governance, Leadership & Investment Readiness (2)',date:'Nov 2026',phase:'Sustain'}
-];
-
-// ═══════════════════════════════════════
-// COHORT ATTENDANCE MATRIX (dashboard view)
-// ═══════════════════════════════════════
-function renderCohortAttendance(){
-  var data=loadData();
-  var orgs=data.orgs||[];
-  var table=document.getElementById('cohortAttTable');
-  if(!table)return;
-  if(!orgs.length){
-    table.innerHTML='<tr><td style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr>';
-    ['cohAttTotal','cohAttOnline','cohAttInPerson','cohAttApologies'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='0';});
-    return;
-  }
-  // Ensure every org has the attendance scaffold
-  orgs.forEach(function(o){ensureAttendance(o);});
-
-  var html='<thead><tr>';
-  html+='<th style="position:sticky;left:0;background:var(--navy);min-width:180px">Organisation</th>';
-  GROUP_SESSIONS.forEach(function(s){
-    html+='<th style="text-align:center;min-width:90px"><div style="font-size:11px;font-weight:700">'+esc(s.code)+'</div><div style="font-size:9px;font-weight:400;color:rgba(255,255,255,0.65);margin-top:2px;text-transform:none">'+esc(s.date)+'</div></th>';
-  });
-  html+='<th style="text-align:center;min-width:80px">Total</th>';
-  html+='</tr></thead><tbody>';
-
-  // Cohort totals
-  var totalAttended=0,totalOnline=0,totalInPerson=0,totalHybrid=0,totalApologies=0;
-  // Per-session counts for the bottom row
-  var sessionStats=GROUP_SESSIONS.map(function(){return{att:0,online:0,inperson:0,hybrid:0,apol:0};});
-
-  orgs.forEach(function(o,oi){
-    var orgAtt=0;
-    html+='<tr>';
-    html+='<td style="position:sticky;left:0;background:var(--card);font-weight:600;color:var(--navy);border-right:1px solid var(--tb2)">'+esc(o.name)+'<div style="font-size:10px;font-weight:400;color:var(--ts);margin-top:1px">'+esc(o.ceo||'')+'</div></td>';
-    o.attendance.forEach(function(s,si){
-      var bg='var(--bg2)',label='&middot;',color='var(--tt)';
-      if(s.attended){
-        orgAtt++;totalAttended++;sessionStats[si].att++;
-        if(s.format==='In Person'){bg='#e8f5e9';label='IP';color='#2e7d32';totalInPerson++;sessionStats[si].inperson++;}
-        else if(s.format==='Hybrid'){bg='#fff4e5';label='HY';color='#ed6c02';totalHybrid++;sessionStats[si].hybrid++;}
-        else{bg='#e3f2fd';label='ON';color='#1565c0';totalOnline++;sessionStats[si].online++;}
-      }else if(s.apology){
-        bg='#fff4e5';label='A';color='#ed6c02';totalApologies++;sessionStats[si].apol++;
-      }
-      if(isAssessor){
-        html+='<td style="text-align:center;background:'+bg+';cursor:pointer;border:1px solid var(--tb);padding:0" onclick="cycleCohortAttendance(\''+esc(o.code)+'\','+si+')" title="Click to cycle: Empty → Online → In Person → Hybrid → Apology → Empty">';
-        html+='<div style="padding:14px 8px;font-size:12px;font-weight:700;color:'+color+'">'+label+'</div></td>';
-      }else{
-        html+='<td style="text-align:center;background:'+bg+';padding:14px 8px;font-size:12px;font-weight:700;color:'+color+'">'+label+'</td>';
-      }
-    });
-    var pct=Math.round((orgAtt/8)*100);
-    var pctCol=pct>=80?'#2e7d32':pct>=50?'#ed6c02':orgAtt>0?'#c62828':'var(--tt)';
-    html+='<td style="text-align:center;font-weight:700;color:'+pctCol+';background:var(--bg2)">'+orgAtt+' / 8<div style="font-size:10px;font-weight:400;margin-top:2px">'+pct+'%</div></td>';
-    html+='</tr>';
-  });
-
-  // Per-session totals row
-  html+='<tr class="rag-summary-row">';
-  html+='<td style="position:sticky;left:0;background:var(--navy-light);font-weight:700;color:var(--navy)">Per-session totals</td>';
-  sessionStats.forEach(function(st){
-    var sessPct=orgs.length?Math.round((st.att/orgs.length)*100):0;
-    var col=sessPct>=80?'#2e7d32':sessPct>=50?'#ed6c02':st.att>0?'#c62828':'var(--tt)';
-    html+='<td style="text-align:center;font-size:11px;color:'+col+';font-weight:700">'+st.att+'/'+orgs.length+'<div style="font-size:9px;font-weight:600;margin-top:1px">'+sessPct+'%</div></td>';
-  });
-  var grandPct=orgs.length?Math.round((totalAttended/(orgs.length*8))*100):0;
-  html+='<td style="text-align:center;font-weight:700;color:var(--navy)">'+totalAttended+' / '+(orgs.length*8)+'<div style="font-size:10px;font-weight:400;margin-top:2px">'+grandPct+'%</div></td>';
-  html+='</tr>';
-  html+='</tbody>';
-  table.innerHTML=html;
-
-  // Update summary cards
-  var setText=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
-  setText('cohAttTotal',totalAttended+' / '+(orgs.length*8));
-  setText('cohAttOnline',totalOnline);
-  setText('cohAttInPerson',totalInPerson+(totalHybrid?' (+'+totalHybrid+' hyb)':''));
-  setText('cohAttApologies',totalApologies);
-}
-
-function cycleCohortAttendance(orgCode,sessionIdx){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===orgCode;});
-  if(!org)return;
-  ensureAttendance(org);
-  var s=org.attendance[sessionIdx];
-  if(!s)return;
-  // States: Empty (none) → Online → In Person → Hybrid → Apology → Empty
-  if(!s.attended&&!s.apology){
-    s.attended=true;s.apology=false;s.format='Online';
-  }else if(s.attended&&s.format==='Online'){
-    s.format='In Person';
-  }else if(s.attended&&s.format==='In Person'){
-    s.format='Hybrid';
-  }else if(s.attended&&s.format==='Hybrid'){
-    s.attended=false;s.apology=true;
-  }else if(s.apology){
-    s.attended=false;s.apology=false;
-  }else{
-    // Fallback - reset to empty
-    s.attended=false;s.apology=false;
-  }
-  saveData(data);
-  renderCohortAttendance();
-}
-
-function ensureAttendance(org){
-  if(!org.attendance||org.attendance.length!==8){
-    org.attendance=GROUP_SESSIONS.map(function(s){
-      var ex=org.attendance?org.attendance.find(function(e){return e.code===s.code;}):null;
-      return ex||{code:s.code,title:s.title,date:s.date,phase:s.phase,attended:false,apology:false,format:'Online',notes:''};
-    });
-  }
-  return org.attendance;
-}
-
-function renderAttendance(org){
-  ensureAttendance(org);
-  var att=org.attendance;
-  var attended=att.filter(function(a){return a.attended;}).length;
-  var apologies=att.filter(function(a){return !a.attended&&a.apology;}).length;
-  var online=att.filter(function(a){return a.attended&&(a.format==='Online'||!a.format);}).length;
-  var inPerson=att.filter(function(a){return a.attended&&a.format==='In Person';}).length;
-  var hybrid=att.filter(function(a){return a.attended&&a.format==='Hybrid';}).length;
-  var pct=Math.round((attended/8)*100);
-  var pctCol=pct>=80?'#2e7d32':pct>=50?'#ed6c02':'#c62828';
-  var sumHtml='';
-  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+pctCol+'">'+attended+' / 8</div><div class="cs-lbl">Attended</div></div>';
-  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#1565c0">'+online+'</div><div class="cs-lbl">Online</div></div>';
-  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#2e7d32">'+inPerson+'</div><div class="cs-lbl">In Person</div></div>';
-  if(hybrid>0)sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#ed6c02">'+hybrid+'</div><div class="cs-lbl">Hybrid</div></div>';
-  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#ed6c02">'+apologies+'</div><div class="cs-lbl">Apologies</div></div>';
-  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+pctCol+'">'+pct+'%</div><div class="cs-lbl">Attendance Rate</div></div>';
-  document.getElementById('attendanceSummary').innerHTML=sumHtml;
-
-  // Module attendance grid
-  var list='<table style="width:100%;border-collapse:collapse;font-size:13px">';
-  list+='<thead><tr style="background:var(--navy);color:rgba(255,255,255,0.85)">';
-  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap">Module</th>';
-  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Session</th>';
-  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Date</th>';
-  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Phase</th>';
-  list+='<th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Attended</th>';
-  list+='<th style="padding:10px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Apology</th>';
-  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Format</th>';
-  list+='<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Notes</th>';
-  list+='</tr></thead><tbody>';
-  att.forEach(function(s,i){
-    var rowBg=s.attended?'rgba(46,125,50,0.05)':s.apology?'rgba(237,108,2,0.05)':'rgba(198,40,40,0.03)';
-    var statusDot=s.attended?'<span style="color:#2e7d32;font-size:16px">&#10003;</span>':s.apology?'<span style="color:#ed6c02;font-size:12px">A</span>':'<span style="color:#c62828;font-size:12px">-</span>';
-    list+='<tr style="border-bottom:1px solid var(--tb);background:'+rowBg+'">';
-    list+='<td style="padding:10px 12px;font-weight:700;color:var(--navy);white-space:nowrap">'+esc(s.code)+'</td>';
-    list+='<td style="padding:10px 12px;color:var(--tp)">'+esc(s.title)+'</td>';
-    list+='<td style="padding:10px 12px;color:var(--ts);white-space:nowrap">'+esc(s.date)+'</td>';
-    list+='<td style="padding:10px 12px;color:var(--ts);white-space:nowrap">'+esc(s.phase)+'</td>';
-    if(isAssessor){
-      list+='<td style="padding:10px 12px;text-align:center"><label style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;cursor:pointer;border-radius:4px;transition:background .15s" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'"><input type="checkbox" '+(s.attended?'checked':'')+' data-att-attended="'+i+'" style="width:18px;height:18px;cursor:pointer;accent-color:var(--teal)"></label></td>';
-      list+='<td style="padding:10px 12px;text-align:center"><label style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;cursor:pointer;border-radius:4px;transition:background .15s" onmouseover="this.style.background=\'var(--bg2)\'" onmouseout="this.style.background=\'transparent\'"><input type="checkbox" '+(s.apology?'checked':'')+' data-att-apology="'+i+'" style="width:18px;height:18px;cursor:pointer;accent-color:#ed6c02"></label></td>';
-      list+='<td style="padding:10px 12px"><select data-att-format="'+i+'" style="padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp);width:100%;cursor:pointer"><option value="Online"'+(s.format==='Online'||!s.format?' selected':'')+'>Online</option><option value="In Person"'+(s.format==='In Person'?' selected':'')+'>In Person</option><option value="Hybrid"'+(s.format==='Hybrid'?' selected':'')+'>Hybrid</option></select></td>';
-      list+='<td style="padding:10px 12px"><input data-att-notes="'+i+'" value="'+esc(s.notes||'')+'" placeholder="Optional notes" style="width:100%;padding:6px 8px;border:1px solid var(--tb2);border-radius:var(--r);font-size:12px;font-family:var(--sans);background:var(--card);color:var(--tp)"></td>';
-    }else{
-      list+='<td style="padding:10px 12px;text-align:center">'+statusDot+'</td>';
-      list+='<td style="padding:10px 12px;text-align:center">'+(s.apology?'<span style="color:#ed6c02">Yes</span>':'-')+'</td>';
-      list+='<td style="padding:10px 12px;font-size:12px;color:var(--ts)">'+(s.format||'Online')+'</td>';
-      list+='<td style="padding:10px 12px;color:var(--ts);font-size:12px">'+esc(s.notes||'')+'</td>';
-    }
-    list+='</tr>';
-  });
-  list+='</tbody></table>';
-
-  var el=document.getElementById('attendanceList');
-  el.innerHTML=list;
-
-  // Wire up event listeners for the checkboxes and inputs
-  if(isAssessor){
-    el.querySelectorAll('[data-att-attended]').forEach(function(cb){
-      cb.addEventListener('change',function(){
-        var idx=parseInt(this.getAttribute('data-att-attended'));
-        var checked=this.checked;
-        try{
-          saveAttField(idx,'attended',checked);
-          // If marking attended and no format set, default to Online
-          if(checked){
-            var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-            if(o&&o.attendance&&o.attendance[idx]&&!o.attendance[idx].format){
-              o.attendance[idx].format='Online';
-              saveData(d);
-            }
-          }
-        }catch(err){console.error('Save attended failed:',err);}
-        // Defer re-render so the click event finishes cleanly
-        setTimeout(function(){renderAttendance(org);},0);
-      });
-    });
-    el.querySelectorAll('[data-att-apology]').forEach(function(cb){
-      cb.addEventListener('change',function(){
-        var idx=parseInt(this.getAttribute('data-att-apology'));
-        var checked=this.checked;
-        try{saveAttField(idx,'apology',checked);}catch(err){console.error('Save apology failed:',err);}
-        setTimeout(function(){renderAttendance(org);},0);
-      });
-    });
-    el.querySelectorAll('[data-att-format]').forEach(function(sel){
-      sel.addEventListener('change',function(){
-        var idx=parseInt(this.getAttribute('data-att-format'));
-        var val=this.value;
-        try{saveAttField(idx,'format',val);}catch(err){console.error('Save format failed:',err);}
-      });
-    });
-    el.querySelectorAll('[data-att-notes]').forEach(function(inp){
-      inp.addEventListener('change',function(){
-        var idx=parseInt(this.getAttribute('data-att-notes'));
-        var val=this.value;
-        try{saveAttField(idx,'notes',val);}catch(err){console.error('Save notes failed:',err);}
-      });
-    });
-  }
-}
-
-function saveAttField(i,field,val){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org){console.warn('saveAttField: org not found',currentOrg);return;}
-  ensureAttendance(org);
-  if(!org.attendance[i]){console.warn('saveAttField: session index missing',i);return;}
-  org.attendance[i][field]=val;
-  saveData(data);
-}
-
-// ═══════════════════════════════════════
-// FINANCIAL BASELINE & GROWTH
-// ═══════════════════════════════════════
-function renderFinancial(org){
-  if(!org.financial)org.financial={};
-  var f=org.financial;
-  var juris=(org.kpi&&org.kpi.jurisdiction)||'ROI';
-  var sym=juris.toUpperCase()==='NI'?'£':'€';
-
-  var baseFields=[
-    {key:'blTurnover',label:'Annual Turnover at Baseline ('+sym+')',ph:'e.g. 450000'},
-    {key:'blTradedIncome',label:'Traded Income at Baseline ('+sym+')',ph:'e.g. 380000'},
-    {key:'blTradedPct',label:'Traded Income as % of Total',ph:'e.g. 84'},
-    {key:'blOpSurplus',label:'Operating Surplus/Deficit ('+sym+')',ph:'e.g. 22000 or -5000'},
-    {key:'blCashPosition',label:'Cash Position ('+sym+')',ph:'e.g. 65000'},
-    {key:'blRunway',label:'Cash Runway (months)',ph:'e.g. 3'},
-    {key:'blCbSalesPct',label:'Cross-Border Sales % of Total',ph:'e.g. 0 or 12'},
-    {key:'blCbSalesVal',label:'Cross-Border Sales Value ('+sym+')',ph:'e.g. 0 or 54000'},
-    {key:'blExportStatus',label:'Exporter Status',ph:'None / First-time / Active'}
-  ];
-  var curFields=[
-    {key:'curTurnover',label:'Current Annual Turnover ('+sym+')',ph:'e.g. 520000'},
-    {key:'curTradedIncome',label:'Current Traded Income ('+sym+')',ph:'e.g. 440000'},
-    {key:'curTradedPct',label:'Traded Income as % of Total',ph:'e.g. 85'},
-    {key:'curOpSurplus',label:'Current Operating Surplus/Deficit ('+sym+')',ph:'e.g. 28000'},
-    {key:'curCbSalesPct',label:'Current Cross-Border Sales %',ph:'e.g. 8'},
-    {key:'curCbSalesVal',label:'Current Cross-Border Sales Value ('+sym+')',ph:'e.g. 35000'},
-    {key:'curAsOf',label:'Data as of (date)',ph:'e.g. Mar 2026'}
-  ];
-  var lciFields=[
-    {key:'lciBaseline',label:'Leadership Confidence Index - Baseline (1-10)',ph:'1-10'},
-    {key:'lciMidpoint',label:'Leadership Confidence Index - Midpoint (1-10)',ph:'1-10'},
-    {key:'lciEndline',label:'Leadership Confidence Index - Endline (1-10)',ph:'1-10'}
-  ];
-
-  function renderFieldGroup(fields,containerId,saveFn){
-    var h='';
-    fields.forEach(function(fd){
-      var val=f[fd.key]||'';
-      h+='<div class="kpi-card"><label>'+esc(fd.label)+'</label>';
-      if(isAssessor){
-        h+='<input data-key="'+esc(fd.key)+'" data-savefn="'+saveFn+'" placeholder="'+esc(fd.ph||'')+'" value="'+esc(val)+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-      }else{
-        h+='<div class="kpi-val">'+(val||'--')+'</div>';
-      }
-      h+='</div>';
-    });
-    var el=document.getElementById(containerId);
-    el.innerHTML=h;
-    if(isAssessor){
-      el.querySelectorAll('input[data-key]').forEach(function(inp){
-        inp.addEventListener('change',function(){
-          var k=this.getAttribute('data-key');
-          saveFinField(k,this.value);
-        });
-      });
-    }
-  }
-
-  renderFieldGroup(baseFields,'finBaselineGrid','fin');
-  renderFieldGroup(curFields,'finCurrentGrid','fin');
-  renderFieldGroup(lciFields,'lciGrid','fin');
-
-  // Growth summary
-  var bl=parseFloat(f.blTradedIncome)||0;
-  var cur=parseFloat(f.curTradedIncome)||0;
-  var growth=bl>0?((cur-bl)/bl*100):null;
-  var target=bl*1.15;
-  var gs='';
-  if(bl&&cur){
-    var gcol=growth>=15?'#2e7d32':growth>=0?'#ed6c02':'#c62828';
-    gs+='<div class="coaching-stat"><div class="cs-val" style="color:'+gcol+'">'+(growth>=0?'+':'')+growth.toFixed(1)+'%</div><div class="cs-lbl">Traded Income Growth</div></div>';
-    gs+='<div class="coaching-stat"><div class="cs-val">'+sym+bl.toLocaleString()+'</div><div class="cs-lbl">Baseline Traded Income</div></div>';
-    gs+='<div class="coaching-stat"><div class="cs-val">'+sym+cur.toLocaleString()+'</div><div class="cs-lbl">Current Traded Income</div></div>';
-    gs+='<div class="coaching-stat"><div class="cs-val" style="color:#0f2b4c">'+sym+target.toLocaleString()+'</div><div class="cs-lbl">Target (15% growth)</div></div>';
-  }else{
-    gs='<div style="color:var(--tt);font-size:13px;padding:8px 0">Enter baseline and current traded income above to calculate growth.</div>';
-  }
-  document.getElementById('finGrowthSummary').innerHTML=gs;
-}
-
-function saveFinField(key,val){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  if(!org.financial)org.financial={};
-  org.financial[key]=val;
-  saveData(data,currentOrg);
-  // Refresh growth summary
-  renderFinancial(org);
-}
-
-function toggleJurisdiction(){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  if(!org.kpi)org.kpi={};
-  org.kpi.jurisdiction=org.kpi.jurisdiction==='NI'?'ROI':'NI';
-  saveData(data);
-  renderAll(org);
-}
-
-function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-
-var targetOrgId=null; // set from URL param
+function saveData(d){localStorage.setItem(STORE_KEY,JSON.stringify(d));}
 
 function doAuth(){
 var pw=document.getElementById('authPw').value;
-if(ASSESSOR_PASSWORDS.indexOf(pw)>-1){
-isAssessor=true;isViewer=false;
-pw=MASTER_PW;
-AT.setAuth(pw);
+if(pw===MASTER_PW){
+isAssessor=true;
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(data){showDash();});
-showDash();
-return;
-}
-// Viewer (ITI read-only) login
-if(VIEWER_PASSWORDS.indexOf(pw)>-1){
-isAssessor=false;isViewer=true;
-AT.setAuth(MASTER_PW);
-document.getElementById('authScreen').style.display='none';
-AT.loadData(function(data){showDash();});
 showDash();
 return;
 }
 var data=loadData();
-// Map CEO password to org code (SL-SBI2026 -> siel-bleu)
-var CEO_PASSWORDS_MAP={
-'SL-LNT2026':'leave-no-trace','SL-SBI2026':'siel-bleu','SL-WMK2026':'waymaker',
-'SL-CON2026':'connections-arts','SL-COD2026':'codema','SL-PSY2026':'psycare',
-'SL-INC2026':'incredible','SL-CRT2026':'community-roots','SL-PAC2026':'pace','SL-YLK2026':'youthlink'
-};
-var mappedCode=CEO_PASSWORDS_MAP[pw]||null;
-// If direct link, only check password for that specific org
-if(targetOrgId){
-var org=data.orgs.find(function(o){return o.code===targetOrgId;});
-if(org&&(org.password===pw||org.code===mappedCode||org.code===pw)){
-isAssessor=false;currentOrg=org.code;
-AT.setAuth(MASTER_PW);
+for(var i=0;i<data.orgs.length;i++){
+if(data.orgs[i].password===pw){
+isAssessor=false;
+currentOrg=data.orgs[i].code;
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){openTracker(org.code);});
-openTracker(org.code);
+openTracker(data.orgs[i].code);
 return;
 }
-document.getElementById('authErr').style.display='block';return;
 }
-// Otherwise check all org passwords
-// Accept: org.password match, CEO_PASSWORDS_MAP match, or org.code match
+// Check URL param
+var params=new URLSearchParams(window.location.search);
+var orgId=params.get('id');
+if(orgId){
 for(var i=0;i<data.orgs.length;i++){
-var o=data.orgs[i];
-if(o.password===pw||o.code===mappedCode||(mappedCode&&o.code===mappedCode)){
-isAssessor=false;currentOrg=o.code;
-AT.setAuth(MASTER_PW);
+if(data.orgs[i].code===orgId&&data.orgs[i].password===pw){
+isAssessor=false;
+currentOrg=orgId;
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){openTracker(o.code);});
-openTracker(o.code);
-return;}
+openTracker(orgId);
+return;
+}
+}
 }
 document.getElementById('authErr').style.display='block';
 }
@@ -1409,60 +375,28 @@ document.getElementById('authErr').style.display='block';
 function showDash(){
 document.getElementById('dashScreen').style.display='block';
 document.getElementById('trackerScreen').style.display='none';
-document.getElementById('sopScreen').style.display='none';
 document.getElementById('saveBar').classList.add('hidden');
-var addBtn=document.getElementById('addOrgBtn');
-var migBtn=document.getElementById('migrateBtn');
-if(addBtn)addBtn.style.display=isAssessor?'':'none';
-if(migBtn)migBtn.style.display=isAssessor?'':'none';
-renderCohortBar();
 renderOrgGrid();
 }
 
-function renderCohortBar(){
-var data=loadData();var total=data.orgs.length;
-var locked=data.orgs.filter(function(o){return o.baselineLocked;}).length;
-var roi=data.orgs.filter(function(o){return o.kpi&&o.kpi.jurisdiction==='ROI';}).length;
-var ni=total-roi;
-var html='<div class="cohort-stat"><div class="stat-val">'+total+'</div><div class="stat-lbl">Organisations</div></div>';
-html+='<div class="cohort-stat"><div class="stat-val">'+locked+'</div><div class="stat-lbl">Baselines Locked</div></div>';
-html+='<div class="cohort-stat"><div class="stat-val">'+roi+' / '+ni+'</div><div class="stat-lbl">ROI / NI</div></div>';
-var avgScore=0;var scored=0;
-data.orgs.forEach(function(o){if(o.baselineLocked){var s=calcWeightedScore(o.baseline);if(s>0){avgScore+=s;scored++;}}});
-html+='<div class="cohort-stat"><div class="stat-val">'+(scored?((avgScore/scored).toFixed(1)):'--')+'</div><div class="stat-lbl">Avg Baseline</div></div>';
-document.getElementById('cohortBar').innerHTML=html;
-}
-
-function calcWeightedScore(baseline){
-var total=0;
-if(!baseline)return 0;
-baseline.forEach(function(b,i){
-var score=parseFloat(b.score)||0;
-var wt=DOMAINS[i]?DOMAINS[i].wt/100:0;
-total+=score*wt;
-});
-return total*5;
-}
-
 function renderOrgGrid(){
-var data=loadData();var grid=document.getElementById('orgGrid');
-if(!data.orgs.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><p style="color:var(--ts);font-size:14px;margin-bottom:16px">No organisations yet. Click <b>+ Add organisation</b> to add your first CEO, or load samples to preview the full system.</p><button class="btn btn-outline" onclick="loadSampleOrg()" style="font-size:13px">Load 3 sample organisations</button></div>';return;}
+var data=loadData();
+var grid=document.getElementById('orgGrid');
+if(data.orgs.length===0){
+grid.innerHTML='<p style="color:var(--ts);font-size:14px;grid-column:1/-1">No organisations added yet. Click <b>+ Add organisation</b> to get started.</p>';
+return;
+}
 var html='';
 data.orgs.forEach(function(o){
 var status=o.baselineLocked?'active':'pending';
 var statusLabel=o.baselineLocked?'Baseline Locked':'Pending';
-var intensity=o.intensity||'';
-var intBadge=intensity?'<span class="org-status os-'+intensity.toLowerCase()+'">'+intensity+'</span>':'';
-var ceoLink=window.location.origin+window.location.pathname+'?id='+o.code;
+var link=window.location.origin+'/tracker?id='+o.code;
 html+='<div class="org-card" onclick="openTracker(\''+o.code+'\')">';
 html+='<h3>'+esc(o.name)+'</h3>';
-html+='<div class="org-ceo">'+esc(o.ceo)+' · '+esc(o.kpi.jurisdiction||'')+'</div>';
-html+='<span class="org-status os-'+status+'">'+statusLabel+'</span>'+intBadge;
-if(o.kpi.sector)html+='<div class="org-meta-row">'+esc(o.kpi.sector)+'</div>';
-html+='<div style="margin-top:8px;padding:8px 10px;background:var(--bg2);border-radius:var(--r);font-size:11px;color:var(--tt);word-break:break-all"><b>CEO link:</b> '+esc(ceoLink)+'</div>';
-if(isAssessor)html+='<div style="font-size:11px;color:var(--tt);margin-top:4px"><b>CEO password:</b> '+esc(o.password)+'</div>';
-if(isAssessor)html+='<div class="org-actions"><button class="btn btn-sm btn-teal" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\')" >Copy CEO link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\')" >Remove</button></div>';
-else if(isViewer)html+='<div class="org-actions"><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();copyLink(\''+ceoLink+'\')" >Copy link</button></div>';
+html+='<div class="org-ceo">'+esc(o.ceo)+'</div>';
+html+='<span class="org-status os-'+status+'">'+statusLabel+'</span>';
+html+='<div class="org-link">CEO link: '+esc(link)+'</div>';
+html+='<div class="org-actions"><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();copyLink(\''+link+'\')">Copy link</button><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();removeOrg(\''+o.code+'\')">Remove</button></div>';
 html+='</div>';
 });
 grid.innerHTML=html;
@@ -1476,104 +410,68 @@ var name=document.getElementById('newOrgName').value.trim();
 var ceo=document.getElementById('newCeoName').value.trim();
 var code=document.getElementById('newOrgCode').value.trim().toLowerCase().replace(/[^a-z0-9\-]/g,'');
 var pw=document.getElementById('newOrgPw').value.trim();
-if(!name||!ceo||!code||!pw){alert('Please complete required fields.');return;}
+var juris=document.getElementById('newOrgJuris').value;
+if(!name||!ceo||!code||!pw){alert('Please complete all fields.');return;}
 var data=loadData();
 for(var i=0;i<data.orgs.length;i++){
-if(data.orgs[i].code===code){alert('Code already exists.');return;}
-if(data.orgs[i].password===pw){alert('Password already in use.');return;}
+if(data.orgs[i].code===code){alert('Organisation code already exists.');return;}
+if(data.orgs[i].password===pw){alert('This password is already used by another organisation. Each CEO needs a unique password.');return;}
 }
 data.orgs.push({
-name:name,ceo:ceo,code:code,password:pw,intensity:'',
-kpi:{jurisdiction:document.getElementById('newOrgJuris').value,newToITI:'',firstTimeCB:'',firstTimeExp:document.getElementById('newFirstExp').value,sector:document.getElementById('newOrgSector').value,email:''},
-app:{turnover:document.getElementById('newTurnover').value,employees:document.getElementById('newEmployees').value,tradedPct:document.getElementById('newTradedPct').value,crossBorderPct:document.getElementById('newCBPct').value,priorITI:document.getElementById('newPriorITI').value,crossBorderTarget:''},
-baseline:DOMAINS.map(function(d){return{domain:d.name,score:'',evidence:''};}),
-endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
-diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
+name:name,ceo:ceo,code:code,password:pw,
+kpi:{jurisdiction:juris,newToITI:'',firstTimeCB:'',firstTimeExp:'',crossBorderPct:'',turnoverBand:''},
+baseline:DOMAINS.map(function(d){return{domain:d,score:''};}),
+endline:DOMAINS.map(function(d){return{domain:d,score:''};}),
 smart:[],
-consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',hours:'',domainMovement:'',rag:'',completed:false};}),
-coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
+progress:[],
 notes:[],
-sop:{},baselineLocked:false,crossBorder:{baselinePct:'',endlinePct:'',target:''}
+baselineLocked:false
 });
 saveData(data);
-// Explicitly push the new org to Airtable
-var newOrg=data.orgs[data.orgs.length-1];
-AT.pushOrg(newOrg);
 closeAddOrg();
-['newOrgName','newCeoName','newOrgCode','newOrgPw','newOrgSector','newTurnover','newEmployees','newTradedPct','newCBPct'].forEach(function(id){document.getElementById(id).value='';});
-renderOrgGrid();renderCohortBar();
-var rv=document.getElementById('dashViewRag');
-if(rv&&rv.style.display!=='none')renderRagReport();
+document.getElementById('newOrgName').value='';
+document.getElementById('newCeoName').value='';
+document.getElementById('newOrgCode').value='';
+document.getElementById('newOrgPw').value='';
+renderOrgGrid();
 }
 
-function removeOrg(code){if(!confirm('Remove this organisation?'))return;var data=loadData();var org=data.orgs.find(function(o){return o.code===code;});if(org)AT.deleteOrg(org);data.orgs=data.orgs.filter(function(o){return o.code!==code;});saveData(data);renderOrgGrid();renderCohortBar();}
+function removeOrg(code){
+if(!confirm('Remove this organisation? This cannot be undone.'))return;
+var data=loadData();
+data.orgs=data.orgs.filter(function(o){return o.code!==code;});
+saveData(data);
+renderOrgGrid();
+}
 
-function copyLink(link){navigator.clipboard.writeText(link).then(function(){alert('CEO link copied to clipboard. Send this to the CEO along with their password.');});}
+function copyLink(link){
+navigator.clipboard.writeText(link).then(function(){alert('Link copied to clipboard.');});
+}
 
-function getOrg(code){var data=loadData();for(var i=0;i<data.orgs.length;i++){if(data.orgs[i].code===code)return data.orgs[i];}return null;}
+function getOrg(code){
+var data=loadData();
+for(var i=0;i<data.orgs.length;i++){if(data.orgs[i].code===code)return data.orgs[i];}
+return null;
+}
 
 function openTracker(code){
-var org=getOrg(code);if(!org)return;
+var org=getOrg(code);
+if(!org){alert('Organisation not found.');return;}
 currentOrg=code;
 document.getElementById('dashScreen').style.display='none';
-document.getElementById('sopScreen').style.display='none';
 document.getElementById('trackerScreen').style.display='block';
 document.getElementById('backDash').style.display=isAssessor?'inline-block':'none';
 document.getElementById('readonlyNotice').style.display=isAssessor?'none':'block';
 document.getElementById('saveBar').classList.toggle('hidden',!isAssessor);
 document.getElementById('trkOrgName').textContent=org.name;
-document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · '+org.code+' · '+(org.kpi.jurisdiction||'')+(org.intensity?' · '+org.intensity:'');
-switchTab('profile',document.querySelector('[data-tab="profile"]'));
-renderAll(org);
-}
-
-function normaliseBaselineDomains(org){
-  if(!org||!Array.isArray(org.baseline))return;
-  var changed=false;
-  // Ensure baseline has exactly 9 rows matching DOMAINS, preserving score/evidence
-  var fixed=DOMAINS.map(function(d,i){
-    var existing=org.baseline[i]||{};
-    if(existing.domain!==d.name){changed=true;}
-    return {
-      domain:d.name,
-      score:existing.score||'',
-      evidence:existing.evidence||''
-    };
-  });
-  // Detect length mismatch as a change too
-  if(org.baseline.length!==DOMAINS.length)changed=true;
-  if(changed){
-    org.baseline=fixed;
-    var data=loadData();
-    var stored=data.orgs.find(function(o){return o.code===org.code;});
-    if(stored){stored.baseline=fixed;saveData(data);}
-  }
-}
-
-function renderAll(org){
-// One-time normalisation: ensure baseline domain names match canonical DOMAINS list.
-// Older Airtable records may have stale domain labels from a previous framework version.
-// This repairs labels while preserving any scores/evidence already entered.
-normaliseBaselineDomains(org);
-// Jurisdiction banner
-var jBanner=document.getElementById('jurisdictionBanner');
-if(jBanner){
-  var j=(org.kpi&&org.kpi.jurisdiction)||'';
-  var jCol=j==='NI'?'var(--navy)':'var(--teal)';
-  var jBg=j==='NI'?'var(--navy-light)':'var(--teal-light)';
-  if(j){
-    jBanner.innerHTML='<span style="background:'+jBg+';color:'+jCol+';font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px">'+j+'</span>';
-    if(isAssessor){
-      jBanner.innerHTML+='<button onclick="toggleJurisdiction()" style="font-size:10px;color:var(--ts);background:none;border:none;cursor:pointer;text-decoration:underline">Change</button>';
-    }
-  } else {
-    jBanner.innerHTML=isAssessor?'<button onclick="toggleJurisdiction()" style="font-size:11px;color:var(--ts);background:none;border:1px dashed var(--tb2);padding:3px 10px;border-radius:20px;cursor:pointer">Set ROI / NI</button>':'';
-  }
-}
-renderKPI(org);renderAppData(org);renderIntensity(org);renderCB(org);
-renderBaselineNotes(org);renderBaselineReport(org);renderBaseline(org);renderDiagnosis(org);renderValidation(org);renderSMART(org);
-renderConsulting(org);renderCoaching(org);renderEndline(org);renderNotes(org);renderRagKpiSlots(org);
-renderAttendance(org);renderFinancial(org);
+document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · Code: '+org.code+' · '+org.kpi.jurisdiction;
+switchTab('kpi',document.querySelector('[data-tab="kpi"]'));
+renderKPI(org);
+renderBaseline(org);
+renderSMART(org);
+renderProgress(org);
+renderEndline(org);
+renderNotes(org);
 }
 
 function switchTab(tab,btn){
@@ -1588,496 +486,58 @@ var html='';
 KPI_FIELDS.forEach(function(f){
 html+='<div class="kpi-card"><label>'+f.label+'</label>';
 if(isAssessor){
-if(f.type==='select'){html+='<select data-kpi="'+f.key+'"><option value="">--</option>';f.opts.forEach(function(o){html+='<option'+(org.kpi[f.key]===o?' selected':'')+'>'+o+'</option>';});html+='</select>';}
-else{html+='<input data-kpi="'+f.key+'" value="'+esc(org.kpi[f.key]||'')+'">';}
-}else{html+='<div class="kpi-val">'+(org.kpi[f.key]||'--')+'</div>';}
+if(f.type==='select'){
+html+='<select data-kpi="'+f.key+'">';
+html+='<option value="">—</option>';
+f.opts.forEach(function(o){html+='<option'+(org.kpi[f.key]===o?' selected':'')+'>'+o+'</option>';});
+html+='</select>';
+}else{
+html+='<input data-kpi="'+f.key+'" value="'+esc(org.kpi[f.key]||'')+'">';
+}
+}else{
+html+='<div class="kpi-val">'+(org.kpi[f.key]||'—')+'</div>';
+}
 html+='</div>';
 });
 document.getElementById('kpiGrid').innerHTML=html;
-}
-
-function renderAppData(org){
-if(!org.app)org.app={};
-var html='';
-APP_FIELDS.forEach(function(f){
-html+='<div class="kpi-card"><label>'+f.label+'</label>';
-if(isAssessor){
-if(f.type==='select'){html+='<select data-app="'+f.key+'"><option value="">--</option>';f.opts.forEach(function(o){html+='<option'+((org.app[f.key]||'')===o?' selected':'')+'>'+o+'</option>';});html+='</select>';}
-else{html+='<input data-app="'+f.key+'" value="'+esc(org.app[f.key]||'')+'">';}
-}else{html+='<div class="kpi-val">'+(org.app[f.key]||'--')+'</div>';}
-html+='</div>';
-});
-document.getElementById('appGrid').innerHTML=html;
-}
-
-function renderIntensity(org){
-var pills=['Stabilise','Strengthen','Scale'];
-var html='';
-pills.forEach(function(p){
-var sel=org.intensity===p;
-var cls=sel?'int-pill selected sel-'+p.toLowerCase():'int-pill';
-if(isAssessor){html+='<div class="'+cls+'" onclick="setIntensity(\''+p+'\')">'+p+'</div>';}
-else{html+='<div class="'+cls+'">'+p+'</div>';}
-});
-document.getElementById('intensityPills').innerHTML=html;
-}
-
-function setIntensity(val){
-var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
-org.intensity=org.intensity===val?'':val;
-saveData(data);renderIntensity(org);
-}
-
-function renderCB(org){
-if(!org.crossBorder)org.crossBorder={};
-var fields=[{key:'baselinePct',label:'Baseline Cross-Border %'},{key:'target',label:'Cross-Border Target'},{key:'endlinePct',label:'Endline Cross-Border %'}];
-var html='';
-fields.forEach(function(f){
-html+='<div class="kpi-card"><label>'+f.label+'</label>';
-if(isAssessor){html+='<input data-cb="'+f.key+'" value="'+esc(org.crossBorder[f.key]||'')+'">';}
-else{html+='<div class="kpi-val">'+(org.crossBorder[f.key]||'--')+'</div>';}
-html+='</div>';
-});
-document.getElementById('cbGrid').innerHTML=html;
 }
 
 function renderBaseline(org){
 var tbody=document.querySelector('#baselineTable tbody');
 var html='';
 org.baseline.forEach(function(b,i){
-var d=DOMAINS[i];var score=parseFloat(b.score)||0;var wt=d?d.wt:0;
-var wtdScore=(score*(wt/100)).toFixed(2);var pct=score?(score/5*100):0;
-html+='<tr><td class="domain-name">'+b.domain+'<span class="cluster-label '+d.clCss+'">'+d.cluster+'</span></td>';
-html+='<td class="wt">'+wt+'%</td>';
+var pct=b.score?(b.score/5*100):0;
+html+='<tr><td class="domain-name">'+b.domain+'</td>';
 if(isAssessor&&!org.baselineLocked){
 html+='<td><input type="number" min="0" max="5" step="0.5" data-bl="'+i+'" value="'+(b.score||'')+'"></td>';
-}else{html+='<td style="font-weight:700;color:var(--navy)">'+(b.score||'--')+'</td>';}
-html+='<td style="font-size:12px;color:var(--ts)">'+(b.score?wtdScore:'--')+'</td>';
-if(isAssessor&&!org.baselineLocked){
-html+='<td><textarea data-bl-ev="'+i+'">'+(b.evidence||'')+'</textarea></td>';
-}else{html+='<td style="font-size:12px;color:var(--ts)">'+(b.evidence||'--')+'</td>';}
+}else{
+html+='<td style="font-weight:700;color:var(--navy)">'+(b.score||'—')+'</td>';
+}
 html+='<td><div class="score-bar"><div class="score-bar-fill" style="width:'+pct+'%"></div></div></td></tr>';
 });
 tbody.innerHTML=html;
-var totalWtd=0;var hasScores=false;
-org.baseline.forEach(function(b,i){var s=parseFloat(b.score)||0;if(s>0)hasScores=true;totalWtd+=s*(DOMAINS[i].wt/100);});
-var overall=totalWtd.toFixed(2);
-var maturity=totalWtd<2?'Fragile':totalWtd<3?'Emerging':totalWtd<3.75?'Defined':totalWtd<4.5?'Embedded':'Optimised';
-var foot='<tr style="background:var(--bg2);font-weight:700"><td>Overall Weighted Score</td><td>100%</td><td colspan="2" style="text-align:center;font-family:var(--serif);font-size:18px;color:var(--navy)">'+(hasScores?overall:'--')+'</td><td style="font-size:13px;color:var(--teal)">'+(hasScores?maturity:'--')+'</td><td></td></tr>';
-if(isAssessor&&!org.baselineLocked){foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';}
-document.getElementById('baselineFoot').innerHTML=foot;
 }
 
-function lockBaseline(){
-if(!confirm('Lock baseline? This cannot be undone. Scores will be frozen.'))return;
-var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
-org.baselineLocked=true;saveData(data);renderBaseline(org);renderOrgGrid();
-}
-
-
-function renderRagKpiSlots(org){
-  var ragF=[
-    {id:'ragModeSlot',key:'ragMode',ph:'e.g. Consulting / Mentoring + Coaching',ta:false},
-    {id:'ragBaselineSlot',key:'ragBaseline',ph:'e.g. 120000',ta:false},
-    {id:'ragCurrentSlot',key:'ragCurrent',ph:'e.g. 138000',ta:false},
-    {id:'ragProgressSlot',key:'progressPct',ph:'0-100 (leave blank for auto)',ta:false},
-    {id:'ragSurplusSlot',key:'ragSurplus',ph:'e.g. 7.2',ta:false},
-    {id:'ragCbSlot',key:'ragCbSales',ph:'e.g. 15000',ta:false},
-    {id:'ragActionsSlot',key:'ragNextActions',ph:'Next actions or risks for RAG report',ta:true}
-  ];
-  ragF.forEach(function(f){
-    var el=document.getElementById(f.id);if(!el)return;
-    var val=(org.kpi&&org.kpi[f.key])?org.kpi[f.key]:'';
-    if(isAssessor){
-      if(f.ta)el.innerHTML='<textarea onchange="saveRagField(\''+f.key+'\',this.value)" placeholder="'+f.ph+'" style="min-height:60px;width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">'+esc(val)+'</textarea>';
-      else el.innerHTML='<input onchange="saveRagField(\''+f.key+'\',this.value)" placeholder="'+f.ph+'" value="'+esc(val)+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-    }else{
-      el.innerHTML='<div class="kpi-val">'+(val||'&mdash;')+'</div>';
-    }
-  });
-}
-function saveRagField(key,val){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  if(!org.kpi)org.kpi={};
-  org.kpi[key]=val;
-  saveData(data);
-}
-
-// ═══════════════════════════════════════
-// BASELINE ASSESSOR NOTES - free text, autosave on blur
-// ═══════════════════════════════════════
-function renderBaselineNotes(org){
-  var slot=document.getElementById('baselineNotesSlot');
-  if(!slot)return;
-  var val=(org.baselineNotes!==undefined&&org.baselineNotes!==null)?org.baselineNotes:'';
-  if(isAssessor){
-    slot.innerHTML='<textarea onchange="saveBaselineNotes(this.value)" placeholder="Overall assessor observations, validation flags, contextual notes..." style="min-height:120px;width:100%;padding:12px 14px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp);line-height:1.5">'+esc(val)+'</textarea>';
-  }else{
-    if(val){
-      slot.innerHTML='<div style="padding:12px 14px;background:var(--bg2);border-left:3px solid var(--navy);border-radius:var(--r);font-size:14px;color:var(--ts2);white-space:pre-wrap;line-height:1.6">'+esc(val)+'</div>';
-    }else{
-      slot.innerHTML='<div style="padding:12px 14px;color:var(--tt);font-size:13px;font-style:italic">No assessor notes recorded.</div>';
-    }
-  }
-}
-function saveBaselineNotes(val){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  org.baselineNotes=val;
-  saveData(data);
-}
-
-function renderBaselineReport(org){
-  var slot=document.getElementById('baselineReportSlot');
-  if(!slot)return;
-  var url=(org.baselineReportUrl||'').trim();
-  var html='';
-  if(url){
-    html+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">';
-    html+='<a href="'+esc(url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--navy);color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; Open Baseline Report</a>';
-    if(isAssessor)html+='<button onclick="clearBaselineReport()" style="background:none;border:none;color:var(--tt);font-size:12px;cursor:pointer;text-decoration:underline">Remove link</button>';
-    html+='</div>';
-  }
-  if(isAssessor){
-    html+='<div style="display:flex;gap:8px;align-items:center">';
-    html+='<input id="baselineReportInput" type="url" placeholder="Paste shareable link here (Google Drive, Dropbox, etc.)" value="'+esc(url)+'" style="flex:1;padding:9px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-    html+='<button onclick="saveBaselineReport()" style="padding:9px 16px;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer">'+(url?'Update':'Save link')+'</button>';
-    html+='</div>';
-  } else if(!url){
-    html+='<div style="padding:12px 14px;color:var(--tt);font-size:13px;font-style:italic">No baseline report attached.</div>';
-  }
-  slot.innerHTML=html;
-}
-function saveBaselineReport(){
-  var input=document.getElementById('baselineReportInput');
-  if(!input)return;
-  var val=input.value.trim();
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  org.baselineReportUrl=val;
-  saveData(data);
-  renderBaselineReport(org);
-}
-function clearBaselineReport(){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  org.baselineReportUrl='';
-  saveData(data);
-  renderBaselineReport(org);
-}
-
-// ═══════════════════════════════════════
-// VALIDATION TAB - SOP-style checklist + notes + goals + lock
-// ═══════════════════════════════════════
-var VALIDATION_CHECKLIST=[
-{key:'ck0',phase:'Phase 1 - CEO Pre-Work',item:'CEO pre-work issued'},
-{key:'ck1',phase:'Phase 1 - CEO Pre-Work',item:'CEO pre-work returned'},
-{key:'ck2',phase:'Phase 1 - CEO Pre-Work',item:'CEO submission logged'},
-{key:'ck3',phase:'Phase 2 - Internal Scoring',item:'CEO submission read end-to-end'},
-{key:'ck4',phase:'Phase 2 - Internal Scoring',item:'Draft internal scoring completed'},
-{key:'ck5',phase:'Phase 2 - Internal Scoring',item:'Draft baseline calculated'},
-{key:'ck6',phase:'Phase 2 - Internal Scoring',item:'Priority issues identified'},
-{key:'ck7',phase:'Phase 3 - Validation Meeting',item:'Validation meeting held'},
-{key:'ck8',phase:'Phase 3 - Validation Meeting',item:'Assumptions tested with CEO'},
-{key:'ck9',phase:'Phase 3 - Validation Meeting',item:'Score adjustments agreed (if required)'},
-{key:'ck10',phase:'Phase 4 - Baseline Lock-In',item:'Final baseline confirmed with CEO'},
-{key:'ck11',phase:'Phase 4 - Baseline Lock-In',item:'CEO summary issued'}
-];
-
-var VALIDATION_NOTES=[
-{key:'vn1',label:'Was the CEO\u2019s self-view accurate? Where did it differ?'},
-{key:'vn2',label:'What is the root commercial constraint? What is symptom vs cause?'},
-{key:'vn3',label:'What would happen with a 20% income drop? Are pricing assumptions tested?'},
-{key:'vn4',label:'Is the board providing commercial challenge? Is there a succession plan?'},
-{key:'vn5',label:'How does the CEO articulate the problem in their own words?'}
-];
-
-var GOAL_FIELDS=[
-{key:'g_problem',label:'Final Commercial Problem Statement',ta:true,ph:'One sentence: the central commercial problem to be solved.'},
-{key:'g_problem_why',label:'Why this matters now (consequences if unaddressed)',ta:true,ph:'What happens if this is not solved within 12 months?'},
-{key:'g_goal1',label:'Goal 1 (high-level direction)',ta:false,ph:'e.g. Diversify revenue beyond single-contract dependency'},
-{key:'g_goal2',label:'Goal 2 (high-level direction)',ta:false,ph:''},
-{key:'g_goal3',label:'Goal 3 (high-level direction)',ta:false,ph:''},
-{key:'g_smart1',label:'SMART Objective 1 (specific, measurable, time-bound)',ta:true,ph:'e.g. Reduce HSE dependency from 60% to <40% by securing 3 new B2B accounts by Dec 2026'},
-{key:'g_smart2',label:'SMART Objective 2',ta:true,ph:''},
-{key:'g_smart3',label:'SMART Objective 3',ta:true,ph:''}
-];
-
-var LOCK_CHECKS=[
-{key:'lk1',label:'CEO has reviewed and signed off on baseline scores'},
-{key:'lk2',label:'Problem statement and SMART objectives agreed in writing'},
-{key:'lk3',label:'Programme intensity (Stabilise / Strengthen / Scale) confirmed'},
-{key:'lk4',label:'Priority focus domains confirmed'}
-];
-
-function ensureAssessor(org){
-if(!org.assessor||typeof org.assessor==='string'){
-// Convert legacy string `assessor:'Fiona'` to object format, preserving the name
-var leadName=typeof org.assessor==='string'?org.assessor:'';
-org.assessor={checklist:{},validation:{},goals:{},priorities:[],lock:{},assessor:leadName};
-}
-if(!org.assessor.checklist)org.assessor.checklist={};
-if(!org.assessor.validation)org.assessor.validation={};
-if(!org.assessor.goals)org.assessor.goals={};
-if(!Array.isArray(org.assessor.priorities))org.assessor.priorities=[];
-if(!org.assessor.lock)org.assessor.lock={};
-return org.assessor;
-}
-
-function renderValidation(org){
-ensureAssessor(org);
-var a=org.assessor;
+function renderEndline(org){
+var tbody=document.querySelector('#endlineTable tbody');
 var html='';
-
-// Lead assessor
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Lead Assessor for this organisation</div>';
+org.endline.forEach(function(e,i){
+var bl=org.baseline[i]?org.baseline[i].score:'';
+var change='';
+if(bl&&e.score){
+var diff=(parseFloat(e.score)-parseFloat(bl)).toFixed(1);
+change=(diff>0?'+':'')+diff;
+}
+html+='<tr><td class="domain-name">'+e.domain+'</td>';
+html+='<td style="color:var(--ts)">'+(bl||'—')+'</td>';
 if(isAssessor){
-html+='<select data-assessor-lead style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-html+='<option value="">-- Select --</option>';
-['Fiona','Clodagh','Both'].forEach(function(o){html+='<option value="'+o+'"'+((a.assessor||'')===o?' selected':'')+'>'+o+'</option>';});
-html+='</select>';
+html+='<td><input type="number" min="0" max="5" step="0.5" data-el="'+i+'" value="'+(e.score||'')+'"></td>';
 }else{
-html+='<div class="pc-val">'+esc(a.assessor||'--')+'</div>';
+html+='<td style="font-weight:700;color:var(--navy)">'+(e.score||'—')+'</td>';
 }
-html+='</div>';
-
-// SECTION 1: Checklist
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Internal SOP Checklist</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">Tick each step as it is completed. Timestamps are recorded automatically.</div>';
-var currentPhase='';
-VALIDATION_CHECKLIST.forEach(function(step){
-if(step.phase!==currentPhase){
-html+='<div class="sop-phase" style="margin-top:14px">'+esc(step.phase)+'</div>';
-currentPhase=step.phase;
-}
-var checked=a.checklist[step.key]?true:false;
-var ts=a.checklist[step.key+'_ts']||'';
-var tsDisplay='';
-if(ts){
-try{
-var d=new Date(ts);
-tsDisplay=d.toLocaleString('en-IE',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
-}catch(e){tsDisplay=ts;}
-}
-html+='<div class="sop-item">';
-if(isAssessor){
-html+='<input type="checkbox" data-val-ck="'+step.key+'"'+(checked?' checked':'')+'>';
-}else{
-html+='<span style="width:16px;height:16px;display:inline-block;text-align:center">'+(checked?'<span style="color:var(--teal);font-weight:700">&#10003;</span>':'<span style="color:var(--tt)">&middot;</span>')+'</span>';
-}
-html+='<label>'+esc(step.item)+'</label>';
-html+='<span class="sop-date">'+esc(tsDisplay)+'</span>';
-html+='</div>';
+html+='<td style="font-weight:700;color:'+(parseFloat(change)>0?'var(--teal)':parseFloat(change)<0?'var(--coral)':'var(--ts)')+'">'+(change||'—')+'</td></tr>';
 });
-html+='</div>';
-
-// SECTION 2: Validation Notes
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Validation Meeting Notes</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">Captured during the validation meeting with the CEO.</div>';
-VALIDATION_NOTES.forEach(function(n){
-var val=a.validation[n.key]||'';
-html+='<div style="margin-bottom:14px">';
-html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(n.label)+'</label>';
-if(isAssessor){
-html+='<textarea data-val-vn="'+n.key+'" style="width:100%;min-height:60px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
-}else{
-html+='<div class="pc-val">'+(val||'--')+'</div>';
-}
-html+='</div>';
-});
-html+='</div>';
-
-// SECTION 3: Goals & SMART Translation
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into 3 directional goals and 3 SMART objectives. The SMART objectives populate the SMART tab.</div>';
-GOAL_FIELDS.forEach(function(g){
-var val=a.goals[g.key]||'';
-html+='<div style="margin-bottom:12px">';
-html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(g.label)+'</label>';
-if(isAssessor){
-if(g.ta){
-html+='<textarea data-val-goal="'+g.key+'" placeholder="'+esc(g.ph||'')+'" style="width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
-}else{
-html+='<input data-val-goal="'+g.key+'" value="'+esc(val)+'" placeholder="'+esc(g.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-}
-}else{
-html+='<div class="pc-val">'+(val||'--')+'</div>';
-}
-html+='</div>';
-});
-html+='</div>';
-
-// SECTION 4: Priority Domains
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Priority Focus Domains (select up to 3)</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">The 3 domains that will be the focus of consulting cycles.</div>';
-html+='<div style="display:flex;flex-wrap:wrap;gap:8px">';
-DOMAINS.forEach(function(d,i){
-var dKey='D'+(i+1);
-var sel=a.priorities.indexOf(dKey)>-1;
-var cls=sel?'int-pill selected sel-strengthen':'int-pill';
-if(isAssessor){
-html+='<div class="'+cls+'" onclick="toggleValPriority(\''+dKey+'\')" style="font-size:11px;padding:6px 12px">'+dKey+': '+esc(d.name.replace(/^[0-9]+\.\s*/,''))+'</div>';
-}else{
-html+='<div class="'+cls+'" style="font-size:11px;padding:6px 12px">'+dKey+': '+esc(d.name.replace(/^[0-9]+\.\s*/,''))+'</div>';
-}
-});
-html+='</div>';
-html+='</div>';
-
-// SECTION 5: Lock Confirmation
-html+='<div class="problem-card" style="border:2px solid var(--coral)">';
-html+='<div class="pc-label" style="color:var(--coral)">Baseline Lock Confirmation</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">Once all four checks are confirmed and dates are entered, the baseline can be locked from the Baseline tab.</div>';
-LOCK_CHECKS.forEach(function(lk){
-var checked=a.lock[lk.key]?true:false;
-html+='<div class="sop-item" style="background:var(--bg2)">';
-if(isAssessor){
-html+='<input type="checkbox" data-val-lk="'+lk.key+'"'+(checked?' checked':'')+'>';
-}else{
-html+='<span style="width:16px;height:16px;display:inline-block;text-align:center">'+(checked?'<span style="color:var(--coral);font-weight:700">&#10003;</span>':'<span style="color:var(--tt)">&middot;</span>')+'</span>';
-}
-html+='<label>'+esc(lk.label)+'</label>';
-html+='</div>';
-});
-html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px">';
-html+='<div><label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:4px">Validation led by</label>';
-if(isAssessor){
-html+='<select data-val-lk-led style="width:100%;padding:6px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-html+='<option value="">--</option>';
-['Fiona','Clodagh','Both'].forEach(function(o){html+='<option value="'+o+'"'+((a.lock.lk_led||'')===o?' selected':'')+'>'+o+'</option>';});
-html+='</select>';
-}else{html+='<div style="font-size:13px;font-weight:600">'+esc(a.lock.lk_led||'--')+'</div>';}
-html+='</div>';
-html+='<div><label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:4px">Validation session date</label>';
-if(isAssessor){
-html+='<input type="date" data-val-lk-session value="'+esc(a.lock.lk_session_date||'')+'" style="width:100%;padding:6px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-}else{html+='<div style="font-size:13px;font-weight:600">'+esc(a.lock.lk_session_date||'--')+'</div>';}
-html+='</div>';
-html+='<div><label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:4px">Baseline lock date</label>';
-if(isAssessor){
-html+='<input type="date" data-val-lk-lock value="'+esc(a.lock.lk_lock_date||'')+'" style="width:100%;padding:6px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
-}else{html+='<div style="font-size:13px;font-weight:600">'+esc(a.lock.lk_lock_date||'--')+'</div>';}
-html+='</div>';
-html+='</div>';
-html+='</div>';
-
-var el=document.getElementById('validationContent');
-if(!el)return;
-el.innerHTML=html;
-
-if(isAssessor){
-// Wire up immediate-save handlers (the global Save button also catches all of these)
-el.querySelectorAll('[data-val-ck]').forEach(function(cb){
-cb.addEventListener('change',function(){
-var key=this.getAttribute('data-val-ck');
-var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-if(!o)return;ensureAssessor(o);
-o.assessor.checklist[key]=this.checked;
-o.assessor.checklist[key+'_ts']=this.checked?new Date().toISOString():'';
-saveData(d);renderValidation(o);
-});
-});
-el.querySelectorAll('[data-val-vn]').forEach(function(t){
-t.addEventListener('change',function(){
-var key=this.getAttribute('data-val-vn');
-var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-if(!o)return;ensureAssessor(o);
-o.assessor.validation[key]=this.value;
-saveData(d);
-});
-});
-el.querySelectorAll('[data-val-goal]').forEach(function(t){
-t.addEventListener('change',function(){
-var key=this.getAttribute('data-val-goal');
-var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-if(!o)return;ensureAssessor(o);
-o.assessor.goals[key]=this.value;
-saveData(d);
-});
-});
-el.querySelectorAll('[data-val-lk]').forEach(function(cb){
-cb.addEventListener('change',function(){
-var key=this.getAttribute('data-val-lk');
-var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-if(!o)return;ensureAssessor(o);
-o.assessor.lock[key]=this.checked;
-saveData(d);
-});
-});
-var ledSel=el.querySelector('[data-val-lk-led]');
-if(ledSel)ledSel.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_led=this.value;saveData(d);});
-var sesInp=el.querySelector('[data-val-lk-session]');
-if(sesInp)sesInp.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_session_date=this.value;saveData(d);});
-var lockInp=el.querySelector('[data-val-lk-lock]');
-if(lockInp)lockInp.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_lock_date=this.value;saveData(d);});
-var leadSel=el.querySelector('[data-assessor-lead]');
-if(leadSel)leadSel.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.assessor=this.value;saveData(d);});
-}
-}
-
-function toggleValPriority(dKey){
-var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-if(!o)return;ensureAssessor(o);
-var idx=o.assessor.priorities.indexOf(dKey);
-if(idx>-1){o.assessor.priorities.splice(idx,1);}
-else{
-if(o.assessor.priorities.length>=3){alert('Maximum 3 priority domains. Remove one first.');return;}
-o.assessor.priorities.push(dKey);
-}
-saveData(d);renderValidation(o);
-}
-
-function renderDiagnosis(org){
-if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
-var d=org.diagnosis;
-// Handle field name differences between Airtable API and local storage
-if(!d.problemStatement&&d.problem)d.problemStatement=d.problem;
-if(!d.constraints||!Array.isArray(d.constraints))d.constraints=['','',''];
-while(d.constraints.length<3)d.constraints.push('');
-var html='';
-html+='<div class="problem-card"><div class="pc-label">Commercial Problem Statement</div>';
-if(isAssessor){html+='<textarea data-diag="problemStatement">'+esc(d.problemStatement)+'</textarea>';}
-else{html+='<div class="pc-val">'+(d.problemStatement||'--')+'</div>';}
-html+='</div>';
-html+='<div class="problem-card"><div class="pc-label">Scenario for Change</div>';
-if(isAssessor){
-html+='<div class="intensity-pills">';
-['Stabilise','Strengthen','Scale'].forEach(function(s){
-html+='<div class="int-pill'+(d.scenario===s?' selected sel-'+s.toLowerCase():'')+'" onclick="setScenario(\''+s+'\')">'+s+'</div>';
-});
-html+='</div>';
-}else{html+='<div class="pc-val">'+(d.scenario||'--')+'</div>';}
-html+='</div>';
-html+='<div class="problem-card"><div class="pc-label">Root Constraints (linked to domain)</div>';
-for(var i=0;i<3;i++){
-html+='<div class="constraint-row"><div class="c-num">'+(i+1)+'</div>';
-if(isAssessor){html+='<input data-constraint="'+i+'" value="'+esc(d.constraints[i]||'')+'" placeholder="Domain -- Constraint description">';}
-else{html+='<span style="font-size:14px;color:var(--ts2)">'+(d.constraints[i]||'--')+'</span>';}
-html+='</div>';
-}
-html+='</div>';
-html+='<div class="problem-card"><div class="pc-label">Key Commercial Observation</div>';
-if(isAssessor){html+='<textarea data-diag="observation">'+esc(d.observation)+'</textarea>';}
-else{html+='<div class="pc-val">'+(d.observation||'--')+'</div>';}
-html+='</div>';
-document.getElementById('diagnosisContent').innerHTML=html;
-}
-
-function setScenario(val){
-var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
-if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
-org.diagnosis.scenario=org.diagnosis.scenario===val?'':val;
-saveData(data);renderDiagnosis(org);
+tbody.innerHTML=html;
 }
 
 function renderSMART(org){
@@ -2089,16 +549,14 @@ html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
 html+='<div class="obj-row">';
 html+='<div><label>Target</label><input data-smart-target="'+i+'" value="'+esc(s.target||'')+'"></div>';
 html+='<div><label>Timeline</label><input data-smart-timeline="'+i+'" value="'+esc(s.timeline||'')+'"></div>';
-html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="'+esc(s.domain||'')+'"></div>';
-html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
+html+='<div><label>Owner</label><input data-smart-owner="'+i+'" value="'+esc(s.owner||'')+'"></div>';
 html+='</div>';
 }else{
-html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px">'+(s.objective||'--')+'</div>';
+html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px">'+(s.objective||'—')+'</div>';
 html+='<div class="obj-row">';
-html+='<div><label>Target</label><div style="font-size:14px;font-weight:600">'+(s.target||'--')+'</div></div>';
-html+='<div><label>Timeline</label><div style="font-size:14px;font-weight:600">'+(s.timeline||'--')+'</div></div>';
-html+='<div><label>Domain</label><div style="font-size:14px;font-weight:600">'+(s.domain||'--')+'</div></div>';
-html+='<div><label>Status</label><div style="font-size:14px;font-weight:600">'+(s.status||'--')+'</div></div>';
+html+='<div><label>Target</label><div style="font-size:14px;font-weight:600">'+(s.target||'—')+'</div></div>';
+html+='<div><label>Timeline</label><div style="font-size:14px;font-weight:600">'+(s.timeline||'—')+'</div></div>';
+html+='<div><label>Owner</label><div style="font-size:14px;font-weight:600">'+(s.owner||'—')+'</div></div>';
 html+='</div>';
 }
 html+='</div>';
@@ -2106,531 +564,140 @@ html+='</div>';
 document.getElementById('smartList').innerHTML=html;
 document.getElementById('smartAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addSMART()">+ Add objective</button>':'';
 }
-function addSMART(){var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});saveData(data);renderSMART(org);}
 
-var OUTREACH_CYCLES=[
-{code:'OR1',title:'Health Check & Problem Identification',date:'4-18 May 2026',phase:'Diagnose',focus:'Deep-dive into commercial assessment; validate baseline; agree problem statement & SMART objectives'},
-{code:'OR2',title:'Commercialisation Plan Progress',date:'12-26 Jun 2026',phase:'Translate',focus:'Confirm scaling barriers, commercial priorities, scenario for change; refine Scale & Change Plan'},
-{code:'OR3',title:'Revenue & Business Model Deep-Dive',date:'10-24 Jul 2026',phase:'Strengthen',focus:'Revenue diversification; income mix; business model innovation; market demand testing'},
-{code:'OR4',title:'Change Management Implementation',date:'14-28 Aug 2026',phase:'Strengthen',focus:'Organisational & commercial change across pricing, cost control, cash-flow, sales processes'},
-{code:'OR5',title:'Financial Systems & Pricing',date:'11-25 Sep 2026',phase:'Strengthen',focus:'Cost structures; pricing assumptions; break-even; cash-flow management; financial dashboards'},
-{code:'OR6',title:'Digital Marketing & Cross-Border',date:'9-23 Oct 2026',phase:'Strengthen',focus:'Value proposition; market positioning; digital channels; cross-border entry planning'},
-{code:'OR7',title:'AI & Technology Adoption',date:'13-27 Nov 2026',phase:'Strengthen',focus:'Operational workflows; low-cost tech solutions; AI tools for finance, marketing, operations'},
-{code:'OR8',title:'Governance & Investment Readiness',date:'14-20 Dec 2026',phase:'Sustain',focus:'Board effectiveness; succession planning; business cases; financial projections; investor materials'}
-];
-
-function ensureConsulting(org){
-var migrated=false;
-if(!org.consulting||org.consulting.length!==8){
-org.consulting=OUTREACH_CYCLES.map(function(c){
-var existing=org.consulting?org.consulting.find(function(e){return e.code===c.code;}):null;
-return existing||{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,
-consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',hours:'',domainMovement:'',rag:'',completed:false};
-});
-migrated=true;
-}
-// Migrate legacy "days" field to "hours" (1 day = 8 hours) and persist.
-// Without this, the per-org tab auto-converts on render but the cohort
-// RAG report reads c.hours directly and shows 0 / 350.
-org.consulting.forEach(function(c){
-  if((c.days||c._legacyDays)&&!c.hours){
-    var legacyVal=parseFloat(c.days||c._legacyDays||0);
-    if(legacyVal>0){
-      c.hours=String(legacyVal*8);
-      c._legacyDays=c.days||c._legacyDays;
-      c.days='';
-      migrated=true;
-    }
-  }
-});
-// Auto-push to Airtable so the migrated/templated data persists for all views
-if(migrated&&isAssessor&&typeof AT!=='undefined'&&AT.saveData){
-  var d=loadData();
-  AT.saveData(d,org.code);
-}
-return org.consulting;
+function addSMART(){
+var data=loadData();
+var org=data.orgs.find(function(o){return o.code===currentOrg;});
+org.smart.push({objective:'',target:'',timeline:'',owner:''});
+saveData(data);
+renderSMART(org);
 }
 
-function renderConsulting(org){
-ensureConsulting(org);
-var totalHrsConsult=0;var completed=0;
-org.consulting.forEach(function(c){
-  totalHrsConsult+=getConsultHours(c);
-  if(c.completed)completed++;
-});
-totalHrsConsult=parseFloat(totalHrsConsult.toFixed(1));
-var html='<div class="coaching-stat"><div class="cs-val">'+totalHrsConsult.toFixed(1)+' / 35</div><div class="cs-lbl">Hours Used</div></div>';
-html+='<div class="coaching-stat"><div class="cs-val">'+(35-totalHrsConsult).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining</div></div>';
-html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 8</div><div class="cs-lbl">Cycles Completed</div></div>';
-html+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val">9</div><div class="cs-lbl">Flex Pool (hrs)</div></div>';
-document.getElementById('consultingSummary').innerHTML=html;
-
-var list='';
-org.consulting.forEach(function(c,i){
-var ref=OUTREACH_CYCLES[i];
-var phaseCls=ref.phase==='Diagnose'?'ph-diag':ref.phase==='Translate'?'ph-trans':ref.phase==='Sustain'?'ph-sust':'ph-str';
-list+='<div class="log-entry" style="border-left:4px solid var(--'+(ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy')+')">';
-list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
-list+='<div class="log-date">'+esc(c.code)+' -- '+esc(c.title)+'</div>';
-list+='<div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;color:#fff;background:var(--'+(ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy')+')">'+ref.phase+'</div>';
-list+='</div>';
-list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
-list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
-
+function renderProgress(org){
+var html='';
+org.progress.forEach(function(p,i){
+html+='<div class="log-entry"><div class="log-date">'+esc(p.month||'')+'</div>';
 if(isAssessor){
-list+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">';
-list+='<div><div style="font-size:11px;color:var(--tt)">Consulted by</div><select data-con-by="'+i+'"><option value="">--</option><option'+(c.consultedBy==='Fiona'?' selected':'')+'>Fiona</option><option'+(c.consultedBy==='Clodagh'?' selected':'')+'>Clodagh</option><option'+(c.consultedBy==='Both'?' selected':'')+'>Both</option></select></div>';
-list+='<div><div style="font-size:11px;color:var(--tt)">Format</div><select data-con-format="'+i+'"><option value="">--</option><option'+(c.format==='In-person'?' selected':'')+'>In-person</option><option'+(c.format==='Online'?' selected':'')+'>Online</option><option'+(c.format==='Mixed'?' selected':'')+'>Mixed</option></select></div>';
-list+='</div>';
-list+='<div style="margin-top:10px"><div style="font-size:11px;color:var(--tt)">SMART objectives progressed</div><input data-con-smart="'+i+'" value="'+esc(c.smartProgressed||'')+'" placeholder="e.g. OBJ1, OBJ3"></div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key actions agreed with CEO</div><textarea data-con-actions="'+i+'">'+esc(c.actionsAgreed||'')+'</textarea></div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key outputs / evidence</div><textarea data-con-outputs="'+i+'">'+esc(c.keyOutputs||'')+'</textarea></div>';
-list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
-list+='<div><div style="font-size:11px;color:var(--tt)">Hours used</div><input data-con-hours="'+i+'" value="'+esc(c.hours||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
-list+='<div><div style="font-size:11px;color:var(--tt)">Domain movement?</div><input data-con-domain="'+i+'" value="'+esc(c.domainMovement||'')+'" placeholder="e.g. D2 ↑, D5 ↑"></div>';
-list+='<div><div style="font-size:11px;color:var(--tt)">RAG</div><select data-con-rag="'+i+'"><option value="">--</option><option'+(c.rag==='Green'?' selected':'')+'>Green</option><option'+(c.rag==='Amber'?' selected':'')+'>Amber</option><option'+(c.rag==='Red'?' selected':'')+'>Red</option></select></div>';
-list+='</div>';
-list+='<div style="margin-top:10px"><label style="font-size:12px;color:var(--ts2);cursor:pointer"><input type="checkbox" data-con-done="'+i+'"'+(c.completed?' checked':'')+' style="accent-color:var(--teal);margin-right:6px">Cycle completed</label></div>';
+html+='<textarea data-prog="'+i+'">'+esc(p.text||'')+'</textarea>';
 }else{
-if(c.completed){
-list+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Consulted by:</b> '+(c.consultedBy||'--')+' · <b>Format:</b> '+(c.format||'--')+' · <b>Hours:</b> '+(c.hours||'--')+'</div>';
-if(c.actionsAgreed)list+='<div style="margin-top:6px;font-size:13px"><b>Actions agreed:</b> '+esc(c.actionsAgreed)+'</div>';
-if(c.keyOutputs)list+='<div style="margin-top:4px;font-size:13px"><b>Outputs:</b> '+esc(c.keyOutputs)+'</div>';
-}else{
-list+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">Not yet completed</div>';
+html+='<div class="log-text">'+(p.text||'—')+'</div>';
 }
-}
-list+='</div>';
+html+='</div>';
 });
-document.getElementById('consultingList').innerHTML=list;
+document.getElementById('progressList').innerHTML=html;
+document.getElementById('progressAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addProgress()">+ Add month</button>':'';
 }
 
-var COACHING_CYCLES=[
-{code:'C1',title:'Readiness & Individual Coaching Plans',date:'19-29 May 2026',focus:'Leadership baseline; coaching readiness assessment; bespoke coaching plan agreed'},
-{code:'C2',title:'Leadership Effectiveness & Decision-Making',date:'15-29 Jun 2026',focus:'Leadership effectiveness; commercial decision-making; prioritisation; resilience & strategic focus'},
-{code:'C3',title:'Leading Change & Behavioural Reinforcement',date:'17-31 Aug 2026',focus:'Leading organisational change; reinforcing behavioural change; commercial decision-making'},
-{code:'C4',title:'Market Positioning & Cross-Border Decisions',date:'12 Oct 2026',focus:'Communications confidence; market positioning; cross-border decision-making'},
-{code:'C5',title:'Board Leadership & Investment Decisions',date:'15 Dec 2026',focus:'Board leadership; succession planning; investor engagement; long-term sustainability'}
-];
-
-function ensureCoaching(org){
-if(!org.coaching||org.coaching.length!==5){
-org.coaching=COACHING_CYCLES.map(function(c){
-var existing=org.coaching?org.coaching.find(function(e){return e.code===c.code;}):null;
-return existing||{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,
-hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};
-});
-if(isAssessor){var d=loadData();AT.saveData(d,org.code);}
-}
-return org.coaching;
-}
-
-function renderCoaching(org){
-ensureCoaching(org);
-var totalHours=0;var completed=0;
-org.coaching.forEach(function(c){totalHours+=parseFloat(c.hours)||0;if(c.completed)completed++;});
-var html='<div class="coaching-stat"><div class="cs-val">'+totalHours.toFixed(1)+'</div><div class="cs-lbl">Hours Used</div></div>';
-html+='<div class="coaching-stat"><div class="cs-val">'+(12-totalHours).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining (of 12)</div></div>';
-html+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val">9</div><div class="cs-lbl">Flex Pool (hrs)</div></div>';
-html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 5</div><div class="cs-lbl">Cycles Completed</div></div>';
-document.getElementById('coachingSummary').innerHTML=html;
-
-var list='';
-org.coaching.forEach(function(c,i){
-var ref=COACHING_CYCLES[i];
-list+='<div class="log-entry" style="border-left:4px solid var(--coral)">';
-list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
-list+='<div class="log-date">'+esc(c.code)+' -- '+esc(c.title)+'</div>';
-list+='<div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:var(--coral-light);color:var(--coral)">Coaching</div>';
-list+='</div>';
-list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
-list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
-
-if(isAssessor){
-list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
-list+='<div><div style="font-size:11px;color:var(--tt)">Hours</div><input data-coach-hours="'+i+'" value="'+esc(c.hours||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
-list+='<div><div style="font-size:11px;color:var(--tt)">Coach</div><select data-coach-by="'+i+'"><option'+(c.coach==='Sarah'?' selected':'')+'>Sarah</option><option'+(c.coach==='Aoife'?' selected':'')+'>Aoife</option><option'+(c.coach==='Sarah / Aoife'?' selected':'')+'>Sarah / Aoife</option></select></div>';
-list+='<div><div style="font-size:11px;color:var(--tt)">Completed?</div><label style="font-size:12px;cursor:pointer"><input type="checkbox" data-coach-done="'+i+'"'+(c.completed?' checked':'')+' style="accent-color:var(--teal);margin-right:4px">Done</label></div>';
-list+='</div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Focus theme (confidential -- high-level only)</div><textarea data-coach-theme="'+i+'">'+esc(c.theme||'')+'</textarea></div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Leadership action agreed</div><textarea data-coach-action="'+i+'">'+esc(c.actionAgreed||'')+'</textarea></div>';
-}else{
-if(c.completed){
-list+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Hours:</b> '+(c.hours||'--')+' · <b>Coach:</b> '+(c.coach||'--')+'</div>';
-if(c.theme)list+='<div style="margin-top:6px;font-size:13px"><b>Focus:</b> '+esc(c.theme)+'</div>';
-}else{
-list+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">Not yet completed</div>';
-}
-}
-list+='</div>';
-});
-document.getElementById('coachingList').innerHTML=list;
-document.getElementById('coachingAddWrap').innerHTML='';
-}
-/* addCoaching no longer needed -- cycles are pre-populated */
-
-function renderEndline(org){
-var tbody=document.querySelector('#endlineTable tbody');var html='';
-org.endline.forEach(function(e,i){
-var d=DOMAINS[i];var bl=org.baseline[i]?org.baseline[i].score:'';
-var change='';
-if(bl&&e.score){var diff=(parseFloat(e.score)-parseFloat(bl)).toFixed(1);change=(diff>0?'+':'')+diff;}
-var pct=e.score?(e.score/5*100):0;
-html+='<tr><td class="domain-name">'+e.domain+'</td>';
-html+='<td class="wt">'+d.wt+'%</td>';
-html+='<td style="color:var(--ts)">'+(bl||'--')+'</td>';
-if(isAssessor){html+='<td><input type="number" min="0" max="5" step="0.5" data-el="'+i+'" value="'+(e.score||'')+'"></td>';}
-else{html+='<td style="font-weight:700;color:var(--navy)">'+(e.score||'--')+'</td>';}
-html+='<td style="font-weight:700;color:'+(parseFloat(change)>0?'var(--teal)':parseFloat(change)<0?'var(--coral)':'var(--ts)')+'\">'+(change||'--')+'</td>';
-html+='<td><div class="score-bar"><div class="score-bar-fill" style="width:'+pct+'%"></div></div></td></tr>';
-});
-tbody.innerHTML=html;
+function addProgress(){
+var month=prompt('Month label (e.g. June 2026):');
+if(!month)return;
+var data=loadData();
+var org=data.orgs.find(function(o){return o.code===currentOrg;});
+org.progress.push({month:month,text:''});
+saveData(data);
+renderProgress(org);
 }
 
 function renderNotes(org){
 var html='';
-if(!org.notes||!org.notes.length){
-html='<div style="color:var(--tt);font-size:13px;font-style:italic;padding:12px 0">No notes yet.</div>';
-}
 org.notes.forEach(function(n,i){
-var isForm=n.type==='Form Submission';
-var cls=n.type==='Coaching'?'nt-coach':n.type==='Session'?'nt-session':isForm?'nt-form':'nt-consult';
-var borderCol=isForm?'var(--gold)':n.type==='Coaching'?'var(--coral)':n.type==='Session'?'var(--navy)':'var(--teal)';
-html+='<div class="note-entry" style="border-left-color:'+borderCol+'">';
-html+='<div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+(n.date?esc(n.date):'')+'</div>';
-if(isForm){
-// Form submissions always shown as readable text, never editable textarea
-html+='<div class="log-text" style="white-space:pre-wrap;font-size:12px;line-height:1.6;color:var(--ts)">'+esc(n.text||'')+'</div>';
-}else if(isAssessor){
+var cls=n.type==='Coaching'?'nt-coach':'nt-consult';
+html+='<div class="note-entry"><div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+esc(n.date||'')+'</div>';
+if(isAssessor){
 html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';
 }else{
-html+='<div class="log-text">'+(n.text||'--')+'</div>';
+html+='<div class="log-text">'+(n.text||'—')+'</div>';
 }
 html+='</div>';
 });
 document.getElementById('notesList').innerHTML=html;
 if(isAssessor){
-document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" onclick="addNote(\'Consulting\')">+ Consulting</button><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching</button><button class="btn btn-outline" onclick="addNote(\'Session\')">+ Group Session</button></div>';
-}else{document.getElementById('notesAddWrap').innerHTML='';}
+document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:8px"><button class="btn btn-outline" onclick="addNote(\'Consulting\')">+ Consulting note</button><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching note</button></div>';
+}else{
+document.getElementById('notesAddWrap').innerHTML='';
 }
+}
+
 function addNote(type){
-var date=prompt('Date (e.g. 15 Jun 2026):');if(!date)return;
-var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
-org.notes.push({type:type,date:date,text:''});saveData(data);renderNotes(org);
-}
-
-/* SOP Checklist */
-function showSOP(){
-document.getElementById('dashScreen').style.display='none';
-document.getElementById('trackerScreen').style.display='none';
-document.getElementById('sopScreen').style.display='block';
-document.getElementById('saveBar').classList.remove('hidden');
-renderSOP();
-}
-
-function renderSOP(){
-var data=loadData();var html='';
-SOP_STEPS.forEach(function(phase){
-html+='<div class="sop-phase">'+phase.phase+'</div>';
-phase.items.forEach(function(item,ii){
-var stepKey=phase.phase.replace(/[^a-zA-Z0-9]/g,'')+'_'+ii;
-html+='<div class="sop-item"><div style="font-weight:600;min-width:180px;font-size:12px">'+item+'</div>';
-data.orgs.forEach(function(o){
-var checked=o.sop&&o.sop[stepKey];
-html+='<div style="text-align:center;min-width:60px"><div style="font-size:9px;color:var(--tt)">'+esc(o.name.substring(0,8))+'</div><input type="checkbox" data-sop-org="'+o.code+'" data-sop-key="'+stepKey+'"'+(checked?' checked':'')+'></div>';
-});
-html+='</div>';
-});
-});
-document.getElementById('sopContent').innerHTML=html;
+var date=prompt('Date (e.g. 15 Jun 2026):');
+if(!date)return;
+var data=loadData();
+var org=data.orgs.find(function(o){return o.code===currentOrg;});
+org.notes.push({type:type,date:date,text:''});
+saveData(data);
+renderNotes(org);
 }
 
 function saveTracker(){
-if(!isAssessor)return;
+if(!isAssessor||!currentOrg)return;
 var data=loadData();
-
-// If on SOP screen, save SOP data
-if(document.getElementById('sopScreen').style.display!=='none'){
-document.querySelectorAll('[data-sop-org]').forEach(function(el){
-var orgCode=el.dataset.sopOrg;var key=el.dataset.sopKey;
-var org=data.orgs.find(function(o){return o.code===orgCode;});
-if(org){if(!org.sop)org.sop={};org.sop[key]=el.checked;}
-});
-saveData(data);showSaveMsg();return;
-}
-
-if(!currentOrg)return;
 var org=data.orgs.find(function(o){return o.code===currentOrg;});
-if(!org)return;
-
-// ── DEFENSIVE GUARDS: ensure every container exists before any write ──
-// Fixes "Cannot set properties of undefined (setting '0')" when records
-// loaded from Airtable are missing arrays/objects (e.g. diagnosis.constraints).
-if(!org.kpi)org.kpi={};
-if(!org.app)org.app={};
-if(!org.crossBorder)org.crossBorder={};
-if(!Array.isArray(org.baseline))org.baseline=DOMAINS.map(function(d){return{domain:d.name,score:'',evidence:''};});
-if(!Array.isArray(org.endline))org.endline=DOMAINS.map(function(d){return{domain:d.name,score:''};});
-if(!Array.isArray(org.smart))org.smart=[];
-if(!Array.isArray(org.notes))org.notes=[];
-if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
-if(!Array.isArray(org.diagnosis.constraints))org.diagnosis.constraints=['','',''];
-while(org.diagnosis.constraints.length<3)org.diagnosis.constraints.push('');
-
 // KPIs
-document.querySelectorAll('[data-kpi]').forEach(function(el){org.kpi[el.dataset.kpi]=el.value;});
-// App data
-document.querySelectorAll('[data-app]').forEach(function(el){org.app[el.dataset.app]=el.value;});
-// Cross-border
-document.querySelectorAll('[data-cb]').forEach(function(el){org.crossBorder[el.dataset.cb]=el.value;});
-// Baseline scores + evidence
-document.querySelectorAll('[data-bl]').forEach(function(el){
-var idx=parseInt(el.dataset.bl);
-if(!org.baseline[idx])org.baseline[idx]={domain:(DOMAINS[idx]?DOMAINS[idx].name:''),score:'',evidence:''};
-org.baseline[idx].score=el.value;
+document.querySelectorAll('[data-kpi]').forEach(function(el){
+org.kpi[el.dataset.kpi]=el.value;
 });
-document.querySelectorAll('[data-bl-ev]').forEach(function(el){
-var idx=parseInt(el.dataset.blEv);
-if(!org.baseline[idx])org.baseline[idx]={domain:(DOMAINS[idx]?DOMAINS[idx].name:''),score:'',evidence:''};
-org.baseline[idx].evidence=el.value;
+// Baseline
+document.querySelectorAll('[data-bl]').forEach(function(el){
+org.baseline[parseInt(el.dataset.bl)].score=el.value;
 });
 // Endline
 document.querySelectorAll('[data-el]').forEach(function(el){
-var idx=parseInt(el.dataset.el);
-if(!org.endline[idx])org.endline[idx]={domain:(DOMAINS[idx]?DOMAINS[idx].name:''),score:''};
-org.endline[idx].score=el.value;
-});
-// Diagnosis
-document.querySelectorAll('[data-diag]').forEach(function(el){org.diagnosis[el.dataset.diag]=el.value;});
-document.querySelectorAll('[data-constraint]').forEach(function(el){
-var idx=parseInt(el.dataset.constraint);
-while(org.diagnosis.constraints.length<=idx)org.diagnosis.constraints.push('');
-org.diagnosis.constraints[idx]=el.value;
+org.endline[parseInt(el.dataset.el)].score=el.value;
 });
 // SMART
 document.querySelectorAll('[data-smart-obj]').forEach(function(el){
-var idx=parseInt(el.dataset.smartObj);
-if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
-org.smart[idx].objective=el.value;
+var i=parseInt(el.dataset.smartObj);
+org.smart[i].objective=el.value;
 });
 document.querySelectorAll('[data-smart-target]').forEach(function(el){
-var idx=parseInt(el.dataset.smartTarget);
-if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
-org.smart[idx].target=el.value;
+org.smart[parseInt(el.dataset.smartTarget)].target=el.value;
 });
 document.querySelectorAll('[data-smart-timeline]').forEach(function(el){
-var idx=parseInt(el.dataset.smartTimeline);
-if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
-org.smart[idx].timeline=el.value;
+org.smart[parseInt(el.dataset.smartTimeline)].timeline=el.value;
 });
-document.querySelectorAll('[data-smart-domain]').forEach(function(el){
-var idx=parseInt(el.dataset.smartDomain);
-if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
-org.smart[idx].domain=el.value;
+document.querySelectorAll('[data-smart-owner]').forEach(function(el){
+org.smart[parseInt(el.dataset.smartOwner)].owner=el.value;
 });
-document.querySelectorAll('[data-smart-status]').forEach(function(el){
-var idx=parseInt(el.dataset.smartStatus);
-if(!org.smart[idx])org.smart[idx]={objective:'',target:'',timeline:'',domain:'',status:'Not Started'};
-org.smart[idx].status=el.value;
+// Progress
+document.querySelectorAll('[data-prog]').forEach(function(el){
+org.progress[parseInt(el.dataset.prog)].text=el.value;
 });
-// Consulting (outreach cycles)
-ensureConsulting(org);
-document.querySelectorAll('[data-con-by]').forEach(function(el){var i=parseInt(el.dataset.conBy);if(org.consulting[i])org.consulting[i].consultedBy=el.value;});
-document.querySelectorAll('[data-con-format]').forEach(function(el){var i=parseInt(el.dataset.conFormat);if(org.consulting[i])org.consulting[i].format=el.value;});
-document.querySelectorAll('[data-con-smart]').forEach(function(el){var i=parseInt(el.dataset.conSmart);if(org.consulting[i])org.consulting[i].smartProgressed=el.value;});
-document.querySelectorAll('[data-con-actions]').forEach(function(el){var i=parseInt(el.dataset.conActions);if(org.consulting[i])org.consulting[i].actionsAgreed=el.value;});
-document.querySelectorAll('[data-con-outputs]').forEach(function(el){var i=parseInt(el.dataset.conOutputs);if(org.consulting[i])org.consulting[i].keyOutputs=el.value;});
-document.querySelectorAll('[data-con-hours]').forEach(function(el){var i=parseInt(el.dataset.conHours);if(org.consulting[i])org.consulting[i].hours=el.value;});
-document.querySelectorAll('[data-con-domain]').forEach(function(el){var i=parseInt(el.dataset.conDomain);if(org.consulting[i])org.consulting[i].domainMovement=el.value;});
-document.querySelectorAll('[data-con-rag]').forEach(function(el){var i=parseInt(el.dataset.conRag);if(org.consulting[i])org.consulting[i].rag=el.value;});
-document.querySelectorAll('[data-con-done]').forEach(function(el){var i=parseInt(el.dataset.conDone);if(org.consulting[i])org.consulting[i].completed=el.checked;});
-// Coaching (5 pre-populated cycles)
-ensureCoaching(org);
-document.querySelectorAll('[data-coach-hours]').forEach(function(el){var i=parseInt(el.dataset.coachHours);if(org.coaching[i])org.coaching[i].hours=el.value;});
-document.querySelectorAll('[data-coach-by]').forEach(function(el){var i=parseInt(el.dataset.coachBy);if(org.coaching[i])org.coaching[i].coach=el.value;});
-document.querySelectorAll('[data-coach-theme]').forEach(function(el){var i=parseInt(el.dataset.coachTheme);if(org.coaching[i])org.coaching[i].theme=el.value;});
-document.querySelectorAll('[data-coach-action]').forEach(function(el){var i=parseInt(el.dataset.coachAction);if(org.coaching[i])org.coaching[i].actionAgreed=el.value;});
-document.querySelectorAll('[data-coach-done]').forEach(function(el){var i=parseInt(el.dataset.coachDone);if(org.coaching[i])org.coaching[i].completed=el.checked;});
 // Notes
 document.querySelectorAll('[data-note]').forEach(function(el){
-var idx=parseInt(el.dataset.note);
-if(org.notes[idx])org.notes[idx].text=el.value;
+org.notes[parseInt(el.dataset.note)].text=el.value;
 });
-
-saveData(data);showSaveMsg();
-renderBaseline(org);renderEndline(org);renderConsulting(org);renderCoaching(org);
+saveData(data);
+var msg=document.getElementById('saveMsg');
+msg.classList.add('show');
+setTimeout(function(){msg.classList.remove('show');},2000);
+// Re-render endline to update change column
+renderEndline(org);
 }
-
-function showSaveMsg(){var msg=document.getElementById('saveMsg');msg.classList.add('show');setTimeout(function(){msg.classList.remove('show');},2000);}
 
 function exportAll(){
 var data=loadData();
-data._exportedAt=new Date().toISOString();
 var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-a.download='select_tracker_'+new Date().toISOString().slice(0,10)+'.json';
-document.body.appendChild(a);a.click();document.body.removeChild(a);
-URL.revokeObjectURL(a.href);
-alert('Data exported. Share this file with your co-assessor to sync.');
+var a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='select_smart_tracker_export.json';
+a.click();
 }
 
-function importAll(event){
-var file=event.target.files[0];
-if(!file) return;
-var reader=new FileReader();
-reader.onload=function(e){
-  try{
-    var imported=JSON.parse(e.target.result);
-    if(!imported.orgs||!Array.isArray(imported.orgs)){
-      alert('This does not appear to be a valid SELECT tracker export.');return;
-    }
-    var existing=loadData();
-    var existingCount=existing.orgs?existing.orgs.length:0;
-    var importCount=imported.orgs.length;
-    var importDate=imported._exportedAt?imported._exportedAt.slice(0,16).replace('T',' '):'unknown date';
-    if(existingCount>0){
-      if(!confirm('You have '+existingCount+' organisation(s) currently.\n\nThe import file has '+importCount+' organisation(s) (exported '+importDate+').\n\nChoose OK to REPLACE all current data, or Cancel to keep current data.\n\n(Tip: Export your current data first as a backup.)')) return;
-    }
-    saveData(imported);
-    // Push all imported orgs to Airtable
-    AT.migrateFromCache(function(n){
-      console.log('Migrated '+n+' orgs to Airtable after import');
-    });
-    showDash();
-    alert('Imported '+importCount+' organisation(s) successfully. Syncing to Airtable…');
-  }catch(err){
-    alert('Could not read file. Make sure it is a valid JSON export from this tracker.');
-  }
-};
-reader.readAsText(file);
-event.target.value='';
+function esc(s){
+if(!s)return'';
+var d=document.createElement('div');
+d.textContent=s;
+return d.innerHTML;
 }
 
-function loadSampleOrg(){
-if(!confirm('This will create 3 sample organisations with example data so you can preview the full system. You can delete them at any time. Continue?')) return;
-var data=loadData();
-
-// ORG 1: Green Threads -- FULLY SCORED AND LOCKED
-var org1={
-name:'Green Threads CIC',ceo:'Sarah Murphy',code:'green-threads',password:'demo-gt',intensity:'Strengthen',
-kpi:{jurisdiction:'ROI',newToITI:'Yes',firstTimeCB:'No',firstTimeExp:'No',sector:'Textiles / Circular Economy',email:'sarah@greenthreads.ie'},
-app:{turnover:'\u20ac280,000',employees:'8',tradedPct:'55%',crossBorderPct:'5%',priorITI:'No',crossBorderTarget:'15% by Dec 2026'},
-baseline:[
-{domain:'1. Business Model & Revenue Mix',score:3,evidence:'3 revenue streams but 60% from one HSE contract. Recurring income ~30%. Forward visibility 3\u20134 months.'},
-{domain:'2. Products & Unit Economics',score:2,evidence:'5 product lines. Cost-based pricing. Margins unknown on 3 of 5. No portfolio review process.'},
-{domain:'3. Financial Management & Cash',score:2,evidence:'Annual accounts current. No management accounts. Cashflow tracked informally. ~4 months runway.'},
-{domain:'4. Commercial Strategy & Market Focus',score:3,evidence:'12-month targets exist but not documented. Buyers are local authorities and direct consumers. Some repeat demand.'},
-{domain:'5. Go-To-Market & Sales',score:1,evidence:'All sales founder-led. No pipeline. Website and Instagram active but no conversion tracking. Repeat rate unknown.'},
-{domain:'6. Operations & Delivery Capacity',score:3,evidence:'Production capacity is the constraint. CEO does delivery, sales, and admin. 3-month absence = significant disruption.'},
-{domain:'7. Cross-Border Readiness',score:1,evidence:'One NI retailer trialled 2024. No systematic cross-border activity. Regulatory barriers unclear.'},
-{domain:'8. Leadership & Execution Capacity',score:2,evidence:'CEO spends 70% on delivery. Should be on strategy/sales. Impact evidence is anecdotal \u2014 case studies but no aggregated data.'},
-{domain:'9. Organisational Readiness',score:2,evidence:'Advisory board meets quarterly. No commercial agenda. Top risks: contract dependency, key-person, no succession.'}
-],
-endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
-diagnosis:{problemStatement:'Over-reliance on a single HSE contract combined with founder-dependency in sales and delivery means the organisation cannot grow traded income without structural change.',scenario:'If the HSE contract is not renewed in 2027, the organisation loses 60% of income with no pipeline to replace it.',constraints:['D1: Business Model & Revenue Mix','D5: Go-To-Market & Sales','D7: Cross-Border Readiness'],observation:'Strong mission alignment and product quality. The commercial constraint is structural, not motivational.'},
-smart:[
-{objective:'Reduce HSE contract dependency from 60% to below 40% of total revenue by securing 3 new B2B accounts',target:'40% dependency / 3 new accounts',timeline:'December 2026',owner:'Sarah Murphy',status:''},
-{objective:'Implement monthly management accounts and margin tracking across all 5 product lines',target:'Monthly accounts live',timeline:'August 2026',owner:'Sarah Murphy + bookkeeper',status:''},
-{objective:'Document and delegate the sales process so at least one team member can convert leads independently',target:'Documented process + 1 trained delegate',timeline:'October 2026',owner:'Sarah Murphy',status:''}
-],
-consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',hours:'',domainMovement:'',rag:'',completed:false};}),
-coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
-notes:[
-{type:'session',date:'23 Apr 2026',text:'Group Session #1. Engaged well. Asked good questions about pricing methodology.'},
-{type:'consult',date:'8 May 2026',text:'Validation meeting completed. Strong self-awareness. Agreed problem statement and 3 SMART objectives. Intensity: Strengthen.'}
-],
-assessor:{checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-28T14:30:00Z','ck2':true,'ck2_ts':'2026-04-28T14:35:00Z','ck3':true,'ck3_ts':'2026-04-29T09:00:00Z','ck4':true,'ck4_ts':'2026-04-30T11:00:00Z','ck5':true,'ck5_ts':'2026-04-30T11:30:00Z','ck6':true,'ck6_ts':'2026-04-30T12:00:00Z','ck7':true,'ck7_ts':'2026-05-08T10:00:00Z','ck8':true,'ck8_ts':'2026-05-08T13:00:00Z','ck9':true,'ck9_ts':'2026-05-08T15:00:00Z','ck10':true,'ck10_ts':'2026-05-09T10:00:00Z','ck11':true,'ck11_ts':'2026-05-09T10:30:00Z'},
-validation:{'vn1':'CEO view largely accurate. Slight optimism on sales capability \u2014 she acknowledged no pipeline exists.','vn2':'Root constraint is single-contract dependency combined with founder-led sales. Everything else is a symptom.','vn3':'20% income drop would require immediate cost cuts. Pricing assumptions untested against market.','vn4':'Board is advisory only. No commercial challenge. No succession plan.','vn5':'Clear articulation: \u201cI am the bottleneck and the safety net.\u201d'},
-goals:{g_problem:'Over-reliance on a single HSE contract combined with founder-dependency in sales and delivery means the organisation cannot grow traded income without structural change.',g_problem_why:'If the HSE contract is not renewed in 2027, the organisation loses 60% of income with no pipeline to replace it.',g_goal1:'Diversify revenue beyond HSE dependency',g_goal2:'Build a repeatable, delegable sales process',g_goal3:'Establish management accounts and margin visibility',g_smart1:'Reduce HSE contract dependency from 60% to below 40% of total revenue by securing 3 new B2B accounts',g_smart2:'Implement monthly management accounts and margin tracking across all 5 product lines',g_smart3:'Document and delegate the sales process so at least one team member can convert leads independently'},
-priorities:['D1','D5','D7'],
-lock:{lk1:true,lk2:true,lk3:true,lk4:true,lk_led:'Fiona',lk_session_date:'2026-05-08',lk_lock_date:'2026-05-09'},
-assessor:'Fiona'},
-sop:{},baselineLocked:true,crossBorder:{baselinePct:'5%',endlinePct:'',target:'15%'}
-};
-
-// ORG 2: Harbour Social Enterprise -- PARTIALLY SCORED (mid-process)
-var org2={
-name:'Harbour Social Enterprise',ceo:'Declan O\u2019Brien',code:'harbour-se',password:'demo-hse',intensity:'',
-kpi:{jurisdiction:'NI',newToITI:'No',firstTimeCB:'Yes',firstTimeExp:'Yes',sector:'Food / Hospitality',email:'declan@harbourse.org'},
-app:{turnover:'\u00a3420,000',employees:'14',tradedPct:'70%',crossBorderPct:'0%',priorITI:'Yes',crossBorderTarget:'10% by Dec 2026'},
-baseline:[
-{domain:'1. Business Model & Revenue Mix',score:4,evidence:'4 revenue streams. Caf\u00e9 (45%), catering contracts (25%), training fees (20%), grants (10%). Good diversification. Recurring contracts ~40%.'},
-{domain:'2. Products & Unit Economics',score:3,evidence:'Caf\u00e9 margins known (~35%). Catering margins estimated but not tracked per contract. Training is break-even. No formal portfolio review.'},
-{domain:'3. Financial Management & Cash',score:3,evidence:'Monthly management accounts via accountant. Budget in place. Cashflow tracked. ~6 months runway. Forecasting is annual, not rolling.'},
-{domain:'4. Commercial Strategy & Market Focus',score:2,evidence:'Ambition to grow catering but no documented strategy. Market opportunity assumed not evidenced. Competitors not mapped.'},
-{domain:'5. Go-To-Market & Sales',score:'',evidence:''},
-{domain:'6. Operations & Delivery Capacity',score:'',evidence:''},
-{domain:'7. Cross-Border Readiness',score:'',evidence:''},
-{domain:'8. Leadership & Execution Capacity',score:'',evidence:''},
-{domain:'9. Organisational Readiness',score:'',evidence:''}
-],
-endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
-diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
-smart:[],
-consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',hours:'',domainMovement:'',rag:'',completed:false};}),
-coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
-notes:[{type:'session',date:'23 Apr 2026',text:'Group Session #1. Quiet but engaged. Follow up on catering pipeline.'}],
-assessor:{checklist:{'ck0':true,'ck0_ts':'2026-04-24T10:00:00Z','ck1':true,'ck1_ts':'2026-04-27T16:00:00Z','ck2':true,'ck2_ts':'2026-04-27T16:05:00Z','ck3':true,'ck3_ts':'2026-04-29T09:00:00Z','ck4':false},validation:{},goals:{},priorities:[],lock:{},assessor:'Clodagh'},
-sop:{},baselineLocked:false,crossBorder:{baselinePct:'0%',endlinePct:'',target:'10%'}
-};
-
-// ORG 3: Bright Futures CLG -- NOT YET STARTED (just added)
-var org3={
-name:'Bright Futures CLG',ceo:'Aoife Brennan',code:'bright-futures',password:'demo-bf',intensity:'',
-kpi:{jurisdiction:'ROI',newToITI:'Yes',firstTimeCB:'Yes',firstTimeExp:'Yes',sector:'Education / Youth Services',email:'aoife@brightfutures.ie'},
-app:{turnover:'\u20ac150,000',employees:'5',tradedPct:'30%',crossBorderPct:'0%',priorITI:'No',crossBorderTarget:''},
-baseline:DOMAINS.map(function(d){return{domain:d.name,score:'',evidence:''};}),
-endline:DOMAINS.map(function(d){return{domain:d.name,score:''};}),
-diagnosis:{problemStatement:'',scenario:'',constraints:['','',''],observation:''},
-smart:[],
-consulting:OUTREACH_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',hours:'',domainMovement:'',rag:'',completed:false};}),
-coaching:COACHING_CYCLES.map(function(c){return{code:c.code,title:c.title,date:c.date,defaultFocus:c.focus,hours:'',coach:'Sarah / Aoife',theme:'',actionAgreed:'',completed:false};}),
-notes:[],
-assessor:{checklist:{},validation:{},goals:{},priorities:[],lock:{},assessor:''},
-sop:{},baselineLocked:false,crossBorder:{baselinePct:'0%',endlinePct:'',target:''}
-};
-
-data.orgs.push(org1);
-data.orgs.push(org2);
-data.orgs.push(org3);
-saveData(data);
-// Push each to Airtable
-AT.pushOrg(org1);AT.pushOrg(org2);AT.pushOrg(org3);
-renderOrgGrid();renderCohortBar();
-}
-
+// On load: check URL params
 (function(){
-// Auto-seed demo data if localStorage is empty
-var checkData=loadData();
-if(!checkData.orgs||checkData.orgs.length===0){
-  loadSampleOrg_silent();
-}
 var params=new URLSearchParams(window.location.search);
 var orgId=params.get('id');
 if(orgId){
-targetOrgId=orgId;
-var data=loadData();
-var org=data.orgs.find(function(o){return o.code===orgId;});
-if(org){
-document.querySelector('.auth-box h2').textContent='Welcome, '+org.ceo;
-document.querySelector('.auth-box p').textContent='Enter your password to view the '+org.name+' SMART Tracker.';
-}else{
 document.querySelector('.auth-box h2').textContent='Access your SMART Tracker';
-document.querySelector('.auth-box p').textContent='Enter your password to continue.';
-}
 }
 })();
-
-/* Silent version of loadSampleOrg -- no confirm dialog */
-function loadSampleOrg_silent(){
-var data=loadData();
-if(data.orgs&&data.orgs.length>0) return;
-// Reuse the same loadSampleOrg logic but skip the confirm
-var origConfirm=window.confirm;
-window.confirm=function(){return true;};
-loadSampleOrg();
-window.confirm=origConfirm;
-}
 </script>
 </body>
 </html>
