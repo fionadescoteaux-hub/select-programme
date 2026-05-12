@@ -288,9 +288,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="wrap dash" id="dashScreen">
 <div class="dash-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
 <h2 id="dashTitle" style="font-family:var(--serif);font-size:22px;color:var(--navy)">All organisations</h2>
-<div style="display:flex;gap:8px;flex-wrap:wrap" id="dashHeadBtns">
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center" id="dashHeadBtns">
+<span id="saveStamp" style="font-size:11px;color:var(--tt);margin-right:4px"></span>
 <button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){if(currentOrg){var o=d.orgs.find(function(x){return x.code===currentOrg;});if(o)renderAll(o);}else{showDash();}})" style="font-size:10px">&#8635; Refresh from Airtable</button>
 <button class="btn btn-sm btn-outline" onclick="exportToExcel()" style="font-size:10px">&#8595; Export to Excel</button>
+<button class="btn btn-sm btn-outline" onclick="exportAll()" style="font-size:10px">&#8595; Export JSON backup</button>
+<button class="btn btn-sm btn-outline" onclick="document.getElementById('importFileInput').click()" style="font-size:10px">&#8593; Import JSON backup</button>
+<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAll(event)">
 <button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px" id="migrateBtn">Migrate local &rarr; Airtable</button>
 <button class="btn btn-teal" onclick="openAddOrg()" id="addOrgBtn">+ Add organisation</button>
 </div>
@@ -1438,6 +1442,7 @@ var addBtn=document.getElementById('addOrgBtn');
 var migBtn=document.getElementById('migrateBtn');
 if(addBtn)addBtn.style.display=isAssessor?'':'none';
 if(migBtn)migBtn.style.display=isAssessor?'':'none';
+AT.setStatus && AT._updateStamp && AT._updateStamp();
 renderCohortBar();
 renderOrgGrid();
 }
