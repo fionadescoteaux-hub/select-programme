@@ -1205,7 +1205,7 @@ function renderAttendance(org){
             var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
             if(o&&o.attendance&&o.attendance[idx]&&!o.attendance[idx].format){
               o.attendance[idx].format='Online';
-              saveData(d);
+              saveData(d,currentOrg);
             }
           }
         }catch(err){console.error('Save attended failed:',err);}
@@ -1559,15 +1559,32 @@ renderAll(org);
 if(isAssessor && !window._autosaveWired){
   window._autosaveWired = true;
   var saveTimer = null;
+  function autosaveGuard(){
+    // Only fire if tracker is currently displayed AND currentOrg is set
+    var trk = document.getElementById('trackerScreen');
+    if (!trk || trk.style.display === 'none') return false;
+    if (!currentOrg) return false;
+    return true;
+  }
   document.getElementById('trackerScreen').addEventListener('input', function(e){
     if(!e.target.matches('input, textarea, select')) return;
+    if(!autosaveGuard()) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function(){
+      if(!autosaveGuard()) return;
       try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
-    }, 300);
+    }, 500);
   }, true);
   document.getElementById('trackerScreen').addEventListener('change', function(e){
     if(!e.target.matches('input, textarea, select')) return;
+    if(!autosaveGuard()) return;
+    clearTimeout(saveTimer);
+    try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
+  }, true);
+  // Also save on blur — guarantees text fields commit when user clicks away
+  document.getElementById('trackerScreen').addEventListener('blur', function(e){
+    if(!e.target.matches('input, textarea')) return;
+    if(!autosaveGuard()) return;
     clearTimeout(saveTimer);
     try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
   }, true);
@@ -1593,7 +1610,7 @@ function normaliseBaselineDomains(org){
     org.baseline=fixed;
     var data=loadData();
     var stored=data.orgs.find(function(o){return o.code===org.code;});
-    if(stored){stored.baseline=fixed;saveData(data);}
+    if(stored){stored.baseline=fixed;saveData(data,org.code);}
   }
 }
 
@@ -2031,7 +2048,7 @@ var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
 o.assessor.checklist[key]=this.checked;
 o.assessor.checklist[key+'_ts']=this.checked?new Date().toISOString():'';
-saveData(d);renderValidation(o);
+saveData(d,o.code);renderValidation(o);
 });
 });
 el.querySelectorAll('[data-val-vn]').forEach(function(t){
@@ -2040,7 +2057,7 @@ var key=this.getAttribute('data-val-vn');
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
 o.assessor.validation[key]=this.value;
-saveData(d);
+saveData(d,o.code);
 });
 });
 el.querySelectorAll('[data-val-goal]').forEach(function(t){
@@ -2049,7 +2066,7 @@ var key=this.getAttribute('data-val-goal');
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
 o.assessor.goals[key]=this.value;
-saveData(d);
+saveData(d,o.code);
 });
 });
 el.querySelectorAll('[data-val-lk]').forEach(function(cb){
@@ -2058,17 +2075,17 @@ var key=this.getAttribute('data-val-lk');
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
 o.assessor.lock[key]=this.checked;
-saveData(d);
+saveData(d,o.code);
 });
 });
 var ledSel=el.querySelector('[data-val-lk-led]');
-if(ledSel)ledSel.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_led=this.value;saveData(d);});
+if(ledSel)ledSel.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_led=this.value;saveData(d,o.code);});
 var sesInp=el.querySelector('[data-val-lk-session]');
-if(sesInp)sesInp.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_session_date=this.value;saveData(d);});
+if(sesInp)sesInp.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_session_date=this.value;saveData(d,o.code);});
 var lockInp=el.querySelector('[data-val-lk-lock]');
-if(lockInp)lockInp.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_lock_date=this.value;saveData(d);});
+if(lockInp)lockInp.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.lock.lk_lock_date=this.value;saveData(d,o.code);});
 var leadSel=el.querySelector('[data-assessor-lead]');
-if(leadSel)leadSel.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.assessor=this.value;saveData(d);});
+if(leadSel)leadSel.addEventListener('change',function(){var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});if(!o)return;ensureAssessor(o);o.assessor.assessor=this.value;saveData(d,o.code);});
 }
 }
 
@@ -2081,7 +2098,7 @@ else{
 if(o.assessor.priorities.length>=3){alert('Maximum 3 priority domains. Remove one first.');return;}
 o.assessor.priorities.push(dKey);
 }
-saveData(d);renderValidation(o);
+saveData(d,o.code);renderValidation(o);
 }
 
 function renderDiagnosis(org){

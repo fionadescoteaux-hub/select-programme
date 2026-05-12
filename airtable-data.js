@@ -177,17 +177,85 @@ var AT = (function() {
             // CACHE PROTECTS LOCAL EDITS: if cache has data Airtable returned empty, keep cache
             var co = cacheMap[o.code];
             if (co) {
-              if ((co.notes      || []).length > (o.notes      || []).length) o.notes      = co.notes;
-              if ((co.consulting || []).length > 0 && (o.consulting || []).length === 0) o.consulting = co.consulting;
-              if ((co.coaching   || []).length > 0 && (o.coaching   || []).length === 0) o.coaching   = co.coaching;
-              if ((co.attendance || []).length > 0 && (o.attendance || []).length === 0) o.attendance = co.attendance;
-              if ((co.smart      || []).length > 0 && (o.smart      || []).length === 0) o.smart      = co.smart;
+              // Notes: keep whichever has more entries
+              if ((co.notes || []).length > (o.notes || []).length) o.notes = co.notes;
+
+              // For consulting/coaching/attendance, merge per-row by code.
+              // For each Airtable row, check if cache has a row with the same code
+              // containing MORE data — if so, prefer the cache row. This prevents
+              // Airtable's stale view from overwriting local field-level edits.
+              ['consulting','coaching','attendance'].forEach(function(key){
+                if (!Array.isArray(o[key]) || !Array.isArray(co[key])) return;
+                var cacheByCode = {};
+                co[key].forEach(function(r){ if (r && r.code) cacheByCode[r.code] = r; });
+                o[key] = o[key].map(function(airtableRow){
+                  if (!airtableRow || !airtableRow.code) return airtableRow;
+                  var cacheRow = cacheByCode[airtableRow.code];
+                  if (!cacheRow) return airtableRow;
+                  // Merge: cache row wins for any field where cache has non-empty value
+                  var merged = Object.assign({}, airtableRow);
+                  Object.keys(cacheRow).forEach(function(field){
+                    if (field === '_rid') return;
+                    var cacheVal = cacheRow[field];
+                    if (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined && cacheVal !== false) {
+                      merged[field] = cacheVal;
+                    }
+                  });
+                  return merged;
+                });
+                // Also keep cache-only rows (rows in cache with no matching Airtable row)
+                var airtableCodes = {};
+                o[key].forEach(function(r){ if (r && r.code) airtableCodes[r.code] = 1; });
+                co[key].forEach(function(r){ if (r && r.code && !airtableCodes[r.code]) o[key].push(r); });
+              });
+
+              // SMART: array index based — if cache has more entries or any cache entry
+              // has more data than Airtable's, prefer cache wholesale
+              if ((co.smart || []).length > (o.smart || []).length) o.smart = co.smart;
+              else if (Array.isArray(co.smart) && co.smart.length > 0) {
+                var cacheHasMore = false;
+                for (var si = 0; si < co.smart.length; si++) {
+                  var cs = co.smart[si], as = o.smart[si];
+                  if (cs && cs.objective && (!as || !as.objective)) { cacheHasMore = true; break; }
+                }
+                if (cacheHasMore) o.smart = co.smart;
+              }
+
+              // Baseline scores: per-domain merge
+              if (Array.isArray(o.baseline) && Array.isArray(co.baseline)) {
+                o.baseline = o.baseline.map(function(airtableRow, idx){
+                  var cacheRow = co.baseline[idx];
+                  if (!cacheRow) return airtableRow;
+                  var merged = Object.assign({}, airtableRow);
+                  if ((cacheRow.score !== '' && cacheRow.score !== null && cacheRow.score !== undefined) &&
+                      (airtableRow.score === '' || airtableRow.score === null || airtableRow.score === undefined)) {
+                    merged.score = cacheRow.score;
+                  }
+                  if (cacheRow.evidence && !airtableRow.evidence) merged.evidence = cacheRow.evidence;
+                  return merged;
+                });
+              }
+
+              // Diagnosis problem statement
               if (co.diagnosis && co.diagnosis.problemStatement && !(o.diagnosis && o.diagnosis.problemStatement)) o.diagnosis = co.diagnosis;
               if (co.baselineNotes && !o.baselineNotes) o.baselineNotes = co.baselineNotes;
               if (co.intensity && !o.intensity) o.intensity = co.intensity;
               if (co.baselineLocked && !o.baselineLocked) o.baselineLocked = true;
               if (co.financial && Object.keys(co.financial).length > 0 && Object.keys(o.financial || {}).length === 0) o.financial = co.financial;
             }
+          });
+        }
+
+        // STRIP CACHED _rid VALUES FROM ALL CHILD RECORDS.
+        // The Netlify backend finds existing records by natural key
+        // (code for consulting/coaching/attendance, domain_num for baseline/endline)
+        // not by client-supplied _rid. Keeping stale _rids in cache causes
+        // PATCH-to-deleted-record 404 errors.
+        if (data.orgs) {
+          data.orgs.forEach(function(o){
+            ['baseline','endline','smart','notes','consulting','coaching','attendance','progress'].forEach(function(k){
+              if (Array.isArray(o[k])) o[k].forEach(function(row){ if(row) delete row._rid; });
+            });
           });
         }
 
