@@ -470,29 +470,59 @@ async function handleGet(orgCode) {
 }
 
 async function seedConsultingAndCoaching(orgCode) {
-  const consulting = CONSULTING_TEMPLATE.map((c) => ({
-    fields: scrubFields({
-      [F.CO_ORG]: orgCode,
-      [F.CO_CODE]: c.code,
-      [F.CO_TITLE]: c.title,
-      [F.CO_DATE]: c.date,
-      [F.CO_PHASE]: c.phase,
-      [F.CO_FOCUS]: c.focus,
-    }),
-  }));
+  // IDEMPOTENT: only create rows that don't already exist for this org/cycle code.
+  // Without this guard, every call adds 8 consulting + 5 coaching duplicates.
+
+  // CONSULTING — find existing rows for this org, only seed missing cycles
+  const existingConsulting = await listAllRecords(TABLES.CONSULTING);
+  const existingConsultingCodes = new Set(
+    existingConsulting
+      .filter((r) => r.fields[F.CO_ORG] === orgCode)
+      .map((r) => r.fields[F.CO_CODE])
+      .filter(Boolean)
+  );
+  const consulting = CONSULTING_TEMPLATE
+    .filter((c) => !existingConsultingCodes.has(c.code))
+    .map((c) => ({
+      fields: scrubFields({
+        [F.CO_ORG]: orgCode,
+        [F.CO_CODE]: c.code,
+        [F.CO_TITLE]: c.title,
+        [F.CO_DATE]: c.date,
+        [F.CO_PHASE]: c.phase,
+        [F.CO_FOCUS]: c.focus,
+      }),
+    }));
+  if (consulting.length === 0) {
+    console.log(`[SELECT API] seedConsultingAndCoaching: all consulting cycles already exist for ${orgCode}, skipping.`);
+  }
   for (let i = 0; i < consulting.length; i += 10) {
     await airtableFetch(TABLES.CONSULTING, { method: "POST", body: JSON.stringify({ records: consulting.slice(i, i + 10) }) });
   }
-  const coaching = COACHING_TEMPLATE.map((c) => ({
-    fields: scrubFields({
-      [F.CC_ORG]: orgCode,
-      [F.CC_CODE]: c.code,
-      [F.CC_TITLE]: c.title,
-      [F.CC_DATE]: c.date,
-      [F.CC_COACH]: c.coach,
-      [F.CC_THEME]: c.theme,
-    }),
-  }));
+
+  // COACHING — same idempotent check
+  const existingCoaching = await listAllRecords(TABLES.COACHING);
+  const existingCoachingCodes = new Set(
+    existingCoaching
+      .filter((r) => r.fields[F.CC_ORG] === orgCode)
+      .map((r) => r.fields[F.CC_CODE])
+      .filter(Boolean)
+  );
+  const coaching = COACHING_TEMPLATE
+    .filter((c) => !existingCoachingCodes.has(c.code))
+    .map((c) => ({
+      fields: scrubFields({
+        [F.CC_ORG]: orgCode,
+        [F.CC_CODE]: c.code,
+        [F.CC_TITLE]: c.title,
+        [F.CC_DATE]: c.date,
+        [F.CC_COACH]: c.coach,
+        [F.CC_THEME]: c.theme,
+      }),
+    }));
+  if (coaching.length === 0) {
+    console.log(`[SELECT API] seedConsultingAndCoaching: all coaching cycles already exist for ${orgCode}, skipping.`);
+  }
   for (let i = 0; i < coaching.length; i += 10) {
     await airtableFetch(TABLES.COACHING, { method: "POST", body: JSON.stringify({ records: coaching.slice(i, i + 10) }) });
   }
@@ -501,6 +531,23 @@ async function seedConsultingAndCoaching(orgCode) {
 async function handleCreate(payload) {
   const { name, ceo, code, jurisdiction } = payload;
   if (!name || !ceo || !code) return jsonResponse(400, { error: "name, ceo, code are required" });
+
+  // IDEMPOTENT: check if profile with this code already exists.
+  // If yes, do NOT create a duplicate — return success with existing record.
+  // This prevents duplicate OrgProfile rows when client retries with no _rid.
+  const existing = await listAllRecords(TABLES.ORG_PROFILE);
+  const dupe = existing.find((p) => p.fields[F.ORG_CODE] === code);
+  if (dupe) {
+    console.warn(`[SELECT API] handleCreate: profile already exists for code "${code}" (id=${dupe.id}). Returning existing record instead of creating duplicate.`);
+    // Still ensure consulting/coaching are seeded (idempotent on its own side)
+    try {
+      await seedConsultingAndCoaching(code);
+    } catch (err) {
+      console.error("[SELECT API] Seed error on existing profile:", err);
+    }
+    return jsonResponse(200, { ok: true, code, existing: true, id: dupe.id });
+  }
+
   const fields = scrubFields({
     [F.ORG_CODE]: code,
     [F.ORG_NAME]: name,
