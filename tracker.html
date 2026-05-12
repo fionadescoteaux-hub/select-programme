@@ -1553,6 +1553,25 @@ document.getElementById('trkOrgName').textContent=org.name;
 document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · '+org.code+' · '+(org.kpi.jurisdiction||'')+(org.intensity?' · '+org.intensity:'');
 switchTab('profile',document.querySelector('[data-tab="profile"]'));
 renderAll(org);
+
+// AUTO-SAVE: any change to any field in the tracker triggers a save.
+// Uses a debounced approach (300ms) so we don't save on every keystroke.
+if(isAssessor && !window._autosaveWired){
+  window._autosaveWired = true;
+  var saveTimer = null;
+  document.getElementById('trackerScreen').addEventListener('input', function(e){
+    if(!e.target.matches('input, textarea, select')) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
+    }, 300);
+  }, true);
+  document.getElementById('trackerScreen').addEventListener('change', function(e){
+    if(!e.target.matches('input, textarea, select')) return;
+    clearTimeout(saveTimer);
+    try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
+  }, true);
+}
 }
 
 function normaliseBaselineDomains(org){
@@ -2106,6 +2125,14 @@ var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOr
 if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
 org.diagnosis.scenario=org.diagnosis.scenario===val?'':val;
 saveData(data,currentOrg);renderDiagnosis(org);
+}
+
+function saveSmartField(idx,field,val){
+var data=loadData();
+var org=data.orgs.find(function(o){return o.code===currentOrg;});
+if(!org||!org.smart||!org.smart[idx])return;
+org.smart[idx][field]=val;
+saveData(data,currentOrg);
 }
 
 function renderSMART(org){
