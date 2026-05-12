@@ -246,18 +246,9 @@ var AT = (function() {
           });
         }
 
-        // STRIP ALL CACHED _rid VALUES RECURSIVELY.
-        // Covers baseline/endline/smart/notes/consulting/coaching/attendance/
-        // progress/checklist/validation and any nested _rid.
-        function _stripRidsLoad(obj){
-          if (!obj || typeof obj !== 'object') return;
-          if (Array.isArray(obj)) { obj.forEach(_stripRidsLoad); return; }
-          Object.keys(obj).forEach(function(k){
-            if (k === '_rid') delete obj[k];
-            else if (typeof obj[k] === 'object') _stripRidsLoad(obj[k]);
-          });
-        }
-        if (data.orgs) data.orgs.forEach(_stripRidsLoad);
+        // _rid values are KEPT in cache so client knows which records exist.
+        // (Earlier versions stripped these "for safety" but doing so caused
+        // every push to look like a new-org create, generating duplicates.)
 
         cacheSet(data);
         _initialLoadComplete = true;  // unlock pushes
@@ -309,20 +300,8 @@ var AT = (function() {
       return;
     }
 
-    // STRIP ALL _rid VALUES RECURSIVELY before sending.
-    // The Netlify backend matches records by natural keys (code, domain_num, index)
-    // not by client-supplied _rid. Cached _rids from deleted records cause 404 errors.
-    // Recursive strip covers baseline/endline/smart/notes/consulting/coaching/
-    // attendance/progress/checklist/validation and the org._rid itself.
-    function _stripRids(obj){
-      if (!obj || typeof obj !== 'object') return;
-      if (Array.isArray(obj)) { obj.forEach(_stripRids); return; }
-      Object.keys(obj).forEach(function(k){
-        if (k === '_rid') delete obj[k];
-        else if (typeof obj[k] === 'object') _stripRids(obj[k]);
-      });
-    }
-    _stripRids(org);
+    // KEEP _rid values intact — they tell the server we're updating, not creating.
+    // (Stripping them was the cause of the duplicate cascade.)
 
     setStatus('Saving…', 'info');
     var isNew = !org._rid;
