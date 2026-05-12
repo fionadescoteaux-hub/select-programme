@@ -1685,7 +1685,7 @@ tbody.innerHTML=html;
 var totalWtd=0;var hasScores=false;
 org.baseline.forEach(function(b,i){var s=parseFloat(b.score)||0;if(s>0)hasScores=true;totalWtd+=s*(DOMAINS[i].wt/100);});
 var overall=totalWtd.toFixed(2);
-var maturity=totalWtd<2?'Fragile':totalWtd<3?'Emerging':totalWtd<3.75?'Defined':totalWtd<4.5?'Embedded':'Optimised';
+var maturity=totalWtd<2?'Foundational':totalWtd<3?'Emerging':totalWtd<3.75?'Defined':totalWtd<4.5?'Embedded':'Optimised';
 var foot='<tr style="background:var(--bg2);font-weight:700"><td>Overall Weighted Score</td><td>100%</td><td colspan="2" style="text-align:center;font-family:var(--serif);font-size:18px;color:var(--navy)">'+(hasScores?overall:'--')+'</td><td style="font-size:13px;color:var(--teal)">'+(hasScores?maturity:'--')+'</td><td></td></tr>';
 if(isAssessor&&!org.baselineLocked){foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';}
 document.getElementById('baselineFoot').innerHTML=foot;
