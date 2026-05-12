@@ -1121,7 +1121,7 @@ function cycleCohortAttendance(orgCode,sessionIdx){
     // Fallback - reset to empty
     s.attended=false;s.apology=false;
   }
-  saveData(data);
+  saveData(data,currentOrg);
   renderCohortAttendance();
 }
 
@@ -1245,7 +1245,7 @@ function saveAttField(i,field,val){
   ensureAttendance(org);
   if(!org.attendance[i]){console.warn('saveAttField: session index missing',i);return;}
   org.attendance[i][field]=val;
-  saveData(data);
+  saveData(data,currentOrg);
 }
 
 // ═══════════════════════════════════════
@@ -1346,7 +1346,7 @@ function toggleJurisdiction(){
   if(!org)return;
   if(!org.kpi)org.kpi={};
   org.kpi.jurisdiction=org.kpi.jurisdiction==='NI'?'ROI':'NI';
-  saveData(data);
+  saveData(data,currentOrg);
   renderAll(org);
 }
 
@@ -1396,7 +1396,7 @@ if(org&&(org.password===pw||org.code===mappedCode||org.code===pw)){
 isAssessor=false;currentOrg=org.code;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){openTracker(org.code);});
+AT.loadData(function(d){openTracker(org.code);});
 return;
 }
 // Fallback: if the password is in CEO_PASSWORDS_MAP and matches the URL target, accept it
@@ -1405,7 +1405,7 @@ if(mappedCode&&mappedCode===targetOrgId){
 isAssessor=false;currentOrg=mappedCode;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){openTracker(mappedCode);});
+AT.loadData(function(d){openTracker(mappedCode);});
 return;
 }
 document.getElementById('authErr').style.display='block';return;
@@ -1427,7 +1427,7 @@ if(mappedCode){
 isAssessor=false;currentOrg=mappedCode;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){openTracker(mappedCode);});
+AT.loadData(function(d){openTracker(mappedCode);});
 return;
 }
 document.getElementById('authErr').style.display='block';
@@ -1653,7 +1653,7 @@ document.getElementById('intensityPills').innerHTML=html;
 function setIntensity(val){
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
 org.intensity=org.intensity===val?'':val;
-saveData(data);renderIntensity(org);
+saveData(data,currentOrg);renderIntensity(org);
 }
 
 function renderCB(org){
@@ -1699,7 +1699,7 @@ document.getElementById('baselineFoot').innerHTML=foot;
 function lockBaseline(){
 if(!confirm('Lock baseline? This cannot be undone. Scores will be frozen.'))return;
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
-org.baselineLocked=true;saveData(data);renderBaseline(org);renderOrgGrid();
+org.baselineLocked=true;saveData(data,currentOrg);renderBaseline(org);renderOrgGrid();
 }
 
 
@@ -1730,7 +1730,7 @@ function saveRagField(key,val){
   if(!org)return;
   if(!org.kpi)org.kpi={};
   org.kpi[key]=val;
-  saveData(data);
+  saveData(data,currentOrg);
 }
 
 // ═══════════════════════════════════════
@@ -1755,7 +1755,7 @@ function saveBaselineNotes(val){
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
   if(!org)return;
   org.baselineNotes=val;
-  saveData(data);
+  saveData(data,currentOrg);
 }
 
 function renderBaselineReport(org){
@@ -1787,7 +1787,7 @@ function saveBaselineReport(){
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
   if(!org)return;
   org.baselineReportUrl=val;
-  saveData(data);
+  saveData(data,currentOrg);
   renderBaselineReport(org);
 }
 function clearBaselineReport(){
@@ -1795,7 +1795,7 @@ function clearBaselineReport(){
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
   if(!org)return;
   org.baselineReportUrl='';
-  saveData(data);
+  saveData(data,currentOrg);
   renderBaselineReport(org);
 }
 
@@ -2105,7 +2105,7 @@ function setScenario(val){
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
 if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
 org.diagnosis.scenario=org.diagnosis.scenario===val?'':val;
-saveData(data);renderDiagnosis(org);
+saveData(data,currentOrg);renderDiagnosis(org);
 }
 
 function renderSMART(org){
@@ -2134,7 +2134,7 @@ html+='</div>';
 document.getElementById('smartList').innerHTML=html;
 document.getElementById('smartAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addSMART()">+ Add objective</button>':'';
 }
-function addSMART(){var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});saveData(data);renderSMART(org);}
+function addSMART(){var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});saveData(data,currentOrg);renderSMART(org);}
 
 var OUTREACH_CYCLES=[
 {code:'OR1',title:'Health Check & Problem Identification',date:'4-18 May 2026',phase:'Diagnose',focus:'Deep-dive into commercial assessment; validate baseline; agree problem statement & SMART objectives'},
@@ -2344,7 +2344,7 @@ document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:
 function addNote(type){
 var date=prompt('Date (e.g. 15 Jun 2026):');if(!date)return;
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
-org.notes.push({type:type,date:date,text:''});saveData(data);renderNotes(org);
+org.notes.push({type:type,date:date,text:''});saveData(data,currentOrg);renderNotes(org);
 }
 
 /* SOP Checklist */
@@ -2485,8 +2485,12 @@ var idx=parseInt(el.dataset.note);
 if(org.notes[idx])org.notes[idx].text=el.value;
 });
 
-saveData(data);showSaveMsg();
-renderBaseline(org);renderEndline(org);renderConsulting(org);renderCoaching(org);
+saveData(data,currentOrg);showSaveMsg();
+// Only re-render baseline and endline (to update weighted score footer).
+// Do NOT re-render consulting or coaching after save — it overwrites the
+// user's current input values before Airtable confirms the write, which
+// causes the hours and other fields to visibly revert.
+renderBaseline(org);renderEndline(org);
 }
 
 function showSaveMsg(){var msg=document.getElementById('saveMsg');msg.classList.add('show');setTimeout(function(){msg.classList.remove('show');},2000);}
@@ -2625,6 +2629,84 @@ saveData(data);
 // Push each to Airtable
 AT.pushOrg(org1);AT.pushOrg(org2);AT.pushOrg(org3);
 renderOrgGrid();renderCohortBar();
+}
+
+
+// ── Patch known org data into cache if Airtable returned it empty ──
+// Protects against Airtable sync gaps wiping locally-entered data.
+function patchKnownOrgData(data) {
+  if (!data || !data.orgs) return data;
+
+  var CODEMA_CODE = 'codema-dublins-energy-agency';
+  var codema = data.orgs.find(function(o){ return o.code === CODEMA_CODE; });
+  if (!codema) return data;
+
+  // Problem statement
+  if (!codema.diagnosis) codema.diagnosis = {};
+  if (!codema.diagnosis.problemStatement) {
+    codema.diagnosis.problemStatement = 'Codema is a financially well-run, commercially literate organisation with mature pricing logic, strong financial discipline, and active cross-border delivery infrastructure — operating inside a governance and funding architecture currently designed to keep it largely grant-funded. To reach its 12-month goal (first large private-sector clients on board, additional large public-sector clients, marketing strategy and BD plan in place, expanded tradable services), Codema must build a meaningful trading line in the private and wider public sector while the 20% governance ceiling still allows headroom (currently used at ~8%). To reach the 2–3 year goal (>50% income from healthy-margin work, well-established north and south, working financial model that funds research and community work), the structural constraint must be resolved — the Board conflict-of-interest pattern that constrains commercial expansion, the absence of co-equal commercial leadership beneath the CEO, and the question of whether the trading line scales inside the current vehicle or through a subsidiary. Cross-border is a commercial conversion task — converting existing grant-funded NI activity into a traded commercial line — rather than a starting-line task.';
+  }
+  if (!codema.diagnosis.scenario) codema.diagnosis.scenario = 'Strengthen';
+  if (!codema.diagnosis.constraints) codema.diagnosis.constraints = ['','',''];
+  if (!codema.diagnosis.constraints[0]) {
+    codema.diagnosis.constraints[0] = 'D1 Business Model & Revenue Mix · D9 Organisational Readiness: Governance architecture caps commercial trading at 20% of income; currently used at ~8%. Board conflict-of-interest pattern limits commercial ambition. Question of vehicle (grow within cap / renegotiate / subsidiary) unresolved.';
+  }
+  if (!codema.diagnosis.constraints[1]) {
+    codema.diagnosis.constraints[1] = 'D5 Go-To-Market & Sales: No documented sales pathway, no BD function, no CRM. Comms/Engagement team underutilised but available. Private-sector demand untested — appetite inferred from EU peer evidence only.';
+  }
+  if (!codema.diagnosis.constraints[2]) {
+    codema.diagnosis.constraints[2] = 'D8 Leadership & Execution Capacity: CEO-out scenario tested twice — commercial decisions revert to CEO. COO stepped back to part-time. No co-equal commercial leader beneath CEO. Donna names this as Priority 1.';
+  }
+
+  // SMART objectives (6 from v9 final)
+  if (!codema.smart || codema.smart.length === 0) {
+    codema.smart = [
+      {
+        objective: 'By end of M7 (Dec 2026), the Board has reached a documented decision on the trading-line vehicle — grow within the 20% cap, renegotiate it, or establish a subsidiary — based on a board paper covering legal/tax architecture, LA Member position, and projected trajectory under each option.',
+        target: 'Board paper produced; documented decision and rationale',
+        timeline: 'December 2026',
+        domain: 'D1 Business Model & Revenue Mix · D9 Organisational Readiness',
+        status: 'Not Started'
+      },
+      {
+        objective: 'By end of M5 (Oct 2026), Donna has a documented stakeholder engagement plan for the four LA Member directors, with at least two structured conversations completed and each Member's position on commercial direction mapped.',
+        target: 'Stakeholder plan; two conversations documented; position map',
+        timeline: 'October 2026',
+        domain: 'D9 Organisational Readiness',
+        status: 'Not Started'
+      },
+      {
+        objective: 'By end of M6 (Nov 2026), Codema has a documented sales pathway across its four product lines and three buyer tiers, the Comms/Engagement team formally redeployed into sales/marketing, and a CRM workflow specified or live.',
+        target: 'Sales SOP; team role redefinition; CRM workflow defined',
+        timeline: 'November 2026',
+        domain: 'D5 Go-To-Market & Sales',
+        status: 'Not Started'
+      },
+      {
+        objective: 'By end of M6 (Nov 2026), Codema has completed a market test for the named private-sector targets — market sizing, competitor pricing, validated cap-headroom figure, and at least one paid pilot or active sales conversation in progress.',
+        target: 'Market sizing; pricing benchmark; cap-headroom figure; ≥1 pilot or active conversation',
+        timeline: 'November 2026',
+        domain: 'D4 Commercial Strategy & Market Focus · D5 Go-To-Market & Sales',
+        status: 'Not Started'
+      },
+      {
+        objective: 'By end of M5 (Oct 2026), the COO role is specified (commercial and operations scope), funded, and either filled or covered on an interim/fractional basis, with Donna's time-audit baselined.',
+        target: 'Role spec; appointment or interim cover; CEO time baseline',
+        timeline: 'October 2026',
+        domain: 'D8 Leadership & Execution Capacity',
+        status: 'Not Started'
+      },
+      {
+        objective: 'By end of M7 (Dec 2026), at least one named NI commercial conversation is in active progress — either a PEACE-PLUS partner conversion or HESK distribution to NI libraries — supported by Gordon's autumn input.',
+        target: '≥1 NI prospect engaged; route-to-market draft; positioning document',
+        timeline: 'December 2026',
+        domain: 'D7 Cross-Border Readiness',
+        status: 'Not Started'
+      }
+    ];
+  }
+
+  return data;
 }
 
 (function(){
