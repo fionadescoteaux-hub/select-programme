@@ -2241,7 +2241,7 @@ list+='<div style="margin-top:10px"><div style="font-size:11px;color:var(--tt)">
 list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key actions agreed with CEO</div><textarea data-con-actions="'+i+'">'+esc(c.actionsAgreed||'')+'</textarea></div>';
 list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key outputs / evidence</div><textarea data-con-outputs="'+i+'">'+esc(c.keyOutputs||'')+'</textarea></div>';
 list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
-list+='<div><div style="font-size:11px;color:var(--tt)">Hours used</div><input data-con-hours="'+i+'" value="'+esc(c.hours||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
+list+='<div><div style="font-size:11px;color:var(--tt)">Hours used</div><input data-con-hours="'+i+'" value="'+esc(c.hours||getConsultHours(c)||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
 list+='<div><div style="font-size:11px;color:var(--tt)">Domain movement?</div><input data-con-domain="'+i+'" value="'+esc(c.domainMovement||'')+'" placeholder="e.g. D2 ↑, D5 ↑"></div>';
 list+='<div><div style="font-size:11px;color:var(--tt)">RAG</div><select data-con-rag="'+i+'"><option value="">--</option><option'+(c.rag==='Green'?' selected':'')+'>Green</option><option'+(c.rag==='Amber'?' selected':'')+'>Amber</option><option'+(c.rag==='Red'?' selected':'')+'>Red</option></select></div>';
 list+='</div>';
@@ -2495,7 +2495,7 @@ document.querySelectorAll('[data-con-format]').forEach(function(el){var i=parseI
 document.querySelectorAll('[data-con-smart]').forEach(function(el){var i=parseInt(el.dataset.conSmart);if(org.consulting[i])org.consulting[i].smartProgressed=el.value;});
 document.querySelectorAll('[data-con-actions]').forEach(function(el){var i=parseInt(el.dataset.conActions);if(org.consulting[i])org.consulting[i].actionsAgreed=el.value;});
 document.querySelectorAll('[data-con-outputs]').forEach(function(el){var i=parseInt(el.dataset.conOutputs);if(org.consulting[i])org.consulting[i].keyOutputs=el.value;});
-document.querySelectorAll('[data-con-hours]').forEach(function(el){var i=parseInt(el.dataset.conHours);if(org.consulting[i])org.consulting[i].hours=el.value;});
+document.querySelectorAll('[data-con-hours]').forEach(function(el){var i=parseInt(el.dataset.conHours);if(org.consulting[i]){org.consulting[i].hours=el.value;if(el.value)org.consulting[i].days='';}});
 document.querySelectorAll('[data-con-domain]').forEach(function(el){var i=parseInt(el.dataset.conDomain);if(org.consulting[i])org.consulting[i].domainMovement=el.value;});
 document.querySelectorAll('[data-con-rag]').forEach(function(el){var i=parseInt(el.dataset.conRag);if(org.consulting[i])org.consulting[i].rag=el.value;});
 document.querySelectorAll('[data-con-done]').forEach(function(el){var i=parseInt(el.dataset.conDone);if(org.consulting[i])org.consulting[i].completed=el.checked;});
