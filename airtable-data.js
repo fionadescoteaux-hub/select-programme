@@ -309,6 +309,15 @@ var AT = (function() {
       return;
     }
 
+    // STRIP STALE _rids from all child records before sending.
+    // The Netlify backend matches records by natural keys (code, domain_num, index)
+    // not by _rid. Cached _rids from deleted records cause 404 errors.
+    ['baseline','endline','smart','notes','consulting','coaching','attendance','progress'].forEach(function(k){
+      if (Array.isArray(org[k])) {
+        org[k].forEach(function(row){ if (row && row._rid) delete row._rid; });
+      }
+    });
+
     setStatus('Saving…', 'info');
     var isNew = !org._rid;
     var payload;
