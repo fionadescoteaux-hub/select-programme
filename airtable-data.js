@@ -246,18 +246,18 @@ var AT = (function() {
           });
         }
 
-        // STRIP CACHED _rid VALUES FROM ALL CHILD RECORDS.
-        // The Netlify backend finds existing records by natural key
-        // (code for consulting/coaching/attendance, domain_num for baseline/endline)
-        // not by client-supplied _rid. Keeping stale _rids in cache causes
-        // PATCH-to-deleted-record 404 errors.
-        if (data.orgs) {
-          data.orgs.forEach(function(o){
-            ['baseline','endline','smart','notes','consulting','coaching','attendance','progress'].forEach(function(k){
-              if (Array.isArray(o[k])) o[k].forEach(function(row){ if(row) delete row._rid; });
-            });
+        // STRIP ALL CACHED _rid VALUES RECURSIVELY.
+        // Covers baseline/endline/smart/notes/consulting/coaching/attendance/
+        // progress/checklist/validation and any nested _rid.
+        function _stripRidsLoad(obj){
+          if (!obj || typeof obj !== 'object') return;
+          if (Array.isArray(obj)) { obj.forEach(_stripRidsLoad); return; }
+          Object.keys(obj).forEach(function(k){
+            if (k === '_rid') delete obj[k];
+            else if (typeof obj[k] === 'object') _stripRidsLoad(obj[k]);
           });
         }
+        if (data.orgs) data.orgs.forEach(_stripRidsLoad);
 
         cacheSet(data);
         _initialLoadComplete = true;  // unlock pushes
@@ -309,14 +309,20 @@ var AT = (function() {
       return;
     }
 
-    // STRIP STALE _rids from all child records before sending.
+    // STRIP ALL _rid VALUES RECURSIVELY before sending.
     // The Netlify backend matches records by natural keys (code, domain_num, index)
-    // not by _rid. Cached _rids from deleted records cause 404 errors.
-    ['baseline','endline','smart','notes','consulting','coaching','attendance','progress'].forEach(function(k){
-      if (Array.isArray(org[k])) {
-        org[k].forEach(function(row){ if (row && row._rid) delete row._rid; });
-      }
-    });
+    // not by client-supplied _rid. Cached _rids from deleted records cause 404 errors.
+    // Recursive strip covers baseline/endline/smart/notes/consulting/coaching/
+    // attendance/progress/checklist/validation and the org._rid itself.
+    function _stripRids(obj){
+      if (!obj || typeof obj !== 'object') return;
+      if (Array.isArray(obj)) { obj.forEach(_stripRids); return; }
+      Object.keys(obj).forEach(function(k){
+        if (k === '_rid') delete obj[k];
+        else if (typeof obj[k] === 'object') _stripRids(obj[k]);
+      });
+    }
+    _stripRids(org);
 
     setStatus('Saving…', 'info');
     var isNew = !org._rid;
