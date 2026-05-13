@@ -1555,7 +1555,8 @@ switchTab('profile',document.querySelector('[data-tab="profile"]'));
 renderAll(org);
 
 // AUTO-SAVE: any change to any field in the tracker triggers a save.
-// Uses a debounced approach (300ms) so we don't save on every keystroke.
+// input/change events are debounced (2000ms) so typing isn't interrupted.
+// blur (leaving a field) saves immediately as a safety commit.
 if(isAssessor && !window._autosaveWired){
   window._autosaveWired = true;
   var saveTimer = null;
@@ -1573,15 +1574,24 @@ if(isAssessor && !window._autosaveWired){
     saveTimer = setTimeout(function(){
       if(!autosaveGuard()) return;
       try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
-    }, 500);
+    }, 5000);
   }, true);
   document.getElementById('trackerScreen').addEventListener('change', function(e){
     if(!e.target.matches('input, textarea, select')) return;
     if(!autosaveGuard()) return;
-    clearTimeout(saveTimer);
-    try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
+    // For selects, save immediately (no typing involved); for text fields, debounce
+    if(e.target.tagName === 'SELECT'){
+      clearTimeout(saveTimer);
+      try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
+    } else {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function(){
+        if(!autosaveGuard()) return;
+        try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
+      }, 5000);
+    }
   }, true);
-  // Also save on blur — guarantees text fields commit when user clicks away
+  // blur = user has left the field — safe to commit immediately
   document.getElementById('trackerScreen').addEventListener('blur', function(e){
     if(!e.target.matches('input, textarea')) return;
     if(!autosaveGuard()) return;
