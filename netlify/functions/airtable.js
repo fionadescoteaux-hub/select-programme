@@ -40,6 +40,7 @@ const F = {
   CB_ENDLINE: "fld486HdK2hxqPQaH",
   BASELINE_LOCKED: "fld8UegLqlAhxOQn5",
   BASELINE_NOTES: "fldIxpNkCRpdtsc7O",
+  BASELINE_REPORT_URL: "fldgWfVtyPV160vxL",
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -308,6 +309,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
     password: orgCode,
     intensity: f[F.INTENSITY] || "",
     baselineNotes: f[F.BASELINE_NOTES] || "",
+    baselineReportUrl: f[F.BASELINE_REPORT_URL] || "",
     assessor: assessorObj,
     kpi: {
       jurisdiction: f[F.JURISDICTION] || "",
@@ -634,7 +636,7 @@ async function batchDelete(tableId, ids) {
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
@@ -753,6 +755,7 @@ async function handleUpdate(payload) {
   if (intensity !== undefined) profileFields[F.INTENSITY] = intensity;
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
+  if (baselineReportUrl !== undefined) profileFields[F.BASELINE_REPORT_URL] = String(baselineReportUrl || "");
 
   // Assessor: NEW supports rich object {assessor (lead name), checklist, validation, goals, priorities, lock}
   // OR legacy plain string. Detect and handle both.
