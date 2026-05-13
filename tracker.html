@@ -2535,6 +2535,29 @@ saveData(data,currentOrg);showSaveMsg();
 // user's current input values before Airtable confirms the write, which
 // causes the hours and other fields to visibly revert.
 renderBaseline(org);renderEndline(org);
+// Update consulting summary bar (hours/cycles counts) without touching the input fields
+(function updateConsultingSummary(){
+  var el=document.getElementById('consultingSummary');
+  if(!el)return;
+  var totalHrs=0,completed=0;
+  org.consulting.forEach(function(c){totalHrs+=getConsultHours(c);if(c.completed)completed++;});
+  totalHrs=parseFloat(totalHrs.toFixed(1));
+  el.innerHTML='<div class="coaching-stat"><div class="cs-val">'+totalHrs.toFixed(1)+' / 35</div><div class="cs-lbl">Hours Used</div></div>'
+    +'<div class="coaching-stat"><div class="cs-val">'+(35-totalHrs).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining</div></div>'
+    +'<div class="coaching-stat"><div class="cs-val">'+completed+' / 8</div><div class="cs-lbl">Cycles Completed</div></div>'
+    +'<div class="coaching-stat coaching-stat-flex"><div class="cs-val">9</div><div class="cs-lbl">Flex Pool (hrs)</div></div>';
+})();
+// Update coaching summary bar similarly
+(function updateCoachingSummary(){
+  var el=document.getElementById('coachingSummary');
+  if(!el)return;
+  var totalHrs=0,completed=0;
+  org.coaching.forEach(function(c){totalHrs+=parseFloat(c.hours||0);if(c.completed)completed++;});
+  totalHrs=parseFloat(totalHrs.toFixed(1));
+  el.innerHTML='<div class="coaching-stat"><div class="cs-val">'+totalHrs.toFixed(1)+' / 12</div><div class="cs-lbl">Hours Used</div></div>'
+    +'<div class="coaching-stat"><div class="cs-val">'+(12-totalHrs).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining</div></div>'
+    +'<div class="coaching-stat"><div class="cs-val">'+completed+' / 5</div><div class="cs-lbl">Sessions Completed</div></div>';
+})();
 }
 
 function showSaveMsg(){var msg=document.getElementById('saveMsg');msg.classList.add('show');setTimeout(function(){msg.classList.remove('show');},2000);}
