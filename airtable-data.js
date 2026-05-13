@@ -173,6 +173,7 @@ var AT = (function() {
             if (!o.sop)         o.sop         = {};
             if (!o.crossBorder) o.crossBorder = {};
             if (typeof o.baselineNotes !== 'string') o.baselineNotes = '';
+            if (typeof o.baselineReportUrl !== 'string') o.baselineReportUrl = '';
 
             // CACHE PROTECTS LOCAL EDITS: if cache has data Airtable returned empty, keep cache
             var co = cacheMap[o.code];
@@ -325,6 +326,7 @@ var AT = (function() {
         baselineLocked: org.baselineLocked || false,
         intensity: org.intensity || '',
         baselineNotes: org.baselineNotes || '',
+        baselineReportUrl: org.baselineReportUrl || '',
         assessor: org.assessor || {}
       };
     }
