@@ -6,8 +6,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- SELECT SMART Tracker v3.6 - 2026-05-07 - Excel export fixed: canonical domain names, correct weights, evidence field, baseline notes column -->
-<title>SELECT — SMART Tracker (v2026-05-11-codes-fixed)</title>
+<!-- SELECT SMART Tracker v3.8 - 2026-05-14 - Added Print Diagnosis view (clean one-org briefing page) on Diagnosis tab. Prior v3.7: Excel export upgraded with Cover/Contents sheet, Diagnosis & Validation sheet, Onboarding SOP sheet; baseline report links exported as clickable hyperlinks; freeze panes on all data sheets; fixed Sheet 1 column count + mislabelled Mode column -->
+<title>SELECT — SMART Tracker (v2026-05-14-print-view)</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -447,8 +447,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- DIAGNOSIS TAB -->
 <div class="tab-panel" id="tab-diagnosis">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+<div>
 <div class="section-title">Commercial Problem Statement & Root Constraints</div>
 <div class="section-note">Captured at validation meeting. Drives the Scale & Change Plan.</div>
+</div>
+<button class="btn btn-sm btn-outline" onclick="printDiagnosis()" style="font-size:10px;white-space:nowrap;flex-shrink:0">&#128424; Print Diagnosis</button>
+</div>
 <div id="diagnosisContent"></div>
 </div>
 
@@ -823,31 +828,87 @@ function exportToExcel(){
   var orgs=data.orgs||[];
   if(!orgs.length){alert('No organisations to export.');return;}
   var wb=XLSX.utils.book_new();
+  var genStamp=new Date().toLocaleString('en-IE');
+
+  // ── Export helpers ───────────────────────────────────────────
+  // Turn a cell into a clickable hyperlink (used for baseline report links).
+  function linkCell(ws,address,url,label){
+    if(!url)return;
+    var c=ws[address];
+    if(!c){c={t:'s',v:label||url};ws[address]=c;}
+    if(!c.v)c.v=label||url;
+    c.l={Target:url,Tooltip:url};
+  }
+  // Apply a freeze pane below the header row of a data sheet (0-based row index).
+  function freezeHeader(ws,headerRowIdx){
+    ws['!freeze']={xSplit:0,ySplit:headerRowIdx,topLeftCell:XLSX.utils.encode_cell({r:headerRowIdx,c:0})};
+  }
+  // Weighted baseline score for an org (0-5 scale, weighted by domain %).
+  function weightedBaseline(o){
+    if(!o.baseline||!o.baseline.length)return '';
+    var tot=0,wt=0;
+    o.baseline.forEach(function(b,i){
+      var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;
+      var s=parseFloat(b.score);
+      if(!isNaN(s)){tot+=s*w;wt+=w;}
+    });
+    return wt?parseFloat((tot/wt).toFixed(2)):'';
+  }
+  // Map a domain code (D1..D9) to its readable name, for priority domains.
+  function domainLabel(code){
+    var m=String(code||'').match(/(\d+)/);
+    if(!m)return code||'';
+    var idx=parseInt(m[1],10)-1;
+    return (DOMAINS[idx]&&DOMAINS[idx].name)||code;
+  }
+
+  // ── SHEET 0: Cover & Contents ──
+  var cover=[
+    ['SELECT Programme — Tracker Export'],
+    ['Social Enterprise Leadership, Economic & Commercialisation Training'],
+    [''],
+    ['Generated','',genStamp],
+    ['Organisations in export','',orgs.length],
+    ['Baseline locked','',orgs.filter(function(o){return o.baselineLocked;}).length+' of '+orgs.length],
+    [''],
+    ['Contents'],
+    ['1. Programme Summary','','Headline status, hours and RAG per organisation'],
+    ['2. Baseline Scores','','9-domain weighted baseline, evidence and report links'],
+    ['3. Diagnosis & Validation','','Problem statement, scenario, constraints, validation notes, lock status'],
+    ['4. SMART Objectives','','Agreed measurable objectives and progress'],
+    ['5. Consulting Log','','1:1 outreach cycle delivery record'],
+    ['6. Coaching Log','','Executive coaching delivery record'],
+    ['7. Hours Summary','','Mentoring, coaching and flex-pool drawdown'],
+    ['8. Attendance','','Group session attendance for ITI audit'],
+    ['9. Financial Baseline','','Turnover, traded income, cross-border and LCI tracking'],
+    ['10. Onboarding SOP','','6-phase onboarding checklist completion'],
+    [''],
+    ['Note','','Baseline report links are clickable in the Baseline Scores and Diagnosis sheets.']
+  ];
+  var ws0=XLSX.utils.aoa_to_sheet(cover);
+  ws0['!cols']=[{wch:32},{wch:4},{wch:64}];
+  ws0['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}];
+  XLSX.utils.book_append_sheet(wb,ws0,'Cover');
 
   // ── SHEET 1: Programme Summary ──
-  var sum=[['SELECT Programme Export','','','','','','','','','','',''],
-    ['Generated: '+new Date().toLocaleString('en-IE'),'','','','','','','','','','',''],
-    ['','','','','','','','','','','',''],
-    ['Organisation','CEO','Jurisdiction','Intensity','Baseline Score','Baseline Locked','Phase',
+  // Header is 14 columns wide; title rows padded to match so merges line up.
+  var sum=[
+    ['SELECT Programme Export — Summary','','','','','','','','','','','','',''],
+    ['Generated: '+genStamp,'','','','','','','','','','','','',''],
+    ['','','','','','','','','','','','','',''],
+    ['Organisation','CEO','Jurisdiction','Intensity','Baseline Score','Baseline Locked','Mode of Support',
      'Mentoring Hrs Used','Mentoring Hrs Remaining','Coaching Hrs Used','Coaching Hrs Remaining','Flex Pool (hrs)','Progress %','RAG Status']];
   orgs.forEach(function(o){
     var mentHrs=0,coachHrs=0;
     if(o.consulting)o.consulting.forEach(function(c){mentHrs+=getConsultHours(c);});
     if(o.coaching)o.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});
     mentHrs=parseFloat(mentHrs.toFixed(1));
-    var mentHrs=mentHrs;
     coachHrs=parseFloat(coachHrs.toFixed(1));
     var prog=ragCalcProgress(o);
     var ragStatus=prog===null?'N/A':prog>=80?'Green':prog>=50?'Amber':'Red';
-    var blScore='';
-    if(o.baseline&&o.baseline.length){
-      var tot=0,wt=0;
-      o.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;wt+=w;});
-      blScore=wt?parseFloat((tot/wt).toFixed(2)):'';
-    }
     sum.push([
       o.name||'',o.ceo||'',(o.kpi&&o.kpi.jurisdiction)||'ROI',o.intensity||'',
-      blScore,o.baselineLocked?'Yes':'No',
+      weightedBaseline(o),o.baselineLocked?'Yes':'No',
       (o.kpi&&o.kpi.ragMode)||'',
       mentHrs,parseFloat((35-mentHrs).toFixed(1)),
       coachHrs,parseFloat((12-coachHrs).toFixed(1)),9,
@@ -856,20 +917,27 @@ function exportToExcel(){
   });
   var ws1=XLSX.utils.aoa_to_sheet(sum);
   ws1['!cols']=[{wch:28},{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:18},
-    {wch:16},{wch:16},{wch:18},{wch:16},{wch:18},{wch:14},{wch:12},{wch:12}];
+    {wch:16},{wch:18},{wch:16},{wch:18},{wch:14},{wch:12},{wch:12}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:13}},{s:{r:1,c:0},e:{r:1,c:13}}];
+  freezeHeader(ws1,4);
   XLSX.utils.book_append_sheet(wb,ws1,'Programme Summary');
 
   // ── SHEET 2: Baseline Scores ──
   // Uses canonical DOMAINS array as source of truth for names + weights.
   // Reads evidence (correct field) not notes. Weighted score = score × weight%.
-  var bl=[['Organisation','CEO','Domain','Tier','Weight','Score (0-5)','Weighted Score','Evidence','Assessor Notes']];
+  // Baseline report link is written once per org (first domain row) as a clickable hyperlink.
+  var bl=[['Organisation','CEO','Domain','Tier','Weight','Score (0-5)','Weighted Score','Evidence','Assessor Notes','Baseline Report']];
+  var blLinks=[]; // {row, url} pairs to hyperlink after the sheet is built
   orgs.forEach(function(o){
     if(o.baseline&&o.baseline.length){
+      var reportUrl=(o.baselineReportUrl||'').trim();
       o.baseline.forEach(function(b,i){
         var d=DOMAINS[i]||{name:'Domain '+(i+1),wt:0,cluster:''};
         var score=parseFloat(b.score);
         var weightPct=d.wt||0;
         var weighted=(!isNaN(score)&&weightPct)?parseFloat((score*(weightPct/100)).toFixed(2)):'';
+        var isFirst=(i===0);
+        if(isFirst&&reportUrl)blLinks.push({row:bl.length,url:reportUrl});
         bl.push([
           o.name||'',
           o.ceo||'',
@@ -879,15 +947,75 @@ function exportToExcel(){
           isNaN(score)?'':score,
           weighted,
           b.evidence||'',
-          (i===0?(o.baselineNotes||''):'')
+          (isFirst?(o.baselineNotes||''):''),
+          (isFirst?(reportUrl?'Open Baseline Report':'Not attached'):'')
         ]);
       });
-      bl.push(['','','','','','','','','']);
+      bl.push(['','','','','','','','','','']);
     }
   });
   var ws2=XLSX.utils.aoa_to_sheet(bl);
-  ws2['!cols']=[{wch:28},{wch:18},{wch:38},{wch:12},{wch:8},{wch:10},{wch:14},{wch:50},{wch:50}];
+  ws2['!cols']=[{wch:28},{wch:18},{wch:38},{wch:12},{wch:8},{wch:10},{wch:14},{wch:50},{wch:50},{wch:24}];
+  // Column index 9 (J) holds the baseline report label — make it a real hyperlink.
+  blLinks.forEach(function(l){
+    linkCell(ws2,XLSX.utils.encode_cell({r:l.row,c:9}),l.url,'Open Baseline Report');
+  });
+  freezeHeader(ws2,1);
   XLSX.utils.book_append_sheet(wb,ws2,'Baseline Scores');
+
+  // ── SHEET 3: Diagnosis & Validation ──
+  // Pulls the Diagnose-phase output: problem statement, scenario, root constraints,
+  // key observation, validation-meeting notes, agreed goals, priority domains and lock status.
+  // Baseline report link is repeated here so the link sits beside the diagnosis it supports.
+  var dgHead=['Organisation','CEO','Baseline Locked','Lock Led By','Validation Date','Lock Date',
+    'Scenario for Change','Programme Intensity','Priority Domains',
+    'Commercial Problem Statement','Why It Matters Now','Key Commercial Observation',
+    'Root Constraint 1','Root Constraint 2','Root Constraint 3',
+    'Validation: CEO Self-View','Validation: Root Constraint','Validation: 20% Income Drop',
+    'Validation: Board & Succession','Validation: CEO\u2019s Own Words',
+    'Agreed Goal 1','Agreed Goal 2','Agreed Goal 3',
+    'SMART Objective 1','SMART Objective 2','SMART Objective 3',
+    'Baseline Report'];
+  var dg=[dgHead];
+  var dgLinks=[];
+  orgs.forEach(function(o){
+    var d=o.diagnosis||{};
+    var problem=d.problemStatement||d.problem||'';
+    var cons=(d.constraints&&Array.isArray(d.constraints))?d.constraints:['','',''];
+    var a=(o.assessor&&typeof o.assessor==='object')?o.assessor:{};
+    var vn=a.validation||{};
+    var g=a.goals||{};
+    var lk=a.lock||{};
+    var pri=(a.priorities&&a.priorities.length)?a.priorities.map(domainLabel).join('; '):'';
+    var reportUrl=(o.baselineReportUrl||'').trim();
+    if(reportUrl)dgLinks.push({row:dg.length,url:reportUrl});
+    dg.push([
+      o.name||'',o.ceo||'',o.baselineLocked?'Yes':'No',
+      lk.lk_led||'',lk.lk_session_date||'',lk.lk_lock_date||'',
+      d.scenario||'',o.intensity||'',pri,
+      g.g_problem||problem||'',g.g_problem_why||'',d.observation||'',
+      cons[0]||'',cons[1]||'',cons[2]||'',
+      vn.vn1||'',vn.vn2||'',vn.vn3||'',vn.vn4||'',vn.vn5||'',
+      g.g_goal1||'',g.g_goal2||'',g.g_goal3||'',
+      g.g_smart1||'',g.g_smart2||'',g.g_smart3||'',
+      reportUrl?'Open Baseline Report':'Not attached'
+    ]);
+  });
+  var ws3a=XLSX.utils.aoa_to_sheet(dg);
+  ws3a['!cols']=[{wch:26},{wch:18},{wch:14},{wch:14},{wch:14},{wch:12},
+    {wch:16},{wch:16},{wch:30},
+    {wch:54},{wch:44},{wch:44},
+    {wch:34},{wch:34},{wch:34},
+    {wch:44},{wch:44},{wch:44},{wch:44},{wch:44},
+    {wch:40},{wch:40},{wch:40},
+    {wch:48},{wch:48},{wch:48},
+    {wch:24}];
+  // Column index 26 (AA) holds the baseline report label.
+  dgLinks.forEach(function(l){
+    linkCell(ws3a,XLSX.utils.encode_cell({r:l.row,c:26}),l.url,'Open Baseline Report');
+  });
+  freezeHeader(ws3a,1);
+  XLSX.utils.book_append_sheet(wb,ws3a,'Diagnosis & Validation');
 
   // ── SHEET 3: Consulting Log ──
   var cl=[['Organisation','CEO','Cycle','Date','Phase','Focus','Consultant',
@@ -906,6 +1034,7 @@ function exportToExcel(){
   var ws3=XLSX.utils.aoa_to_sheet(cl);
   ws3['!cols']=[{wch:28},{wch:18},{wch:20},{wch:12},{wch:12},{wch:30},{wch:18},
     {wch:14},{wch:8},{wch:8},{wch:20},{wch:30},{wch:30},{wch:20},{wch:10},{wch:10}];
+  freezeHeader(ws3,1);
   XLSX.utils.book_append_sheet(wb,ws3,'Consulting Log');
 
   // ── SHEET 4: Coaching Log ──
@@ -921,6 +1050,7 @@ function exportToExcel(){
   });
   var ws4=XLSX.utils.aoa_to_sheet(ch);
   ws4['!cols']=[{wch:28},{wch:18},{wch:20},{wch:12},{wch:30},{wch:18},{wch:8},{wch:35},{wch:10}];
+  freezeHeader(ws4,1);
   XLSX.utils.book_append_sheet(wb,ws4,'Coaching Log');
 
   // ── SHEET 5: SMART Objectives ──
@@ -935,11 +1065,12 @@ function exportToExcel(){
   });
   var ws5=XLSX.utils.aoa_to_sheet(sm);
   ws5['!cols']=[{wch:28},{wch:18},{wch:40},{wch:25},{wch:15},{wch:15},{wch:12},{wch:12},{wch:12}];
+  freezeHeader(ws5,1);
   XLSX.utils.book_append_sheet(wb,ws5,'SMART Objectives');
 
   // ── SHEET 6: Hours Summary ──
   var hrs=[['SELECT Programme Hours Summary','','','','',''],
-    ['Generated: '+new Date().toLocaleString('en-IE'),'','','','',''],
+    ['Generated: '+genStamp,'','','','',''],
     ['','','','','',''],
     ['','Mentoring (hrs)','Mentoring Remaining','Coaching (hrs)','Coaching Remaining','Flex Pool (hrs)'],
     ['TOTAL ALLOCATED','35 hrs','','12 hrs','','9 hrs'],
@@ -961,6 +1092,7 @@ function exportToExcel(){
     '=SUM(F7:F'+(6+orgs.length)+')']);
   var ws6=XLSX.utils.aoa_to_sheet(hrs);
   ws6['!cols']=[{wch:28},{wch:16},{wch:16},{wch:20},{wch:16},{wch:20},{wch:14}];
+  freezeHeader(ws6,4);
   XLSX.utils.book_append_sheet(wb,ws6,'Hours Summary');
 
   // ── SHEET 7: Attendance ──
@@ -975,6 +1107,7 @@ function exportToExcel(){
   });
   var ws7=XLSX.utils.aoa_to_sheet(att);
   ws7['!cols']=[{wch:28},{wch:18},{wch:45},{wch:14},{wch:12},{wch:10},{wch:10},{wch:30}];
+  freezeHeader(ws7,1);
   XLSX.utils.book_append_sheet(wb,ws7,'Attendance');
 
   // ── SHEET 8: Financial Baseline ──
@@ -999,7 +1132,41 @@ function exportToExcel(){
   var ws8=XLSX.utils.aoa_to_sheet(fin);
   ws8['!cols']=[{wch:28},{wch:18},{wch:8},{wch:16},{wch:18},{wch:14},{wch:20},{wch:14},
     {wch:12},{wch:12},{wch:16},{wch:14},{wch:16},{wch:18},{wch:16},{wch:18},{wch:18},{wch:14},{wch:12},{wch:12},{wch:12}];
+  freezeHeader(ws8,1);
   XLSX.utils.book_append_sheet(wb,ws8,'Financial Baseline');
+
+  // ── SHEET 9: Onboarding SOP ──
+  // 6-phase onboarding tick-box checklist. Step keys mirror renderSOP():
+  // phase name stripped of non-alphanumerics + '_' + item index.
+  var sopHead=['Phase','Step'];
+  orgs.forEach(function(o){sopHead.push(o.name||'');});
+  var sop=[sopHead];
+  var doneCounts=orgs.map(function(){return 0;});
+  var totalSteps=0;
+  SOP_STEPS.forEach(function(phase){
+    phase.items.forEach(function(item,ii){
+      totalSteps++;
+      var stepKey=phase.phase.replace(/[^a-zA-Z0-9]/g,'')+'_'+ii;
+      var row=[phase.phase,item];
+      orgs.forEach(function(o,oi){
+        var checked=!!(o.sop&&o.sop[stepKey]);
+        if(checked)doneCounts[oi]++;
+        row.push(checked?'Yes':'');
+      });
+      sop.push(row);
+    });
+  });
+  // Completion summary row.
+  var sumRow=['','COMPLETED'];
+  doneCounts.forEach(function(d){sumRow.push(d+' / '+totalSteps);});
+  sop.push(['','','','','','','','','','',''].slice(0,sopHead.length));
+  sop.push(sumRow);
+  var ws9=XLSX.utils.aoa_to_sheet(sop);
+  var sopCols=[{wch:26},{wch:34}];
+  orgs.forEach(function(){sopCols.push({wch:16});});
+  ws9['!cols']=sopCols;
+  freezeHeader(ws9,1);
+  XLSX.utils.book_append_sheet(wb,ws9,'Onboarding SOP');
 
   // ── Export ──
   var date=new Date().toISOString().slice(0,10);
@@ -2146,6 +2313,161 @@ if(isAssessor){html+='<textarea data-diag="observation">'+esc(d.observation)+'</
 else{html+='<div class="pc-val">'+(d.observation||'--')+'</div>';}
 html+='</div>';
 document.getElementById('diagnosisContent').innerHTML=html;
+}
+
+// Print View — reflows the current org's full Diagnose-phase record into a clean
+// vertical briefing page and opens it in a print window. Pulls the same data the
+// Excel "Diagnosis & Validation" sheet uses, laid out for reading rather than filtering.
+function printDiagnosis(){
+if(!currentOrg){alert('Open an organisation first.');return;}
+var data=loadData();
+var org=data.orgs.find(function(o){return o.code===currentOrg;});
+if(!org){alert('Organisation not found.');return;}
+
+var d=org.diagnosis||{};
+var problem=d.problemStatement||d.problem||'';
+var cons=(d.constraints&&Array.isArray(d.constraints))?d.constraints:['','',''];
+var a=(org.assessor&&typeof org.assessor==='object')?org.assessor:{};
+var vn=a.validation||{};
+var g=a.goals||{};
+var lk=a.lock||{};
+
+// Resolve priority domain codes (D1..D9) to readable names.
+function domLabel(code){
+var m=String(code||'').match(/(\d+)/);
+if(!m)return code||'';
+var idx=parseInt(m[1],10)-1;
+return (DOMAINS[idx]&&DOMAINS[idx].name)||code;
+}
+var pri=(a.priorities&&a.priorities.length)?a.priorities.map(domLabel):[];
+
+var reportUrl=(org.baselineReportUrl||'').trim();
+var blScore='';
+if(org.baseline&&org.baseline.length){
+var tot=0,wt=0;
+org.baseline.forEach(function(b,i){
+var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;
+var s=parseFloat(b.score);
+if(!isNaN(s)){tot+=s*w;wt+=w;}
+});
+blScore=wt?(tot/wt).toFixed(2):'';
+}
+var genStamp=new Date().toLocaleString('en-IE');
+
+// Small builders for the briefing page.
+function block(label,val){
+return '<div class="pv-block"><div class="pv-label">'+esc(label)+'</div>'+
+'<div class="pv-val">'+(val&&String(val).trim()?esc(val):'<span class="pv-empty">— not recorded —</span>')+'</div></div>';
+}
+function metaItem(label,val){
+return '<div class="pv-meta-item"><span class="pv-meta-label">'+esc(label)+'</span>'+
+'<span class="pv-meta-val">'+(val&&String(val).trim()?esc(val):'—')+'</span></div>';
+}
+
+var vnLabels=[
+['vn1','Was the CEO\u2019s self-view accurate? Where did it differ?'],
+['vn2','Root commercial constraint — symptom vs cause'],
+['vn3','Resilience to a 20% income drop / pricing assumptions'],
+['vn4','Board commercial challenge & succession planning'],
+['vn5','How the CEO articulates the problem in their own words']
+];
+
+var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagnosis — '+esc(org.name||'')+'</title>';
+html+='<style>'+
+'*{box-sizing:border-box;margin:0;padding:0}'+
+'body{font-family:Georgia,\'Times New Roman\',serif;color:#1a1a1a;line-height:1.55;padding:32px 40px;max-width:760px;margin:0 auto;font-size:12pt}'+
+'.pv-head{border-bottom:3px solid #0f2b4c;padding-bottom:14px;margin-bottom:20px}'+
+'.pv-prog{font-size:9pt;letter-spacing:1.5px;text-transform:uppercase;color:#0a6b5a;font-family:Arial,sans-serif;font-weight:700}'+
+'.pv-head h1{font-size:21pt;color:#0f2b4c;margin:4px 0 2px}'+
+'.pv-head .pv-ceo{font-size:11pt;color:#5a5a55}'+
+'.pv-head .pv-stamp{font-size:8.5pt;color:#8a8a82;font-family:Arial,sans-serif;margin-top:6px}'+
+'.pv-meta{display:flex;flex-wrap:wrap;gap:6px 28px;background:#f4f3f0;border:1px solid #ddd;border-radius:4px;padding:12px 16px;margin-bottom:22px}'+
+'.pv-meta-item{font-family:Arial,sans-serif;font-size:9pt}'+
+'.pv-meta-label{display:block;color:#8a8a82;text-transform:uppercase;letter-spacing:0.5px;font-size:7.5pt}'+
+'.pv-meta-val{font-weight:700;color:#1a1a1a;font-size:10pt}'+
+'.pv-section{font-family:Arial,sans-serif;font-size:10pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0f2b4c;border-bottom:1px solid #ccc;padding-bottom:4px;margin:24px 0 12px}'+
+'.pv-block{margin-bottom:14px}'+
+'.pv-label{font-family:Arial,sans-serif;font-size:8.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#0a6b5a;margin-bottom:2px}'+
+'.pv-val{font-size:11.5pt;color:#1a1a1a}'+
+'.pv-empty{color:#aaa;font-style:italic;font-size:10pt}'+
+'.pv-constraint{display:flex;gap:10px;margin-bottom:7px;align-items:baseline}'+
+'.pv-cnum{font-family:Arial,sans-serif;font-weight:700;color:#fff;background:#0f2b4c;border-radius:50%;width:18px;height:18px;min-width:18px;text-align:center;font-size:9pt;line-height:18px}'+
+'.pv-link{font-family:Arial,sans-serif;font-size:9.5pt}'+
+'.pv-link a{color:#0f2b4c}'+
+'.pv-foot{margin-top:30px;padding-top:10px;border-top:1px solid #ccc;font-family:Arial,sans-serif;font-size:8pt;color:#8a8a82;display:flex;justify-content:space-between}'+
+'@media print{body{padding:0}.pv-noprint{display:none}@page{margin:18mm}}'+
+'.pv-noprint{position:fixed;top:12px;right:12px;background:#0f2b4c;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-family:Arial,sans-serif;font-size:10pt;font-weight:600;cursor:pointer}'+
+'</style></head><body>';
+
+html+='<button class="pv-noprint" onclick="window.print()">Print</button>';
+
+html+='<div class="pv-head"><div class="pv-prog">SELECT Programme · Phase 1 — Diagnose</div>';
+html+='<h1>'+esc(org.name||'')+'</h1>';
+html+='<div class="pv-ceo">'+esc(org.ceo||'')+'</div>';
+html+='<div class="pv-stamp">Commercial Diagnosis & Validation Record · Generated '+esc(genStamp)+'</div></div>';
+
+html+='<div class="pv-meta">';
+html+=metaItem('Jurisdiction',(org.kpi&&org.kpi.jurisdiction)||'ROI');
+html+=metaItem('Sector',(org.kpi&&org.kpi.sector)||'');
+html+=metaItem('Weighted Baseline',blScore!==''?(blScore+' / 5'):'');
+html+=metaItem('Programme Intensity',org.intensity||'');
+html+=metaItem('Scenario for Change',d.scenario||'');
+html+=metaItem('Baseline Locked',org.baselineLocked?'Yes':'No');
+html+=metaItem('Validation Date',lk.lk_session_date||'');
+html+=metaItem('Lock Date',lk.lk_lock_date||'');
+html+=metaItem('Lock Led By',lk.lk_led||'');
+html+='</div>';
+
+// Commercial diagnosis
+html+='<div class="pv-section">Commercial Diagnosis</div>';
+html+=block('Commercial Problem Statement',g.g_problem||problem);
+html+=block('Why It Matters Now (consequences if unaddressed)',g.g_problem_why);
+html+=block('Key Commercial Observation',d.observation);
+
+html+='<div class="pv-block"><div class="pv-label">Root Constraints (linked to domain)</div>';
+var anyCon=false;
+for(var i=0;i<3;i++){
+if(cons[i]&&String(cons[i]).trim()){
+anyCon=true;
+html+='<div class="pv-constraint"><span class="pv-cnum">'+(i+1)+'</span><span>'+esc(cons[i])+'</span></div>';
+}
+}
+if(!anyCon)html+='<div class="pv-empty">— not recorded —</div>';
+html+='</div>';
+
+if(pri.length){
+html+=block('Priority Focus Domains',pri.join('  ·  '));
+}
+
+// Validation meeting
+html+='<div class="pv-section">Validation Meeting Notes</div>';
+vnLabels.forEach(function(p){html+=block(p[1],vn[p[0]]);});
+
+// Agreed goals & SMART objectives
+html+='<div class="pv-section">Agreed Goals & SMART Objectives</div>';
+html+=block('Goal 1 — high-level direction',g.g_goal1);
+html+=block('Goal 2 — high-level direction',g.g_goal2);
+html+=block('Goal 3 — high-level direction',g.g_goal3);
+html+=block('SMART Objective 1',g.g_smart1);
+html+=block('SMART Objective 2',g.g_smart2);
+html+=block('SMART Objective 3',g.g_smart3);
+
+// Baseline report link
+html+='<div class="pv-section">Baseline Report</div>';
+if(reportUrl){
+html+='<div class="pv-link">Full baseline overview document: <a href="'+esc(reportUrl)+'">'+esc(reportUrl)+'</a></div>';
+}else{
+html+='<div class="pv-empty">No baseline report attached.</div>';
+}
+
+html+='<div class="pv-foot"><span>SELECT Programme · InterTradeIreland · Built to Scale Consortium</span><span>'+esc(org.name||'')+'</span></div>';
+html+='</body></html>';
+
+var w=window.open('','_blank');
+if(!w){alert('Please allow pop-ups for this site to use Print View.');return;}
+w.document.open();
+w.document.write(html);
+w.document.close();
 }
 
 function setScenario(val){
