@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-07-v5 (BaselineNotes field added)
+// Version: 2026-05-18-v6 (resilient saves: 404-tolerant batch ops; SMART update-in-place)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -614,7 +614,21 @@ async function batchUpdate(tableId, updates) {
   }
   const clean = deduped.map((u) => ({ id: u.id, fields: scrubFields(u.fields) }));
   for (let i = 0; i < clean.length; i += 10) {
-    await airtableFetch(tableId, { method: "PATCH", body: JSON.stringify({ records: clean.slice(i, i + 10) }) });
+    const slice = clean.slice(i, i + 10);
+    try {
+      await airtableFetch(tableId, { method: "PATCH", body: JSON.stringify({ records: slice }) });
+    } catch (err) {
+      // A single dead/missing record id (404) must not abort the whole save.
+      // Retry the batch one record at a time; skip any that no longer exist.
+      console.warn(`[SELECT API] batchUpdate: batch failed on ${tableId}, retrying individually:`, err.message);
+      for (const rec of slice) {
+        try {
+          await airtableFetch(tableId, { method: "PATCH", body: JSON.stringify({ records: [rec] }) });
+        } catch (e2) {
+          console.warn(`[SELECT API] batchUpdate: skipped record ${tableId}/${rec.id}:`, e2.message);
+        }
+      }
+    }
   }
 }
 
@@ -631,7 +645,20 @@ async function batchDelete(tableId, ids) {
   for (let i = 0; i < uniqueIds.length; i += 10) {
     const batch = uniqueIds.slice(i, i + 10);
     const qs = batch.map((id) => `records[]=${id}`).join("&");
-    await airtableFetch(`${tableId}?${qs}`, { method: "DELETE" });
+    try {
+      await airtableFetch(`${tableId}?${qs}`, { method: "DELETE" });
+    } catch (err) {
+      // A record that is already gone (404) must not abort the whole save.
+      // Retry the batch one id at a time and skip any that no longer exist.
+      console.warn(`[SELECT API] batchDelete: batch failed on ${tableId}, retrying individually:`, err.message);
+      for (const id of batch) {
+        try {
+          await airtableFetch(`${tableId}?records[]=${id}`, { method: "DELETE" });
+        } catch (e2) {
+          console.warn(`[SELECT API] batchDelete: skipped dead record ${tableId}/${id}:`, e2.message);
+        }
+      }
+    }
   }
 }
 
@@ -842,14 +869,21 @@ async function handleUpdate(payload) {
   }
 
   // ── SMART table ──
+  // Match existing rows by SM_NUM and update in place, mirroring the Baseline
+  // block. The previous delete-all-then-recreate pattern regenerated every
+  // record id on each save and was the source of orphan rows / 404 save
+  // failures. Surplus rows (objective count reduced) are intentionally left in
+  // place rather than deleted, so no data is ever destroyed by a save.
   if (Array.isArray(smart)) {
     const existing = await listAllRecords(TABLES.SMART);
-    const toDelete = existing.filter((r) => r.fields[F.SM_ORG] === code).map((r) => r.id);
-    await batchDelete(TABLES.SMART, toDelete);
-    const creates = smart.map((s, i) => {
+    const byNum = {};
+    existing.filter((r) => r.fields[F.SM_ORG] === code).forEach((r) => (byNum[r.fields[F.SM_NUM]] = r));
+    const ops = [];
+    smart.forEach((s, i) => {
+      const num = i + 1;
       const fields = {
         [F.SM_ORG]: code,
-        [F.SM_NUM]: i + 1,
+        [F.SM_NUM]: num,
         [F.SM_OBJ]: s.objective || "",
         [F.SM_TARGET]: s.target || "",
         [F.SM_TIMELINE]: s.timeline || "",
@@ -859,9 +893,12 @@ async function handleUpdate(payload) {
       if (owner !== undefined) fields[F.SM_OWNER] = owner;
       const status = selectVal(s.status);
       if (status !== undefined) fields[F.SM_STATUS] = status;
-      return { fields };
+      const exists = byNum[num];
+      if (exists) ops.push({ id: exists.id, fields });
+      else ops.push({ fields });
     });
-    await batchCreate(TABLES.SMART, creates);
+    await batchUpdate(TABLES.SMART, ops.filter((o) => o.id));
+    await batchCreate(TABLES.SMART, ops.filter((o) => !o.id));
   }
 
   // ── CONSULTING table ──
