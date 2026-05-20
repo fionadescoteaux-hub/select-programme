@@ -1,11 +1,19 @@
 // ═══════════════════════════════════════════════════════════════
 // SELECT Programme — Airtable Data Layer
-// Version: 2026-05-12-SAFE
+// Version: 2026-05-20-MULTIUSER-MERGE
 //
 // CRITICAL SAFETY RULES (prevent Airtable wipes):
 // 1. NEVER push to Airtable until loadData() succeeds at least once.
 // 2. NEVER push an org that fails isOrgSafeToPush() — must have real data.
 // 3. Cache writes are always allowed and unconditional (local data is safe).
+//
+// MULTI-USER FIX (2026-05-20):
+// Fiona and Clodagh share the same Airtable. Previously each save pushed the
+// user's entire local org blob, so whoever saved last overwrote the other's
+// edits — visible as different mentoring/coaching hour totals on each login.
+// pushOrg() now does a read-merge-write: fetch latest Airtable state, merge
+// local edits into it, then push. loadData() also flipped to "Airtable wins
+// for shared per-row fields"; cache only fills empty slots.
 // ═══════════════════════════════════════════════════════════════
 
 var AT = (function() {
@@ -182,9 +190,12 @@ var AT = (function() {
               if ((co.notes || []).length > (o.notes || []).length) o.notes = co.notes;
 
               // For consulting/coaching/attendance, merge per-row by code.
-              // For each Airtable row, check if cache has a row with the same code
-              // containing MORE data — if so, prefer the cache row. This prevents
-              // Airtable's stale view from overwriting local field-level edits.
+              // AIRTABLE WINS: Airtable is the shared source of truth across both
+              // assessors. The cache only fills in fields Airtable has left empty
+              // (e.g. a row the user has typed into but not yet successfully synced).
+              // This prevents one user's stale cache from overwriting the other
+              // user's saved edits — the previous "cache always wins" rule caused
+              // mentoring/coaching hours to drift between Fiona and Clodagh.
               ['consulting','coaching','attendance'].forEach(function(key){
                 if (!Array.isArray(o[key]) || !Array.isArray(co[key])) return;
                 var cacheByCode = {};
@@ -193,12 +204,17 @@ var AT = (function() {
                   if (!airtableRow || !airtableRow.code) return airtableRow;
                   var cacheRow = cacheByCode[airtableRow.code];
                   if (!cacheRow) return airtableRow;
-                  // Merge: cache row wins for any field where cache has non-empty value
+                  // Airtable row is the base. Cache only fills in fields that
+                  // Airtable has as empty/null/undefined (NOT false — false is a
+                  // valid saved value for `completed` booleans).
                   var merged = Object.assign({}, airtableRow);
                   Object.keys(cacheRow).forEach(function(field){
                     if (field === '_rid') return;
+                    var airtableVal = airtableRow[field];
                     var cacheVal = cacheRow[field];
-                    if (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined && cacheVal !== false) {
+                    var airtableEmpty = (airtableVal === '' || airtableVal === null || airtableVal === undefined);
+                    var cacheHasValue = (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined);
+                    if (airtableEmpty && cacheHasValue) {
                       merged[field] = cacheVal;
                     }
                   });
@@ -306,32 +322,87 @@ var AT = (function() {
 
     setStatus('Saving…', 'info');
     var isNew = !org._rid;
-    var payload;
 
     if (isNew) {
-      payload = {
+      var newPayload = {
         action: 'create', password: authToken,
         name: org.name || '', ceo: org.ceo || '', code: org.code || '',
         jurisdiction: (org.kpi && org.kpi.jurisdiction) || 'ROI'
       };
-    } else {
-      payload = {
-        action: 'update', password: authToken, code: org.code,
-        kpi: org.kpi || {}, app: org.app || {}, diagnosis: org.diagnosis || {},
-        crossBorder: org.crossBorder || {}, financial: org.financial || {},
-        baseline: org.baseline || [], endline: org.endline || [],
-        smart: org.smart || [], consulting: org.consulting || [],
-        coaching: org.coaching || [], attendance: org.attendance || [],
-        progress: org.progress || [], notes: org.notes || [],
-        baselineLocked: org.baselineLocked || false,
-        intensity: org.intensity || '',
-        baselineNotes: org.baselineNotes || '',
-        baselineReportUrl: org.baselineReportUrl || '',
-        assessor: org.assessor || {}
-      };
+      request('POST', null, newPayload)
+        .then(function(){
+          _online = true;
+          setStatus('Saved ✓', 'ok');
+          setTimeout(function(){ setStatus('', 'ok'); }, 2000);
+          if (callback) callback(true);
+        })
+        .catch(function(err){
+          console.warn('Airtable create failed:', err.message);
+          setStatus('Save failed — kept locally', 'warn');
+          _online = false;
+          if (callback) callback(false);
+        });
+      return;
     }
 
-    request('POST', null, payload)
+    // READ-MERGE-WRITE for updates:
+    // Before pushing, fetch the current Airtable state for THIS org so we can
+    // merge our local change into the latest shared record rather than
+    // overwriting the other assessor's saved edits with our stale full blob.
+    // Per-row arrays (consulting/coaching/attendance) merge by code at the
+    // field level. Simple/scalar fields use a "local wins if non-empty" rule
+    // — this is correct here because we KNOW the local copy was just edited
+    // by this user, so non-empty local values are intentional changes.
+    request('POST', null, { action: 'list' })
+      .then(function(latest){
+        var latestOrg = null;
+        if (latest && Array.isArray(latest.orgs)) {
+          for (var i = 0; i < latest.orgs.length; i++) {
+            if (latest.orgs[i].code === org.code) { latestOrg = latest.orgs[i]; break; }
+          }
+        }
+
+        // Build the payload starting from the latest Airtable state, then
+        // overlay the local edits for this org.
+        var basis = latestOrg ? latestOrg : org;
+        var merged = {
+          kpi:          mergeObj(basis.kpi, org.kpi),
+          app:          mergeObj(basis.app, org.app),
+          diagnosis:    mergeObj(basis.diagnosis, org.diagnosis),
+          crossBorder:  mergeObj(basis.crossBorder, org.crossBorder),
+          financial:    mergeObj(basis.financial, org.financial),
+          assessor:     mergeObj(basis.assessor, org.assessor),
+          baseline:     mergeRowsByIndex(basis.baseline, org.baseline),
+          endline:      mergeRowsByIndex(basis.endline, org.endline),
+          smart:        org.smart && org.smart.length ? org.smart : (basis.smart || []),
+          notes:        unionNotes(basis.notes, org.notes),
+          consulting:   mergeRowsByCode(basis.consulting, org.consulting),
+          coaching:     mergeRowsByCode(basis.coaching,   org.coaching),
+          attendance:   mergeRowsByCode(basis.attendance, org.attendance),
+          progress:     org.progress || basis.progress || [],
+          baselineLocked: !!(org.baselineLocked || basis.baselineLocked),
+          intensity:      org.intensity || basis.intensity || '',
+          baselineNotes:  org.baselineNotes || basis.baselineNotes || '',
+          baselineReportUrl: org.baselineReportUrl || basis.baselineReportUrl || ''
+        };
+
+        var payload = {
+          action: 'update', password: authToken, code: org.code,
+          kpi: merged.kpi, app: merged.app, diagnosis: merged.diagnosis,
+          crossBorder: merged.crossBorder, financial: merged.financial,
+          baseline: merged.baseline, endline: merged.endline,
+          smart: merged.smart, consulting: merged.consulting,
+          coaching: merged.coaching, attendance: merged.attendance,
+          progress: merged.progress, notes: merged.notes,
+          baselineLocked: merged.baselineLocked,
+          intensity: merged.intensity,
+          baselineNotes: merged.baselineNotes,
+          baselineReportUrl: merged.baselineReportUrl,
+          assessor: merged.assessor
+        };
+
+        return request('POST', null, payload);
+      })
       .then(function(){
         _online = true;
         setStatus('Saved ✓', 'ok');
@@ -344,6 +415,90 @@ var AT = (function() {
         _online = false;
         if (callback) callback(false);
       });
+  }
+
+  // ── Merge helpers used by read-merge-write pushOrg ──
+  // mergeObj: local non-empty fields win over remote; remote fills the rest.
+  function mergeObj(remote, local) {
+    var r = remote && typeof remote === 'object' ? remote : {};
+    var l = local  && typeof local  === 'object' ? local  : {};
+    var out = {};
+    Object.keys(r).forEach(function(k){ out[k] = r[k]; });
+    Object.keys(l).forEach(function(k){
+      var v = l[k];
+      // Local wins for any non-empty value, including `false` (saved boolean).
+      if (v !== '' && v !== null && v !== undefined) out[k] = v;
+      else if (!(k in out)) out[k] = v;
+    });
+    return out;
+  }
+  // mergeRowsByCode: per-row, per-field merge keyed on `code` (consulting/coaching/attendance).
+  // Local non-empty field values overlay remote. Rows present only in one side are kept.
+  function mergeRowsByCode(remoteRows, localRows) {
+    var r = Array.isArray(remoteRows) ? remoteRows : [];
+    var l = Array.isArray(localRows)  ? localRows  : [];
+    if (!r.length) return l;
+    if (!l.length) return r;
+    var localByCode = {};
+    l.forEach(function(row){ if (row && row.code) localByCode[row.code] = row; });
+    var out = r.map(function(remoteRow){
+      if (!remoteRow || !remoteRow.code) return remoteRow;
+      var localRow = localByCode[remoteRow.code];
+      if (!localRow) return remoteRow;
+      var merged = Object.assign({}, remoteRow);
+      Object.keys(localRow).forEach(function(field){
+        if (field === '_rid') return;
+        var v = localRow[field];
+        // Local wins for non-empty values. For booleans, only `true` overrides
+        // remote (a local `false` could be stale; if user genuinely unticked,
+        // they'll save again and remote will already be `false` next read).
+        if (typeof v === 'boolean') {
+          if (v === true) merged[field] = true;
+        } else if (v !== '' && v !== null && v !== undefined) {
+          merged[field] = v;
+        }
+      });
+      return merged;
+    });
+    // Append local-only rows.
+    var remoteCodes = {};
+    out.forEach(function(row){ if (row && row.code) remoteCodes[row.code] = 1; });
+    l.forEach(function(row){ if (row && row.code && !remoteCodes[row.code]) out.push(row); });
+    return out;
+  }
+  // mergeRowsByIndex: for fixed-length arrays like baseline/endline (9 domains).
+  // Local field value wins where non-empty.
+  function mergeRowsByIndex(remoteRows, localRows) {
+    var r = Array.isArray(remoteRows) ? remoteRows : [];
+    var l = Array.isArray(localRows)  ? localRows  : [];
+    var len = Math.max(r.length, l.length);
+    var out = [];
+    for (var i = 0; i < len; i++) {
+      var rRow = r[i] || {};
+      var lRow = l[i] || {};
+      var merged = Object.assign({}, rRow);
+      Object.keys(lRow).forEach(function(field){
+        var v = lRow[field];
+        if (v !== '' && v !== null && v !== undefined) merged[field] = v;
+      });
+      out.push(merged);
+    }
+    return out;
+  }
+  // unionNotes: keep all notes from both sides, de-duped by (type+date+text).
+  function unionNotes(remoteNotes, localNotes) {
+    var r = Array.isArray(remoteNotes) ? remoteNotes : [];
+    var l = Array.isArray(localNotes)  ? localNotes  : [];
+    var seen = {};
+    var out = [];
+    function key(n) { return (n.type||'') + '|' + (n.date||'') + '|' + (n.text||''); }
+    r.concat(l).forEach(function(n){
+      if (!n) return;
+      var k = key(n);
+      if (seen[k]) return;
+      seen[k] = 1; out.push(n);
+    });
+    return out;
   }
 
   function deleteOrg(org, callback) {
