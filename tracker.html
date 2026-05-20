@@ -335,7 +335,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <span><span class="rag-dot rag-g"></span>Green &ge;80%</span>
 <span><span class="rag-dot rag-a"></span>Amber 50&ndash;79%</span>
 <span><span class="rag-dot rag-r"></span>Red &lt;50%</span>
-<span style="color:var(--tt);font-style:italic">vs cycles due to date</span>
+<span style="color:var(--tt);font-style:italic">modules + consulting + coaching (closed / in-window / missed)</span>
 </div>
 </div>
 </div>
@@ -447,7 +447,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="kpi-card"><label>Mode of Support</label><div id="ragModeSlot"></div></div>
 <div class="kpi-card"><label>Baseline Turnover (number only, e.g. 120000)</label><div id="ragBaselineSlot"></div></div>
 <div class="kpi-card"><label>Current Turnover (number only)</label><div id="ragCurrentSlot"></div></div>
-<div class="kpi-card"><label>Progress % (0-100, leave blank for auto)</label><div id="ragProgressSlot"></div></div>
 <div class="kpi-card"><label>Op Surplus % (number only, e.g. 7.2)</label><div id="ragSurplusSlot"></div></div>
 <div class="kpi-card"><label>Cross-Border Sales (number only)</label><div id="ragCbSlot"></div></div>
 </div>
@@ -685,34 +684,83 @@ function getConsultHours(c){
   return 0;
 }
 
-function ragCyclesDueByNow(){
-  // Cycle due-by dates use the START of each outreach window. Treat a cycle as
-  // "due" once its window has opened.
-  var dues=[
-    new Date(2026,4,4),  // OR1: 4 May
-    new Date(2026,5,12), // OR2: 12 Jun
-    new Date(2026,6,10), // OR3: 10 Jul
-    new Date(2026,7,14), // OR4: 14 Aug
-    new Date(2026,8,11), // OR5: 11 Sep
-    new Date(2026,9,9),  // OR6: 9 Oct
-    new Date(2026,10,13),// OR7: 13 Nov
-    new Date(2026,11,14) // OR8: 14 Dec
-  ];
-  var today=new Date();
-  var n=0;
-  for(var i=0;i<dues.length;i++){if(today>=dues[i])n++;}
-  return n;
+// Parse a date range string like "12-26 Jun 2026" or "15 Dec 2026" or "12 Oct 2026"
+// Returns {start: Date, end: Date} or null if unparseable.
+function ragParseDateRange(str){
+  if(!str)return null;
+  var months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  // Match "12-26 Jun 2026" or "12 - 26 Jun 2026"
+  var m=str.match(/^(\d{1,2})\s*[-\u2013]\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+  if(m){
+    var mo=months[m[3]];if(mo===undefined)return null;
+    return{start:new Date(parseInt(m[4]),mo,parseInt(m[1])),end:new Date(parseInt(m[4]),mo,parseInt(m[2]))};
+  }
+  // Match "15 Dec 2026" (single day)
+  m=str.match(/^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+  if(m){
+    var mo2=months[m[2]];if(mo2===undefined)return null;
+    var d=new Date(parseInt(m[3]),mo2,parseInt(m[1]));
+    return{start:d,end:d};
+  }
+  return null;
 }
 
-function ragCalcProgress(org){
-  if(org.kpi&&org.kpi.progressPct&&org.kpi.progressPct!=='')return parseFloat(org.kpi.progressPct);
-  var due=ragCyclesDueByNow();
-  if(due===0)return null; // pre-OR1: nothing due yet, show N/A not Red
-  var done=0;
-  if(org.consulting&&org.consulting.length){
-    org.consulting.forEach(function(c){if(c.completed)done++;});
+// Determine RAG state for a single deliverable item.
+// Returns 'green' (closed), 'amber' (in window, not yet closed),
+// 'red' (window passed, not closed), or 'na' (window not yet open).
+function ragItemState(completed,startDate,endDate){
+  if(completed)return'green';
+  if(!startDate)return'na';
+  var today=new Date();
+  today.setHours(0,0,0,0);
+  if(today<startDate)return'na';
+  // Allow a 7-day grace period after window end before flagging red
+  var grace=new Date(endDate.getTime());
+  grace.setDate(grace.getDate()+7);
+  if(today<=grace)return'amber';
+  return'red';
+}
+
+// Build the full list of programme deliverables for an org with their state.
+// Returns {items:[{kind,code,title,state}], counts:{green,amber,red,na,total,due}}
+function ragOrgDeliverables(org){
+  var items=[];
+  // Modules (group sessions) - use startDate/endDate baked into GROUP_SESSIONS
+  if(org.attendance&&org.attendance.length){
+    org.attendance.forEach(function(a,i){
+      var gs=GROUP_SESSIONS[i];if(!gs)return;
+      var closed=!!a.attended;
+      items.push({kind:'module',code:gs.code,title:gs.title,state:ragItemState(closed,gs.startDate,gs.endDate)});
+    });
   }
-  return Math.round((done/due)*100);
+  // Consulting cycles - parse date string from the OUTREACH_CYCLES record on the org
+  if(org.consulting&&org.consulting.length){
+    org.consulting.forEach(function(c){
+      var r=ragParseDateRange(c.date);
+      var closed=!!c.completed;
+      items.push({kind:'consulting',code:c.code,title:c.title,state:ragItemState(closed,r?r.start:null,r?r.end:null)});
+    });
+  }
+  // Coaching cycles
+  if(org.coaching&&org.coaching.length){
+    org.coaching.forEach(function(c){
+      var r=ragParseDateRange(c.date);
+      var closed=!!c.completed;
+      items.push({kind:'coaching',code:c.code,title:c.title,state:ragItemState(closed,r?r.start:null,r?r.end:null)});
+    });
+  }
+  var counts={green:0,amber:0,red:0,na:0,total:items.length,due:0};
+  items.forEach(function(it){counts[it.state]++;if(it.state!=='na')counts.due++;});
+  return{items:items,counts:counts};
+}
+
+// Overall progress percentage = (green + 0.5 * amber) / due, where 'due' excludes
+// items whose window has not yet opened. Returns null if nothing is due yet.
+function ragCalcProgress(org){
+  var d=ragOrgDeliverables(org);
+  if(d.counts.due===0)return null;
+  var weighted=d.counts.green+(d.counts.amber*0.5);
+  return Math.round((weighted/d.counts.due)*100);
 }
 
 function ragBadge(p){
@@ -1224,14 +1272,14 @@ function exportToExcel(){
 // GROUP SESSION ATTENDANCE
 // ═══════════════════════════════════════
 var GROUP_SESSIONS=[
-  {code:'GS1',title:'Group Session 1 - Programme Launch & Baseline',date:'30 Apr 2026',phase:'Diagnose'},
-  {code:'GS2',title:'Group Session 2 - Taking Ownership & Driving Forward',date:'May 2026',phase:'Translate'},
-  {code:'GS3',title:'Group Session 3 - Strategic Development & Innovation',date:'Jun 2026',phase:'Translate'},
-  {code:'GS4',title:'Group Session 4 - Change Management for Scaling 1',date:'Jul 2026',phase:'Strengthen'},
-  {code:'GS5',title:'Group Session 5 - Change Management for Scaling 2',date:'Aug 2026',phase:'Strengthen'},
-  {code:'GS6',title:'Group Session 6 - Digital Marketing & Cross-Border',date:'Sep 2026',phase:'Strengthen'},
-  {code:'GS7',title:'Group Session 7 - Governance, Leadership & Investment Readiness (1)',date:'Oct 2026',phase:'Strengthen'},
-  {code:'GS8',title:'Group Session 8 - Governance, Leadership & Investment Readiness (2)',date:'Nov 2026',phase:'Sustain'}
+  {code:'GS1',title:'Kick-Off - Programme Launch & Diagnostic Briefing',date:'23 Apr 2026',phase:'Diagnose',startDate:new Date(2026,3,23),endDate:new Date(2026,3,23)},
+  {code:'GS2',title:'M1 - Foundations for Commercialisation',date:'11 Jun 2026',phase:'Translate',startDate:new Date(2026,5,11),endDate:new Date(2026,5,11)},
+  {code:'GS3',title:'M2 - Diversifying Revenue Streams & Strengthening Commercial',date:'16 Jul 2026',phase:'Strengthen',startDate:new Date(2026,6,16),endDate:new Date(2026,6,16)},
+  {code:'GS4',title:'M3 - Change Management for Commercial Scaling',date:'13 Aug 2026',phase:'Strengthen',startDate:new Date(2026,7,13),endDate:new Date(2026,7,13)},
+  {code:'GS5',title:'M4 - Financial Systems, Pricing & Commercial Decision-Making',date:'10 Sep 2026',phase:'Strengthen',startDate:new Date(2026,8,10),endDate:new Date(2026,8,10)},
+  {code:'GS6',title:'M5 - Digital Marketing, Communications & Cross-Border Visibility',date:'8 Oct 2026',phase:'Strengthen',startDate:new Date(2026,9,8),endDate:new Date(2026,9,8)},
+  {code:'GS7',title:'M6 - AI & Technology for Operational Efficiency',date:'12 Nov 2026',phase:'Strengthen',startDate:new Date(2026,10,12),endDate:new Date(2026,10,12)},
+  {code:'GS8',title:'M7 - Governance, Leadership, Succession & Investment Readiness',date:'10-11 Dec 2026',phase:'Sustain',startDate:new Date(2026,11,10),endDate:new Date(2026,11,11)}
 ];
 
 // ═══════════════════════════════════════
@@ -1345,6 +1393,12 @@ function ensureAttendance(org){
       return ex||{code:s.code,title:s.title,date:s.date,phase:s.phase,attended:false,apology:false,format:'Online',notes:''};
     });
   }
+  // Always refresh titles/dates/phase from master so module renames flow through;
+  // attended/apology/format/notes are preserved.
+  org.attendance.forEach(function(a,i){
+    var gs=GROUP_SESSIONS[i];if(!gs)return;
+    a.title=gs.title;a.date=gs.date;a.phase=gs.phase;
+  });
   return org.attendance;
 }
 
@@ -1971,7 +2025,6 @@ function renderRagKpiSlots(org){
     {id:'ragModeSlot',key:'ragMode',ph:'e.g. Consulting / Mentoring + Coaching',ta:false},
     {id:'ragBaselineSlot',key:'ragBaseline',ph:'e.g. 120000',ta:false},
     {id:'ragCurrentSlot',key:'ragCurrent',ph:'e.g. 138000',ta:false},
-    {id:'ragProgressSlot',key:'progressPct',ph:'0-100 (leave blank for auto)',ta:false},
     {id:'ragSurplusSlot',key:'ragSurplus',ph:'e.g. 7.2',ta:false},
     {id:'ragCbSlot',key:'ragCbSales',ph:'e.g. 15000',ta:false},
     {id:'ragActionsSlot',key:'ragNextActions',ph:'Next actions or risks for RAG report',ta:true}
