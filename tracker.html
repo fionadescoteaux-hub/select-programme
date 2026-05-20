@@ -1636,7 +1636,10 @@ var score=parseFloat(b.score)||0;
 var wt=DOMAINS[i]?DOMAINS[i].wt/100:0;
 total+=score*wt;
 });
-return total*5;
+// Domain weights total 100, so total is already on a 0-5 scale.
+// The earlier "*5" inflated AVG BASELINE to a 0-25 figure that
+// didn't match the per-org baselines shown in the RAG report.
+return total;
 }
 
 function renderOrgGrid(){
