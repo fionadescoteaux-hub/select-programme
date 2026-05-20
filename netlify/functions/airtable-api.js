@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-07-v5 (BaselineNotes field added)
+// Version: 2026-05-20-v7-hours (consulting hours mapped to CO_DAYS; read returns hours and days)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -395,6 +395,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       actionsAgreed: r.fields[F.CO_ACTIONS] || "",
       keyOutputs: r.fields[F.CO_OUTPUTS] || "",
       days: r.fields[F.CO_DAYS] || "",
+      hours: r.fields[F.CO_DAYS] || "",
       domainMovement: r.fields[F.CO_MOVEMENT] || "",
       rag: r.fields[F.CO_RAG] || "",
       completed: !!r.fields[F.CO_DONE],
@@ -891,7 +892,7 @@ async function handleUpdate(payload) {
         [F.CO_SMART]: c.smartProgressed || "",
         [F.CO_ACTIONS]: c.actionsAgreed || "",
         [F.CO_OUTPUTS]: c.keyOutputs || "",
-        [F.CO_DAYS]: c.days || "",
+        [F.CO_DAYS]: (c.hours !== undefined && c.hours !== "") ? c.hours : (c.days || ""),
         [F.CO_MOVEMENT]: c.domainMovement || "",
         [F.CO_DONE]: !!c.completed,
       };
