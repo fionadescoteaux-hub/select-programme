@@ -113,6 +113,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .tab-btn{padding:8px 14px;border-radius:var(--r);font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--tb2);background:transparent;color:var(--ts);transition:all .15s;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
 .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .tab-btn:hover:not(.active){border-color:var(--navy);color:var(--navy)}
+.tab-btn[data-tab="actionplan"]{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:700;padding:8px 18px;font-size:12.5px;box-shadow:0 1px 3px rgba(0,140,130,0.25)}
+.tab-btn[data-tab="actionplan"]:hover:not(.active){background:#006b63;color:#fff;border-color:#006b63}
+.tab-btn[data-tab="actionplan"].active{background:#004a44;color:#fff;border-color:#004a44}
 .tab-panel{display:none}.tab-panel.active{display:block}
 
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
@@ -203,6 +206,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .aps-block{background:#fdecea;color:#c62828}
 .ap-empty{color:var(--tt);font-style:italic;font-size:13px;padding:14px 0}
 .ap-no-smart{background:#fff4e5;border:1px solid rgba(237,108,2,0.25);color:#8a4500;padding:16px 20px;border-radius:var(--r2);font-size:14px;line-height:1.5}
+.ap-tab-header{background:linear-gradient(135deg,var(--teal) 0%,#006b63 100%);color:#fff;padding:22px 26px;border-radius:var(--r2);margin-bottom:22px;box-shadow:0 2px 6px rgba(0,140,130,0.18)}
+.ap-tab-header .ap-tab-title{font-family:var(--serif);font-size:26px;font-weight:700;margin-bottom:6px;color:#fff;letter-spacing:-0.3px}
+.ap-tab-header .ap-tab-subtitle{font-size:14px;color:rgba(255,255,255,0.9);line-height:1.5;max-width:780px}
+.ap-section-label{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--navy);margin:24px 0 10px 0;padding-bottom:6px;border-bottom:2px solid var(--teal)}
+.ap-section-label:first-child{margin-top:0}
 .pc-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
 .pc-lock-btn{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:5px 11px;border-radius:4px;border:1px solid var(--tb2);background:var(--card);color:var(--ts);cursor:pointer;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
 .pc-lock-btn:hover{background:var(--bg2);border-color:var(--ts)}
@@ -556,8 +564,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- MY ACTION PLAN TAB -->
 <div class="tab-panel" id="tab-actionplan">
-<div class="section-title">My Action Plan</div>
-<div class="section-note">Your live action plan against the SMART objectives agreed at the validation meeting. Add the practical steps you'll take, who's responsible, and by when. This is your working plan — update it as things move.</div>
+<div class="ap-tab-header">
+<div class="ap-tab-title">My Action Plan</div>
+<div class="ap-tab-subtitle">Your live action plan. Add the practical steps you'll take, who's responsible, and by when. Update it as things move — this is your working document, not a one-off submission.</div>
+</div>
 <div id="actionPlanContent"></div>
 </div>
 
@@ -2989,8 +2999,53 @@ var AP_STATUSES=['Not Started','In Progress','Done','Blocked'];
 
 function ensureActionPlan(org){
   if(!org.actionPlan||typeof org.actionPlan!=='object')org.actionPlan={};
-  // org.actionPlan[smartIndex] = array of {desc, who, byWhen, status}
+  // Migration: earlier version used numeric SMART indices (0,1,2...) as keys.
+  // Move any such entries under the new 's<index>' naming.
+  Object.keys(org.actionPlan).forEach(function(k){
+    if(/^\d+$/.test(k)){
+      var newKey='s'+k;
+      if(!org.actionPlan[newKey])org.actionPlan[newKey]=org.actionPlan[k];
+      delete org.actionPlan[k];
+    }
+  });
   return org.actionPlan;
+}
+
+function saveActionField(el){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  ensureActionPlan(org);
+  var key=el.dataset.apKey;
+  var aIdx=parseInt(el.dataset.apAction);
+  var prop=el.dataset.apField;
+  if(!org.actionPlan[key])org.actionPlan[key]=[];
+  if(!org.actionPlan[key][aIdx])org.actionPlan[key][aIdx]={desc:'',who:'',byWhen:'',status:'Not Started'};
+  org.actionPlan[key][aIdx][prop]=el.value;
+  saveData(data,currentOrg);
+}
+
+function addAction(key){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  ensureActionPlan(org);
+  if(!org.actionPlan[key])org.actionPlan[key]=[];
+  org.actionPlan[key].push({desc:'',who:'',byWhen:'',status:'Not Started'});
+  saveData(data,currentOrg);
+  renderActionPlan(org);
+}
+
+function deleteAction(key,actionIdx){
+  if(!confirm('Remove this action?'))return;
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  ensureActionPlan(org);
+  if(!org.actionPlan[key])return;
+  org.actionPlan[key].splice(actionIdx,1);
+  saveData(data,currentOrg);
+  renderActionPlan(org);
 }
 
 function renderActionPlan(org){
@@ -3002,61 +3057,73 @@ function renderActionPlan(org){
   var goals=ass.goals||{};
   var problem=diag.problemStatement||diag.problem||goals.g_problem||'';
   var smarts=(org.smart||[]).filter(function(s){return s&&(s.objective||'').trim();});
+  var goalLines=[];
+  ['g_goal1','g_goal2','g_goal3'].forEach(function(k,i){
+    if(goals[k])goalLines.push({key:'g'+(i+1),idx:i+1,text:goals[k]});
+  });
   var html='';
 
-  // Context block: problem statement + goals
+  // Context block: problem statement (read-only)
   html+='<div class="ap-context">';
   html+='<div class="ap-ctx-label">Commercial Problem Statement</div>';
   html+='<div class="ap-ctx-val">'+(problem||'<em style="color:var(--tt)">Not yet captured. Fiona or Clodagh will complete this at the validation meeting.</em>')+'</div>';
-  var goalLines=[];
-  if(goals.g_goal1)goalLines.push(goals.g_goal1);
-  if(goals.g_goal2)goalLines.push(goals.g_goal2);
-  if(goals.g_goal3)goalLines.push(goals.g_goal3);
-  html+='<div class="ap-ctx-label">Goals (high-level direction)</div>';
-  if(goalLines.length){
-    html+='<ol class="ap-ctx-goals">';
-    goalLines.forEach(function(g){html+='<li>'+esc(g)+'</li>';});
-    html+='</ol>';
-  }else{
-    html+='<div class="ap-ctx-val"><em style="color:var(--tt)">Goals will appear here once captured at the validation meeting.</em></div>';
-  }
   html+='</div>';
 
-  // SMART objectives + actions tables
-  if(!smarts.length){
-    html+='<div class="ap-no-smart">No SMART objectives yet. These are agreed with Fiona or Clodagh at the validation meeting and will appear here once recorded. The action plan goes live after the M1 module on Thursday 11 June.</div>';
-  }else{
-    smarts.forEach(function(s,idx){
-      var actions=org.actionPlan[idx]||[];
-      html+='<div class="ap-card">';
-      html+='<div class="ap-obj-num">SMART Objective '+(idx+1)+'</div>';
-      html+='<div class="ap-obj-text">'+esc(s.objective||'')+'</div>';
-      html+='<table class="ap-table">';
-      html+='<thead><tr><th class="ap-col-desc">Action</th><th class="ap-col-who">Who</th><th class="ap-col-when">By when</th><th class="ap-col-status">Status</th><th class="ap-col-action"></th></tr></thead>';
-      html+='<tbody>';
-      if(!actions.length){
-        html+='<tr><td colspan="5" class="ap-empty">No actions yet. Click "Add action" below to start planning the steps to deliver this objective.</td></tr>';
-      }else{
-        actions.forEach(function(a,ai){
-          var st=a.status||'Not Started';
-          html+='<tr>';
-          html+='<td><textarea data-ap-field="desc" data-ap-smart="'+idx+'" data-ap-action="'+ai+'" placeholder="What needs to happen?">'+esc(a.desc||'')+'</textarea></td>';
-          html+='<td><input data-ap-field="who" data-ap-smart="'+idx+'" data-ap-action="'+ai+'" value="'+esc(a.who||'')+'" placeholder="Name or role"></td>';
-          html+='<td><input type="date" data-ap-field="byWhen" data-ap-smart="'+idx+'" data-ap-action="'+ai+'" value="'+esc(a.byWhen||'')+'"></td>';
-          html+='<td><select data-ap-field="status" data-ap-smart="'+idx+'" data-ap-action="'+ai+'">';
-          AP_STATUSES.forEach(function(opt){
-            html+='<option value="'+opt+'"'+(opt===st?' selected':'')+'>'+opt+'</option>';
-          });
-          html+='</select></td>';
-          html+='<td class="ap-col-action"><button class="ap-del-btn" onclick="deleteAction('+idx+','+ai+')" title="Remove action">&times;</button></td>';
-          html+='</tr>';
+  function renderActionTable(anchorKey,headerLabel,headerText){
+    var actions=org.actionPlan[anchorKey]||[];
+    var out='';
+    out+='<div class="ap-card">';
+    out+='<div class="ap-obj-num">'+esc(headerLabel)+'</div>';
+    out+='<div class="ap-obj-text">'+esc(headerText)+'</div>';
+    out+='<table class="ap-table">';
+    out+='<thead><tr><th class="ap-col-desc">Action</th><th class="ap-col-who">Who</th><th class="ap-col-when">By when</th><th class="ap-col-status">Status</th><th class="ap-col-action"></th></tr></thead>';
+    out+='<tbody>';
+    if(!actions.length){
+      out+='<tr><td colspan="5" class="ap-empty">No actions yet. Click "Add action" below to start planning.</td></tr>';
+    }else{
+      actions.forEach(function(a,ai){
+        var st=a.status||'Not Started';
+        out+='<tr>';
+        out+='<td><textarea data-ap-field="desc" data-ap-key="'+esc(anchorKey)+'" data-ap-action="'+ai+'" placeholder="What needs to happen?">'+esc(a.desc||'')+'</textarea></td>';
+        out+='<td><input data-ap-field="who" data-ap-key="'+esc(anchorKey)+'" data-ap-action="'+ai+'" value="'+esc(a.who||'')+'" placeholder="Name or role"></td>';
+        out+='<td><input type="date" data-ap-field="byWhen" data-ap-key="'+esc(anchorKey)+'" data-ap-action="'+ai+'" value="'+esc(a.byWhen||'')+'"></td>';
+        out+='<td><select data-ap-field="status" data-ap-key="'+esc(anchorKey)+'" data-ap-action="'+ai+'">';
+        AP_STATUSES.forEach(function(opt){
+          out+='<option value="'+opt+'"'+(opt===st?' selected':'')+'>'+opt+'</option>';
         });
-      }
-      html+='</tbody></table>';
-      html+='<div class="ap-add-row"><button class="btn btn-outline" onclick="addAction('+idx+')">+ Add action</button></div>';
-      html+='</div>';
+        out+='</select></td>';
+        out+='<td class="ap-col-action"><button class="ap-del-btn" onclick="deleteAction(\''+esc(anchorKey)+'\','+ai+')" title="Remove action">&times;</button></td>';
+        out+='</tr>';
+      });
+    }
+    out+='</tbody></table>';
+    out+='<div class="ap-add-row"><button class="btn btn-outline" onclick="addAction(\''+esc(anchorKey)+'\')">+ Add action</button></div>';
+    out+='</div>';
+    return out;
+  }
+
+  // SMART OBJECTIVES section (shown if any exist on the SMART tab)
+  if(smarts.length){
+    html+='<div class="ap-section-label">Actions against SMART Objectives</div>';
+    smarts.forEach(function(s,idx){
+      html+=renderActionTable('s'+idx,'SMART Objective '+(idx+1),s.objective||'');
     });
   }
+
+  // GOALS section (shown if any goals captured but no SMARTs, OR alongside SMARTs as supplementary)
+  if(goalLines.length){
+    var goalSectionLabel=smarts.length?'Actions against Goals (high-level direction)':'Actions against Goals';
+    html+='<div class="ap-section-label">'+esc(goalSectionLabel)+'</div>';
+    goalLines.forEach(function(g){
+      html+=renderActionTable(g.key,'Goal '+g.idx,g.text);
+    });
+  }
+
+  // If nothing to anchor actions to yet
+  if(!smarts.length&&!goalLines.length){
+    html+='<div class="ap-no-smart">Your goals and SMART objectives will appear here once captured with Fiona or Clodagh. Once they\'re in, you can start adding the practical actions to deliver them.</div>';
+  }
+
   el.innerHTML=html;
 
   // Wire up inline-save handlers for all editable fields
@@ -3064,45 +3131,6 @@ function renderActionPlan(org){
     var ev=field.tagName==='SELECT'||field.type==='date'?'change':'blur';
     field.addEventListener(ev,function(){saveActionField(this);});
   });
-}
-
-function saveActionField(el){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  ensureActionPlan(org);
-  var sIdx=parseInt(el.dataset.apSmart);
-  var aIdx=parseInt(el.dataset.apAction);
-  var prop=el.dataset.apField;
-  if(!org.actionPlan[sIdx])org.actionPlan[sIdx]=[];
-  if(!org.actionPlan[sIdx][aIdx])org.actionPlan[sIdx][aIdx]={desc:'',who:'',byWhen:'',status:'Not Started'};
-  org.actionPlan[sIdx][aIdx][prop]=el.value;
-  saveData(data,currentOrg);
-  // For status changes, re-render so the colour updates immediately
-  // (other fields don't need a re-render — value is already correct in the DOM)
-}
-
-function addAction(smartIdx){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  ensureActionPlan(org);
-  if(!org.actionPlan[smartIdx])org.actionPlan[smartIdx]=[];
-  org.actionPlan[smartIdx].push({desc:'',who:'',byWhen:'',status:'Not Started'});
-  saveData(data,currentOrg);
-  renderActionPlan(org);
-}
-
-function deleteAction(smartIdx,actionIdx){
-  if(!confirm('Remove this action?'))return;
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  ensureActionPlan(org);
-  if(!org.actionPlan[smartIdx])return;
-  org.actionPlan[smartIdx].splice(actionIdx,1);
-  saveData(data,currentOrg);
-  renderActionPlan(org);
 }
 
 var OUTREACH_CYCLES=[
