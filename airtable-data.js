@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // SELECT Programme — Airtable Data Layer
-// Version: 2026-05-20-MULTIUSER-MERGE
+// Version: 2026-05-20-MULTIUSER-MERGE-PLUS-LOCKS-AND-ACTIONS
 //
 // CRITICAL SAFETY RULES (prevent Airtable wipes):
 // 1. NEVER push to Airtable until loadData() succeeds at least once.
@@ -180,6 +180,8 @@ var AT = (function() {
             if (!o.diagnosis)   o.diagnosis   = {};
             if (!o.sop)         o.sop         = {};
             if (!o.crossBorder) o.crossBorder = {};
+            if (!o.actionPlan || typeof o.actionPlan !== 'object') o.actionPlan = {};
+            if (!o._uiLocks   || typeof o._uiLocks   !== 'object') o._uiLocks   = {};
             if (typeof o.baselineNotes !== 'string') o.baselineNotes = '';
             if (typeof o.baselineReportUrl !== 'string') o.baselineReportUrl = '';
 
@@ -259,6 +261,9 @@ var AT = (function() {
               if (co.intensity && !o.intensity) o.intensity = co.intensity;
               if (co.baselineLocked && !o.baselineLocked) o.baselineLocked = true;
               if (co.financial && Object.keys(co.financial).length > 0 && Object.keys(o.financial || {}).length === 0) o.financial = co.financial;
+              // actionPlan and _uiLocks: keep cache version if Airtable returned empty
+              if (co.actionPlan && Object.keys(co.actionPlan).length > 0 && Object.keys(o.actionPlan || {}).length === 0) o.actionPlan = co.actionPlan;
+              if (co._uiLocks   && Object.keys(co._uiLocks).length   > 0 && Object.keys(o._uiLocks   || {}).length === 0) o._uiLocks   = co._uiLocks;
             }
           });
         }
@@ -383,7 +388,10 @@ var AT = (function() {
           baselineLocked: !!(org.baselineLocked || basis.baselineLocked),
           intensity:      org.intensity || basis.intensity || '',
           baselineNotes:  org.baselineNotes || basis.baselineNotes || '',
-          baselineReportUrl: org.baselineReportUrl || basis.baselineReportUrl || ''
+          baselineReportUrl: org.baselineReportUrl || basis.baselineReportUrl || '',
+          // actionPlan and _uiLocks are simple JSON blobs — local wins when non-empty.
+          actionPlan:     (org.actionPlan && Object.keys(org.actionPlan).length) ? org.actionPlan : (basis.actionPlan || {}),
+          _uiLocks:       (org._uiLocks   && Object.keys(org._uiLocks).length)   ? org._uiLocks   : (basis._uiLocks   || {})
         };
 
         var payload = {
@@ -398,7 +406,9 @@ var AT = (function() {
           intensity: merged.intensity,
           baselineNotes: merged.baselineNotes,
           baselineReportUrl: merged.baselineReportUrl,
-          assessor: merged.assessor
+          assessor: merged.assessor,
+          actionPlan: merged.actionPlan,
+          _uiLocks: merged._uiLocks
         };
 
         return request('POST', null, payload);
