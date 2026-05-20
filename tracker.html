@@ -171,6 +171,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .problem-card .pc-label{font-size:11px;font-weight:700;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
 .problem-card textarea{width:100%;min-height:60px;padding:8px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);resize:vertical;background:var(--card);color:var(--tp)}
 .problem-card .pc-val{font-size:14px;color:var(--ts2);line-height:1.6;white-space:pre-wrap}
+.problem-card.pc-locked{background:var(--bg2);border-color:var(--tb)}
+.pc-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.pc-lock-btn{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:5px 11px;border-radius:4px;border:1px solid var(--tb2);background:var(--card);color:var(--ts);cursor:pointer;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
+.pc-lock-btn:hover{background:var(--bg2);border-color:var(--ts)}
+.pc-lock-btn.locked{background:var(--teal-light);color:var(--teal);border-color:rgba(0,140,130,0.25)}
+.pc-lock-btn.locked:hover{background:rgba(0,140,130,0.15)}
+.constraint-row.c-locked{padding:6px 0}
+.constraint-row.c-locked .c-text{flex:1;font-size:14px;color:var(--ts2);line-height:1.55;padding:6px 0}
 .constraint-row{display:flex;gap:12px;margin-bottom:10px;align-items:center}
 .constraint-row .c-num{background:var(--coral);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .constraint-row input,.constraint-row select{flex:1;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)}
@@ -2544,11 +2552,25 @@ var d=org.diagnosis;
 if(!d.problemStatement&&d.problem)d.problemStatement=d.problem;
 if(!d.constraints||!Array.isArray(d.constraints))d.constraints=['','',''];
 while(d.constraints.length<3)d.constraints.push('');
+if(!d._locks)d._locks={};
+var L=d._locks;
+function lockBtn(section,locked){
+  if(!isAssessor)return'';
+  var label=locked?'&#9998; Edit':'&#128274; Save &amp; Lock View';
+  var cls=locked?'pc-lock-btn locked':'pc-lock-btn';
+  return'<button class="'+cls+'" onclick="toggleDiagnosisLock(\''+section+'\')">'+label+'</button>';
+}
 var html='';
-html+='<div class="problem-card"><div class="pc-label">Commercial Problem Statement</div>';
-if(isAssessor){html+='<textarea data-diag="problemStatement">'+esc(d.problemStatement)+'</textarea>';}
+
+// Problem Statement
+var lps=!!L.problemStatement;
+html+='<div class="problem-card'+(lps?' pc-locked':'')+'">';
+html+='<div class="pc-header"><div class="pc-label">Commercial Problem Statement</div>'+lockBtn('problemStatement',lps)+'</div>';
+if(isAssessor&&!lps){html+='<textarea data-diag="problemStatement">'+esc(d.problemStatement)+'</textarea>';}
 else{html+='<div class="pc-val">'+(d.problemStatement||'--')+'</div>';}
 html+='</div>';
+
+// Scenario for Change (always interactive, no lock — it's a 3-button pill selector)
 html+='<div class="problem-card"><div class="pc-label">Scenario for Change</div>';
 if(isAssessor){
 html+='<div class="intensity-pills">';
@@ -2558,19 +2580,62 @@ html+='<div class="int-pill'+(d.scenario===s?' selected sel-'+s.toLowerCase():''
 html+='</div>';
 }else{html+='<div class="pc-val">'+(d.scenario||'--')+'</div>';}
 html+='</div>';
-html+='<div class="problem-card"><div class="pc-label">Root Constraints (linked to domain)</div>';
+
+// Root Constraints
+var lc=!!L.constraints;
+html+='<div class="problem-card'+(lc?' pc-locked':'')+'">';
+html+='<div class="pc-header"><div class="pc-label">Root Constraints (linked to domain)</div>'+lockBtn('constraints',lc)+'</div>';
 for(var i=0;i<3;i++){
+if(isAssessor&&!lc){
 html+='<div class="constraint-row"><div class="c-num">'+(i+1)+'</div>';
-if(isAssessor){html+='<input data-constraint="'+i+'" value="'+esc(d.constraints[i]||'')+'" placeholder="Domain -- Constraint description">';}
-else{html+='<span style="font-size:14px;color:var(--ts2)">'+(d.constraints[i]||'--')+'</span>';}
+html+='<input data-constraint="'+i+'" value="'+esc(d.constraints[i]||'')+'" placeholder="Domain -- Constraint description">';
+html+='</div>';
+}else{
+html+='<div class="constraint-row c-locked"><div class="c-num">'+(i+1)+'</div>';
+html+='<div class="c-text">'+(d.constraints[i]||'--')+'</div>';
 html+='</div>';
 }
+}
 html+='</div>';
-html+='<div class="problem-card"><div class="pc-label">Key Commercial Observation</div>';
-if(isAssessor){html+='<textarea data-diag="observation">'+esc(d.observation)+'</textarea>';}
+
+// Key Commercial Observation
+var lo=!!L.observation;
+html+='<div class="problem-card'+(lo?' pc-locked':'')+'">';
+html+='<div class="pc-header"><div class="pc-label">Key Commercial Observation</div>'+lockBtn('observation',lo)+'</div>';
+if(isAssessor&&!lo){html+='<textarea data-diag="observation">'+esc(d.observation)+'</textarea>';}
 else{html+='<div class="pc-val">'+(d.observation||'--')+'</div>';}
 html+='</div>';
+
 document.getElementById('diagnosisContent').innerHTML=html;
+}
+
+// Toggle a Diagnosis section between edit and locked-view mode.
+// Saves any pending text in the section's input(s) before locking so nothing is lost.
+function toggleDiagnosisLock(section){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!org.diagnosis)org.diagnosis={problemStatement:'',scenario:'',constraints:['','',''],observation:''};
+  if(!org.diagnosis._locks)org.diagnosis._locks={};
+  var willLock=!org.diagnosis._locks[section];
+  // Before flipping to locked, capture any unsaved input from the DOM
+  if(willLock){
+    if(section==='problemStatement'){
+      var ps=document.querySelector('[data-diag="problemStatement"]');
+      if(ps)org.diagnosis.problemStatement=ps.value;
+    }else if(section==='observation'){
+      var ob=document.querySelector('[data-diag="observation"]');
+      if(ob)org.diagnosis.observation=ob.value;
+    }else if(section==='constraints'){
+      document.querySelectorAll('[data-constraint]').forEach(function(el){
+        var idx=parseInt(el.dataset.constraint);
+        org.diagnosis.constraints[idx]=el.value;
+      });
+    }
+  }
+  org.diagnosis._locks[section]=willLock;
+  saveData(data,currentOrg);
+  renderDiagnosis(org);
 }
 
 // Print View — reflows the current org's full Diagnose-phase record into a clean
