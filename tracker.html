@@ -139,9 +139,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 .smart-obj{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .smart-obj .obj-num{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.smart-obj textarea,.smart-obj input{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;background:var(--card);color:var(--tp)}
-.smart-obj .obj-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:8px}
-@media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr 1fr}}
+.smart-obj textarea,.smart-obj input,.smart-obj select{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;background:var(--card);color:var(--tp);box-sizing:border-box}
+.smart-obj textarea{resize:vertical;min-height:64px;line-height:1.45}
+.smart-obj textarea[data-smart-obj]{min-height:80px}
+.smart-obj .obj-row{display:grid;grid-template-columns:2.4fr 1.2fr 0.9fr 1fr;gap:10px;margin-top:8px;align-items:start}
+.smart-obj .obj-row > div{min-width:0}
+.smart-obj .obj-row .target-cell textarea{min-height:72px}
+.smart-obj .obj-row .readonly-val{font-size:14px;font-weight:600;margin-top:6px;white-space:pre-wrap;word-wrap:break-word}
+@media(max-width:900px){.smart-obj .obj-row{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr}}
 .smart-obj label{font-size:10px;font-weight:600;color:var(--tt);text-transform:uppercase;letter-spacing:0.3px}
 
 .log-entry{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
@@ -243,7 +249,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .green-card .rag-sum-num{color:#2e7d32}.amber-card .rag-sum-num{color:#ed6c02}.red-card .rag-sum-num{color:#c62828}
 .rag-sum-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;color:var(--ts)}
 .rag-table-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--tb2)}
-.rag-table{width:100%;border-collapse:collapse;min-width:900px}
+.rag-table{width:100%;border-collapse:collapse;min-width:1500px;table-layout:fixed}
+.rag-table col.c-ent{width:170px}
+.rag-table col.c-base{width:64px}
+.rag-table col.c-lock{width:78px}
+.rag-table col.c-sess{width:80px}
+.rag-table col.c-ment{width:80px}
+.rag-table col.c-coach{width:78px}
+.rag-table col.c-inc{width:110px}
+.rag-table col.c-grow{width:78px}
+.rag-table col.c-prog{width:130px}
+.rag-table col.c-rag{width:78px}
+.rag-table col.c-cbs{width:90px}
+.rag-table col.c-next{width:auto;min-width:280px}
+.rag-table td.c-next-td{white-space:normal;word-wrap:break-word;line-height:1.4}
 .rag-table th{padding:10px 12px;background:var(--navy);color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;text-align:left;white-space:nowrap}
 .rag-table td{padding:11px 12px;border-bottom:1px solid var(--tb);font-size:13px;vertical-align:middle}
 .rag-table tr:last-child td{border-bottom:none}
@@ -316,6 +335,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <span><span class="rag-dot rag-g"></span>Green &ge;80%</span>
 <span><span class="rag-dot rag-a"></span>Amber 50&ndash;79%</span>
 <span><span class="rag-dot rag-r"></span>Red &lt;50%</span>
+<span style="color:var(--tt);font-style:italic">vs cycles due to date</span>
+</div>
 </div>
 </div>
 <div class="rag-summary-bar" style="grid-template-columns:repeat(6,1fr)">
@@ -328,14 +349,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 </div>
 <div class="rag-table-wrap">
 <table class="rag-table">
+<colgroup>
+<col class="c-ent"><col class="c-base"><col class="c-lock">
+<col class="c-sess"><col class="c-ment"><col class="c-coach">
+<col class="c-inc"><col class="c-grow"><col class="c-prog"><col class="c-rag">
+<col class="c-cbs"><col class="c-next">
+</colgroup>
 <thead><tr>
-<th>Enterprise</th><th>Region</th><th>Baseline</th><th>Locked</th>
+<th>Enterprise</th><th>Baseline</th><th>Locked</th>
 <th class="rag-right">Sessions</th><th class="rag-right">Consult Hrs</th><th class="rag-right">Coach Hrs</th>
 <th class="rag-right">Traded Income</th><th class="rag-right">Growth %</th>
 <th class="rag-right">Progress %</th><th>RAG</th>
 <th class="rag-right">CB Sales</th><th>Next Actions / Risks</th>
 </tr></thead>
-<tbody id="ragTableBody"><tr><td colspan="13" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
+<tbody id="ragTableBody"><tr><td colspan="12" style="text-align:center;color:var(--ts);padding:32px">No organisations yet.</td></tr></tbody>
 </table>
 </div>
 <div class="rag-last-updated" id="ragLastUpdated"></div>
@@ -658,14 +685,34 @@ function getConsultHours(c){
   return 0;
 }
 
+function ragCyclesDueByNow(){
+  // Cycle due-by dates use the START of each outreach window. Treat a cycle as
+  // "due" once its window has opened.
+  var dues=[
+    new Date(2026,4,4),  // OR1: 4 May
+    new Date(2026,5,12), // OR2: 12 Jun
+    new Date(2026,6,10), // OR3: 10 Jul
+    new Date(2026,7,14), // OR4: 14 Aug
+    new Date(2026,8,11), // OR5: 11 Sep
+    new Date(2026,9,9),  // OR6: 9 Oct
+    new Date(2026,10,13),// OR7: 13 Nov
+    new Date(2026,11,14) // OR8: 14 Dec
+  ];
+  var today=new Date();
+  var n=0;
+  for(var i=0;i<dues.length;i++){if(today>=dues[i])n++;}
+  return n;
+}
+
 function ragCalcProgress(org){
   if(org.kpi&&org.kpi.progressPct&&org.kpi.progressPct!=='')return parseFloat(org.kpi.progressPct);
+  var due=ragCyclesDueByNow();
+  if(due===0)return null; // pre-OR1: nothing due yet, show N/A not Red
   var done=0;
   if(org.consulting&&org.consulting.length){
     org.consulting.forEach(function(c){if(c.completed)done++;});
-    return Math.round((done/8)*100);
   }
-  return null;
+  return Math.round((done/due)*100);
 }
 
 function ragBadge(p){
@@ -762,7 +809,7 @@ function renderRagReport(){
     rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
     rows+='<td>'+ragBadge(prog)+'</td>';
     rows+='<td class="rag-right">'+cbs+'</td>';
-    rows+='<td style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
+    rows+='<td class="c-next-td" style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
     rows+='</tr>';
   });
   var avgProg=progCount?Math.round(totalProg/progCount):null;
@@ -775,8 +822,7 @@ function renderRagReport(){
     if(o.attendance)o.attendance.forEach(function(a){if(a.attended)totalAtt++;});
   });
   rows+='<tr class="rag-summary-row">';
-  rows+='<td colspan="2"><strong>Programme Totals ('+orgs.length+' orgs)</strong></td>';
-  rows+='<td></td><td></td>';
+  rows+='<td colspan="3"><strong>Programme Totals ('+orgs.length+' orgs)</strong></td>';
   rows+='<td class="rag-right"><strong>'+totalAtt+' / '+(orgs.length*8)+'</strong></td>';
   rows+='<td class="rag-right"><strong>'+parseFloat(totalMentHrs.toFixed(1))+' / '+(orgs.length*35)+'</strong></td>';
   rows+='<td class="rag-right"><strong>'+parseFloat(totalCoachHrs.toFixed(1))+' / '+(orgs.length*12)+'</strong></td>';
@@ -785,7 +831,7 @@ function renderRagReport(){
   rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'%':'-')+'</strong></td>';
   rows+='<td>'+ragBadge(avgProg)+'</td>';
   rows+='<td></td>';
-  rows+='<td style="font-size:12px;color:var(--ts)">All figures cumulative across cohort</td>';
+  rows+='<td class="c-next-td" style="font-size:12px;color:var(--ts)">All figures cumulative across cohort</td>';
   rows+='</tr>';
   tbody.innerHTML=rows;
   document.getElementById('ragCountGreen').textContent=counts.green;
@@ -2495,18 +2541,18 @@ html+='<div class="smart-obj"><div class="obj-num">Objective '+(i+1)+'</div>';
 if(isAssessor){
 html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
 html+='<div class="obj-row">';
-html+='<div><label>Target</label><input data-smart-target="'+i+'" value="'+esc(s.target||'')+'"></div>';
-html+='<div><label>Timeline</label><input data-smart-timeline="'+i+'" value="'+esc(s.timeline||'')+'"></div>';
+html+='<div class="target-cell"><label>Target</label><textarea data-smart-target="'+i+'" rows="3">'+esc(s.target||'')+'</textarea></div>';
+html+='<div><label>Timeline</label><textarea data-smart-timeline="'+i+'" rows="2">'+esc(s.timeline||'')+'</textarea></div>';
 html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="'+esc(s.domain||'')+'"></div>';
 html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
 html+='</div>';
 }else{
 html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px">'+(s.objective||'--')+'</div>';
 html+='<div class="obj-row">';
-html+='<div><label>Target</label><div style="font-size:14px;font-weight:600">'+(s.target||'--')+'</div></div>';
-html+='<div><label>Timeline</label><div style="font-size:14px;font-weight:600">'+(s.timeline||'--')+'</div></div>';
-html+='<div><label>Domain</label><div style="font-size:14px;font-weight:600">'+(s.domain||'--')+'</div></div>';
-html+='<div><label>Status</label><div style="font-size:14px;font-weight:600">'+(s.status||'--')+'</div></div>';
+html+='<div class="target-cell"><label>Target</label><div class="readonly-val">'+(s.target||'--')+'</div></div>';
+html+='<div><label>Timeline</label><div class="readonly-val">'+(s.timeline||'--')+'</div></div>';
+html+='<div><label>Domain</label><div class="readonly-val">'+(s.domain||'--')+'</div></div>';
+html+='<div><label>Status</label><div class="readonly-val">'+(s.status||'--')+'</div></div>';
 html+='</div>';
 }
 html+='</div>';
