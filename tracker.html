@@ -1068,7 +1068,7 @@ function exportToExcel(){
     'Validation: CEO Self-View','Validation: Root Constraint','Validation: 20% Income Drop',
     'Validation: Board & Succession','Validation: CEO\u2019s Own Words',
     'Agreed Goal 1','Agreed Goal 2','Agreed Goal 3',
-    'SMART Objective 1','SMART Objective 2','SMART Objective 3',
+    'SMART Objective 1','SMART Objective 2','SMART Objective 3','SMART Objective 4','SMART Objective 5',
     'Baseline Report'];
   var dg=[dgHead];
   var dgLinks=[];
@@ -1091,7 +1091,7 @@ function exportToExcel(){
       cons[0]||'',cons[1]||'',cons[2]||'',
       vn.vn1||'',vn.vn2||'',vn.vn3||'',vn.vn4||'',vn.vn5||'',
       g.g_goal1||'',g.g_goal2||'',g.g_goal3||'',
-      g.g_smart1||'',g.g_smart2||'',g.g_smart3||'',
+      g.g_smart1||'',g.g_smart2||'',g.g_smart3||'',g.g_smart4||'',g.g_smart5||'',
       reportUrl?'Open Baseline Report':'Not attached'
     ]);
   });
@@ -1102,11 +1102,11 @@ function exportToExcel(){
     {wch:34},{wch:34},{wch:34},
     {wch:44},{wch:44},{wch:44},{wch:44},{wch:44},
     {wch:40},{wch:40},{wch:40},
-    {wch:48},{wch:48},{wch:48},
+    {wch:48},{wch:48},{wch:48},{wch:48},{wch:48},
     {wch:24}];
-  // Column index 26 (AA) holds the baseline report label.
+  // Column index 28 (AC) holds the baseline report label (shifted by +2 after adding SMART 4 & 5).
   dgLinks.forEach(function(l){
-    linkCell(ws3a,XLSX.utils.encode_cell({r:l.row,c:26}),l.url,'Open Baseline Report');
+    linkCell(ws3a,XLSX.utils.encode_cell({r:l.row,c:28}),l.url,'Open Baseline Report');
   });
   freezeHeader(ws3a,1);
   XLSX.utils.book_append_sheet(wb,ws3a,'Diagnosis & Validation');
@@ -2149,7 +2149,9 @@ var GOAL_FIELDS=[
 {key:'g_goal3',label:'Goal 3 (high-level direction)',ta:false,ph:''},
 {key:'g_smart1',label:'SMART Objective 1 (specific, measurable, time-bound)',ta:true,ph:'e.g. Reduce HSE dependency from 60% to <40% by securing 3 new B2B accounts by Dec 2026'},
 {key:'g_smart2',label:'SMART Objective 2',ta:true,ph:''},
-{key:'g_smart3',label:'SMART Objective 3',ta:true,ph:''}
+{key:'g_smart3',label:'SMART Objective 3',ta:true,ph:''},
+{key:'g_smart4',label:'SMART Objective 4',ta:true,ph:''},
+{key:'g_smart5',label:'SMART Objective 5',ta:true,ph:''}
 ];
 
 var LOCK_CHECKS=[
@@ -2553,6 +2555,8 @@ html+=block('Goal 3 — high-level direction',g.g_goal3);
 html+=block('SMART Objective 1',g.g_smart1);
 html+=block('SMART Objective 2',g.g_smart2);
 html+=block('SMART Objective 3',g.g_smart3);
+if(g.g_smart4)html+=block('SMART Objective 4',g.g_smart4);
+if(g.g_smart5)html+=block('SMART Objective 5',g.g_smart5);
 
 // Baseline report link
 html+='<div class="pv-section">Baseline Report</div>';
