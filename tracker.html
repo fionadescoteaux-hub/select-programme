@@ -156,7 +156,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .log-entry .log-text{font-size:14px;color:var(--ts2);margin-top:6px;line-height:1.6;white-space:pre-wrap}
 
 .note-entry{background:var(--card);border-left:3px solid var(--navy);border-radius:0 var(--r) var(--r) 0;padding:14px 16px;margin-bottom:10px;border-top:1px solid var(--tb);border-right:1px solid var(--tb);border-bottom:1px solid var(--tb)}
-.note-entry .note-meta{font-size:11px;color:var(--tt);margin-bottom:4px}
+.note-entry .note-meta{font-size:11px;color:var(--tt);margin-bottom:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .note-entry .note-type{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;border-radius:3px;margin-right:6px}
 .nt-consult{background:var(--teal-light);color:var(--teal)}
 .nt-form{background:var(--gold-light);color:var(--gold)}
@@ -171,7 +171,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .problem-card .pc-label{font-size:11px;font-weight:700;color:var(--tt);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
 .problem-card textarea{width:100%;min-height:60px;padding:8px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);resize:vertical;background:var(--card);color:var(--tp)}
 .problem-card .pc-val{font-size:14px;color:var(--ts2);line-height:1.6;white-space:pre-wrap}
-.problem-card.pc-locked{background:var(--bg2);border-color:var(--tb)}
+.problem-card.pc-locked,.smart-obj.pc-locked,.note-entry.pc-locked{background:var(--bg2);border-color:var(--tb)}
 .pc-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
 .pc-lock-btn{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;padding:5px 11px;border-radius:4px;border:1px solid var(--tb2);background:var(--card);color:var(--ts);cursor:pointer;font-family:var(--sans);white-space:nowrap;flex-shrink:0}
 .pc-lock-btn:hover{background:var(--bg2);border-color:var(--ts)}
@@ -2212,22 +2212,36 @@ function saveRagField(key,val){
 }
 
 // ═══════════════════════════════════════
+// LOCK MAPS - declared early so capture/rerender wiring works from any tab.
+// Functions uiLockGet, uiLockBtn, toggleUiLock are defined further down.
+// ═══════════════════════════════════════
+var _uiLockCaptureMap={};
+var _uiLockRerenderMap={};
+
+// ═══════════════════════════════════════
 // BASELINE ASSESSOR NOTES - free text, autosave on blur
 // ═══════════════════════════════════════
 function renderBaselineNotes(org){
   var slot=document.getElementById('baselineNotesSlot');
   if(!slot)return;
   var val=(org.baselineNotes!==undefined&&org.baselineNotes!==null)?org.baselineNotes:'';
-  if(isAssessor){
-    slot.innerHTML='<textarea onchange="saveBaselineNotes(this.value)" placeholder="Overall assessor observations, validation flags, contextual notes..." style="min-height:120px;width:100%;padding:12px 14px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp);line-height:1.5">'+esc(val)+'</textarea>';
+  var locked=uiLockGet(org,'baselineNotes','main');
+  var header=isAssessor?'<div class="pc-header" style="margin-bottom:8px"><div></div>'+uiLockBtn('baselineNotes','main',locked)+'</div>':'';
+  if(isAssessor&&!locked){
+    slot.innerHTML=header+'<textarea onchange="saveBaselineNotes(this.value)" placeholder="Overall assessor observations, validation flags, contextual notes..." style="min-height:120px;width:100%;padding:12px 14px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp);line-height:1.5">'+esc(val)+'</textarea>';
   }else{
     if(val){
-      slot.innerHTML='<div style="padding:12px 14px;background:var(--bg2);border-left:3px solid var(--navy);border-radius:var(--r);font-size:14px;color:var(--ts2);white-space:pre-wrap;line-height:1.6">'+esc(val)+'</div>';
+      slot.innerHTML=header+'<div style="padding:12px 14px;background:var(--bg2);border-left:3px solid var(--navy);border-radius:var(--r);font-size:14px;color:var(--ts2);white-space:pre-wrap;line-height:1.6">'+esc(val)+'</div>';
     }else{
-      slot.innerHTML='<div style="padding:12px 14px;color:var(--tt);font-size:13px;font-style:italic">No assessor notes recorded.</div>';
+      slot.innerHTML=header+'<div style="padding:12px 14px;color:var(--tt);font-size:13px;font-style:italic">No assessor notes recorded.</div>';
     }
   }
 }
+_uiLockCaptureMap['baselineNotes']=function(org){
+  var ta=document.querySelector('#baselineNotesSlot textarea');
+  if(ta)org.baselineNotes=ta.value;
+};
+_uiLockRerenderMap['baselineNotes']=function(org){renderBaselineNotes(org);};
 function saveBaselineNotes(val){
   var data=loadData();
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
@@ -2387,14 +2401,15 @@ html+='</div>';
 html+='</div>';
 
 // SECTION 2: Validation Notes
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Validation Meeting Notes</div>';
+var lvn=uiLockGet(org,'valNotes','main');
+html+='<div class="problem-card'+(lvn?' pc-locked':'')+'">';
+html+='<div class="pc-header"><div class="pc-label">Validation Meeting Notes</div>'+uiLockBtn('valNotes','main',lvn)+'</div>';
 html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">Captured during the validation meeting with the CEO.</div>';
 VALIDATION_NOTES.forEach(function(n){
 var val=a.validation[n.key]||'';
 html+='<div style="margin-bottom:14px">';
 html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(n.label)+'</label>';
-if(isAssessor){
+if(isAssessor&&!lvn){
 html+='<textarea data-val-vn="'+n.key+'" style="width:100%;min-height:60px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
 }else{
 html+='<div class="pc-val">'+(val||'--')+'</div>';
@@ -2404,14 +2419,15 @@ html+='</div>';
 html+='</div>';
 
 // SECTION 3: Goals & SMART Translation
-html+='<div class="problem-card">';
-html+='<div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into 3 directional goals and 3 SMART objectives. The SMART objectives populate the SMART tab.</div>';
+var lgs=uiLockGet(org,'goals','main');
+html+='<div class="problem-card'+(lgs?' pc-locked':'')+'">';
+html+='<div class="pc-header"><div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>'+uiLockBtn('goals','main',lgs)+'</div>';
+html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into directional goals and SMART objectives. SMARTs populate the SMART tab.</div>';
 GOAL_FIELDS.forEach(function(g){
 var val=a.goals[g.key]||'';
 html+='<div style="margin-bottom:12px">';
 html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(g.label)+'</label>';
-if(isAssessor){
+if(isAssessor&&!lgs){
 if(g.ta){
 html+='<textarea data-val-goal="'+g.key+'" placeholder="'+esc(g.ph||'')+'" style="width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
 }else{
@@ -2533,6 +2549,22 @@ if(leadSel)leadSel.addEventListener('change',function(){var d=loadData();var o=d
 }
 }
 
+_uiLockCaptureMap['valNotes']=function(org){
+  ensureAssessor(org);
+  document.querySelectorAll('[data-val-vn]').forEach(function(el){
+    org.assessor.validation[el.dataset.valVn]=el.value;
+  });
+};
+_uiLockRerenderMap['valNotes']=function(org){renderValidation(org);};
+
+_uiLockCaptureMap['goals']=function(org){
+  ensureAssessor(org);
+  document.querySelectorAll('[data-val-goal]').forEach(function(el){
+    org.assessor.goals[el.dataset.valGoal]=el.value;
+  });
+};
+_uiLockRerenderMap['goals']=function(org){renderValidation(org);};
+
 function toggleValPriority(dKey){
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
@@ -2636,6 +2668,44 @@ function toggleDiagnosisLock(section){
   org.diagnosis._locks[section]=willLock;
   saveData(data,currentOrg);
   renderDiagnosis(org);
+}
+
+// ═══════════════════════════════════════
+// GENERIC LOCK INFRASTRUCTURE
+// Used by all assessor tabs except Diagnosis (which has its own helper above).
+// State is stored under org._uiLocks[scope+'.'+key] = true|false.
+// ═══════════════════════════════════════
+function uiLockGet(org,scope,key){
+  if(!org._uiLocks)return false;
+  return!!org._uiLocks[scope+'.'+key];
+}
+function uiLockBtn(scope,key,locked){
+  if(!isAssessor)return'';
+  var label=locked?'&#9998; Edit':'&#128274; Save &amp; Lock View';
+  var cls=locked?'pc-lock-btn locked':'pc-lock-btn';
+  return'<button class="'+cls+'" onclick="toggleUiLock(\''+scope+'\',\''+key+'\')">'+label+'</button>';
+}
+// captureFn (optional): function(org) called BEFORE flipping to locked, so the
+// caller can pull unsaved values out of the DOM. rerenderFn: function(org) called
+// after the flip to refresh the UI.
+function toggleUiLock(scope,key,captureFn,rerenderFn){
+  // For inline onclick handlers, captureFn/rerenderFn are looked up by convention.
+  // The button itself only passes scope+key; the render functions wire up via
+  // _uiLockCaptureMap and _uiLockRerenderMap below.
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!org._uiLocks)org._uiLocks={};
+  var fullKey=scope+'.'+key;
+  var willLock=!org._uiLocks[fullKey];
+  if(willLock){
+    var cap=_uiLockCaptureMap[scope];
+    if(cap)cap(org,key);
+  }
+  org._uiLocks[fullKey]=willLock;
+  saveData(data,currentOrg);
+  var rer=_uiLockRerenderMap[scope];
+  if(rer)rer(org);
 }
 
 // Print View — reflows the current org's full Diagnose-phase record into a clean
@@ -2813,8 +2883,10 @@ saveData(data,currentOrg);
 function renderSMART(org){
 var html='';
 org.smart.forEach(function(s,i){
-html+='<div class="smart-obj"><div class="obj-num">Objective '+(i+1)+'</div>';
-if(isAssessor){
+var lkS=uiLockGet(org,'smart',String(i));
+html+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
+html+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+'</div>'+uiLockBtn('smart',String(i),lkS)+'</div>';
+if(isAssessor&&!lkS){
 html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
 html+='<div class="obj-row">';
 html+='<div class="target-cell"><label>Target</label><textarea data-smart-target="'+i+'" rows="3">'+esc(s.target||'')+'</textarea></div>';
@@ -2823,7 +2895,7 @@ html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="
 html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
 html+='</div>';
 }else{
-html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px">'+(s.objective||'--')+'</div>';
+html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
 html+='<div class="obj-row">';
 html+='<div class="target-cell"><label>Target</label><div class="readonly-val">'+(s.target||'--')+'</div></div>';
 html+='<div><label>Timeline</label><div class="readonly-val">'+(s.timeline||'--')+'</div></div>';
@@ -2836,6 +2908,23 @@ html+='</div>';
 document.getElementById('smartList').innerHTML=html;
 document.getElementById('smartAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addSMART()">+ Add objective</button>':'';
 }
+_uiLockCaptureMap['smart']=function(org,key){
+  // key is the objective index as a string
+  var i=parseInt(key);
+  if(!org.smart[i])return;
+  var fields=[
+    {sel:'[data-smart-obj="'+i+'"]',prop:'objective'},
+    {sel:'[data-smart-target="'+i+'"]',prop:'target'},
+    {sel:'[data-smart-timeline="'+i+'"]',prop:'timeline'},
+    {sel:'[data-smart-domain="'+i+'"]',prop:'domain'},
+    {sel:'[data-smart-status="'+i+'"]',prop:'status'}
+  ];
+  fields.forEach(function(f){
+    var el=document.querySelector(f.sel);
+    if(el)org.smart[i][f.prop]=el.value;
+  });
+};
+_uiLockRerenderMap['smart']=function(org){renderSMART(org);};
 function addSMART(){var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});saveData(data,currentOrg);renderSMART(org);}
 
 var OUTREACH_CYCLES=[
@@ -3026,12 +3115,13 @@ org.notes.forEach(function(n,i){
 var isForm=n.type==='Form Submission';
 var cls=n.type==='Coaching'?'nt-coach':n.type==='Session'?'nt-session':isForm?'nt-form':'nt-consult';
 var borderCol=isForm?'var(--gold)':n.type==='Coaching'?'var(--coral)':n.type==='Session'?'var(--navy)':'var(--teal)';
-html+='<div class="note-entry" style="border-left-color:'+borderCol+'">';
-html+='<div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+(n.date?esc(n.date):'')+'</div>';
+var lkN=uiLockGet(org,'notes',String(i));
+html+='<div class="note-entry'+(lkN?' pc-locked':'')+'" style="border-left-color:'+borderCol+'">';
+html+='<div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Consulting')+'</span>'+(n.date?esc(n.date):'')+(isForm?'':'<span style="margin-left:auto">'+uiLockBtn('notes',String(i),lkN)+'</span>')+'</div>';
 if(isForm){
 // Form submissions always shown as readable text, never editable textarea
 html+='<div class="log-text" style="white-space:pre-wrap;font-size:12px;line-height:1.6;color:var(--ts)">'+esc(n.text||'')+'</div>';
-}else if(isAssessor){
+}else if(isAssessor&&!lkN){
 html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';
 }else{
 html+='<div class="log-text">'+(n.text||'--')+'</div>';
@@ -3043,6 +3133,12 @@ if(isAssessor){
 document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" onclick="addNote(\'Consulting\')">+ Consulting</button><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching</button><button class="btn btn-outline" onclick="addNote(\'Session\')">+ Group Session</button></div>';
 }else{document.getElementById('notesAddWrap').innerHTML='';}
 }
+_uiLockCaptureMap['notes']=function(org,key){
+  var i=parseInt(key);
+  var el=document.querySelector('[data-note="'+i+'"]');
+  if(el&&org.notes[i])org.notes[i].text=el.value;
+};
+_uiLockRerenderMap['notes']=function(org){renderNotes(org);};
 function addNote(type){
 var date=prompt('Date (e.g. 15 Jun 2026):');if(!date)return;
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
