@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-21-v12 (Validation g_smart1-5 now have dedicated storage on ORGANISATIONS gSmart1-5. Validation tab no longer reads from SMART table; SMART promotion only fires when SMART table is empty for the org. Breaks the destructive cycle that overwrote PACE's validation.)
+// Version: 2026-05-21-v11 (Defensive SMART dedupe: orphan rows with null SM_NUM or beyond mergedSmart.length are deleted on every save, preventing the accumulation seen on Pearse where g_smart3 was re-pushed as Obj 4-10)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -164,18 +164,6 @@ const F = {
   // long-text on OrgProfile rather than four boolean columns so adding
   // future lockable sections doesn't require schema changes.
   DIAGNOSIS_LOCKS:   "diagnosisLocks",
-  // ── 2026-05-21-v12: Validation g_smart1-5 get their own storage on
-  // ORGANISATIONS. Previously they were a read-side view of the SMART table,
-  // which created a destructive cycle: editing SMART rows overwrote the
-  // validation copy, and editing validation tried to push back to SMART
-  // rows whose existing text blocked the merge. With these dedicated fields,
-  // validation stores its own record and only PROMOTES to the SMART table
-  // when SMART has zero rows for that org (first-time push at the meeting).
-  G_SMART1:          "gSmart1",
-  G_SMART2:          "gSmart2",
-  G_SMART3:          "gSmart3",
-  G_SMART4:          "gSmart4",
-  G_SMART5:          "gSmart5",
 };
 
 const DOMAINS = [
@@ -297,13 +285,9 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
   const generalNotes = noteRows.filter((r) => r.fields[F.N_TYPE] === "Consulting" || r.fields[F.N_TYPE] === "Coaching" || r.fields[F.N_TYPE] === "Form Submission").map((r) => ({ type: r.fields[F.N_TYPE], date: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
 
   // Build rich assessor object expected by Validation tab
-  // 2026-05-21-v12: g_smart1-5 now read from dedicated gSmart1-5 fields on
-  // ORGANISATIONS, not from the SMART table. The SMART table reflects what's
-  // being WORKED on; validation reflects what was AGREED at the meeting. They
-  // start synchronised (validation promotes on first save) and may diverge
-  // afterwards if the team adds/refines SMART objectives during delivery.
-  // The smartObjByNum index below is no longer used for validation but is
-  // kept harmless in case other code paths depend on it.
+  // SMART objectives (g_smart1 through g_smart5) read from the SMARTObjectives
+  // table — same source as org.smart[] — so Validation and the SMART tab show
+  // the same data. Added 2026-05-21-v10. Previously hardcoded to empty strings.
   const smartObjByNum = {};
   smartRows.forEach((r) => {
     const n = r.fields[F.SM_NUM];
@@ -319,11 +303,11 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       g_goal1: f[F.GOAL1] || "",
       g_goal2: f[F.GOAL2] || "",
       g_goal3: f[F.GOAL3] || "",
-      g_smart1: f[F.G_SMART1] || "",
-      g_smart2: f[F.G_SMART2] || "",
-      g_smart3: f[F.G_SMART3] || "",
-      g_smart4: f[F.G_SMART4] || "",
-      g_smart5: f[F.G_SMART5] || "",
+      g_smart1: smartObjByNum[1] || "",
+      g_smart2: smartObjByNum[2] || "",
+      g_smart3: smartObjByNum[3] || "",
+      g_smart4: smartObjByNum[4] || "",
+      g_smart5: smartObjByNum[5] || "",
     },
     priorities: f[F.PRIORITIES] ? String(f[F.PRIORITIES]).split(",").map((s) => s.trim()).filter(Boolean) : [],
     lock: {
@@ -896,15 +880,6 @@ async function handleUpdate(payload) {
         if (assessor.goals.g_goal1 !== undefined) profileFields[F.GOAL1] = assessor.goals.g_goal1;
         if (assessor.goals.g_goal2 !== undefined) profileFields[F.GOAL2] = assessor.goals.g_goal2;
         if (assessor.goals.g_goal3 !== undefined) profileFields[F.GOAL3] = assessor.goals.g_goal3;
-        // 2026-05-21-v12: persist validation g_smart1-5 to their own
-        // ORGANISATIONS fields. These are the authoritative validation copy.
-        // The push-to-SMART-table promotion still runs further down but only
-        // on first save (when the SMART table has no rows for the org).
-        if (assessor.goals.g_smart1 !== undefined) profileFields[F.G_SMART1] = assessor.goals.g_smart1;
-        if (assessor.goals.g_smart2 !== undefined) profileFields[F.G_SMART2] = assessor.goals.g_smart2;
-        if (assessor.goals.g_smart3 !== undefined) profileFields[F.G_SMART3] = assessor.goals.g_smart3;
-        if (assessor.goals.g_smart4 !== undefined) profileFields[F.G_SMART4] = assessor.goals.g_smart4;
-        if (assessor.goals.g_smart5 !== undefined) profileFields[F.G_SMART5] = assessor.goals.g_smart5;
       }
       if (Array.isArray(assessor.priorities)) {
         profileFields[F.PRIORITIES] = assessor.priorities.join(", ");
@@ -935,22 +910,21 @@ async function handleUpdate(payload) {
 
   await patchProfile(profile.id, profileFields);
 
-  // ── 2026-05-21-v12: One-way validation → SMART promotion, ONLY on first save ──
-  // Validation captures SMART objectives as g_smart1..g_smart5 on assessor.goals.
-  // These are now persisted in dedicated gSmart1-5 fields (see read/write paths
-  // above) — they are NOT a view of the SMART table any more.
+  // ── 2026-05-21-v10: Merge Validation g_smart1-5 text into SMART array ──
+  // Validation captures SMART objectives as free text fields g_smart1..g_smart5
+  // on assessor.goals. These need to land in the SMARTObjectives table so they
+  // appear on the SMART tab, the cohort RAG report, and the Excel export.
   //
-  // The promotion below remains so that the first save after a validation
-  // meeting populates the SMART table from validation. But it ONLY runs when
-  // the SMART table has zero rows for this org. After that, the SMART tab is
-  // the working view and validation is the agreed-at-meeting record; they may
-  // diverge and that's by design.
+  // Strategy: if the payload has assessor.goals.g_smart* values, fold them into
+  // the `smart` array's `objective` field at the matching index — but ONLY
+  // where the structured SMART slot is empty. This means the SMART tab is the
+  // source of truth once a structured row exists (with target/timeline/etc),
+  // and Validation only fills in slots that haven't been worked yet.
   //
-  // This prevents the destructive cycle that overwrote PACE's validation:
-  // editing SMART rows no longer reaches back into validation, and editing
-  // validation no longer overwrites the SMART tab beyond the first push.
+  // Edge: if a slot exists on the SMART tab but has empty objective text, the
+  // validation text fills it in. That's intentional — empty objective with
+  // filled target/timeline is meaningless, so we accept Validation's value.
   let mergedSmart = Array.isArray(smart) ? smart.slice() : null;
-  let shouldPromoteToSmart = false;
   if (assessor && typeof assessor === "object" && assessor.goals && typeof assessor.goals === "object") {
     const valSmarts = [
       assessor.goals.g_smart1, assessor.goals.g_smart2, assessor.goals.g_smart3,
@@ -958,36 +932,22 @@ async function handleUpdate(payload) {
     ];
     const anyDefined = valSmarts.some((v) => v !== undefined && v !== "");
     if (anyDefined) {
-      // Check whether the SMART table is currently empty for this org. The
-      // promotion only fires when it is — otherwise the SMART tab's existing
-      // content (which may have been refined since the meeting) is left alone.
-      const existingForCheck = await listAllRecords(TABLES.SMART);
-      const hasAnySmartRow = existingForCheck.some((r) => {
-        if (r.fields[F.SM_ORG] !== code) return false;
-        // Treat rows with empty objective text as "not really there"
-        return !!(r.fields[F.SM_OBJ] && String(r.fields[F.SM_OBJ]).trim());
-      });
-      if (!hasAnySmartRow) {
-        shouldPromoteToSmart = true;
-        if (!mergedSmart) mergedSmart = [];
-        for (let i = 0; i < 5; i++) {
-          const txt = valSmarts[i];
-          if (!txt) continue;
-          while (mergedSmart.length <= i) {
-            mergedSmart.push({ objective: "", target: "", timeline: "", owner: "", status: "" });
-          }
-          if (!mergedSmart[i].objective) {
-            mergedSmart[i].objective = String(txt);
-          }
+      if (!mergedSmart) mergedSmart = [];
+      for (let i = 0; i < 5; i++) {
+        const txt = valSmarts[i];
+        if (!txt) continue; // Skip undefined and empty — don't overwrite structured data with blank
+        // Ensure slot exists in the merged array
+        while (mergedSmart.length <= i) {
+          mergedSmart.push({ objective: "", target: "", timeline: "", owner: "", status: "" });
+        }
+        // Only fill objective when it's currently empty on the SMART tab side.
+        // If the SMART tab has structured data here, it wins.
+        if (!mergedSmart[i].objective) {
+          mergedSmart[i].objective = String(txt);
         }
       }
     }
   }
-  // If validation has nothing AND the SMART tab was sent empty, don't touch
-  // the SMART table at all. mergedSmart is the front-end's view of the SMART
-  // tab; if the user didn't edit it on this save, sending an empty array
-  // would wipe rows. Skip the write entirely in that case.
-  const smartWriteRequested = Array.isArray(smart) || shouldPromoteToSmart;
 
   // ── BASELINE SCORES table ──
   if (Array.isArray(baseline)) {
@@ -1046,7 +1006,7 @@ async function handleUpdate(payload) {
   //   3. Also mark as orphans any row with a missing/invalid SM_NUM
   //   4. Delete orphans BEFORE creating new rows so the SMART tab never
   //      shows a duplicated objective again
-  if (Array.isArray(mergedSmart) && smartWriteRequested) {
+  if (Array.isArray(mergedSmart)) {
     const existing = await listAllRecords(TABLES.SMART);
     const allForOrg = existing.filter((r) => r.fields[F.SM_ORG] === code);
     const byNum = {};
