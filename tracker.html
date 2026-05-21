@@ -3211,15 +3211,45 @@ var OUTREACH_CYCLES=[
 {code:'OR8',title:'Governance & Investment Readiness',date:'14-20 Dec 2026',phase:'Sustain',focus:'Board effectiveness; succession planning; business cases; financial projections; investor materials'}
 ];
 
+// Strand-based baseline override (currently Nigel only — gated by org.baseline_structure==='strand')
+var STRANDS=[
+{key:'C',label:'Community Caf\u00e9s',sub:'Protecting and growing the caf\u00e9 income model'},
+{key:'A',label:'Short-Term Accommodation',sub:'Managing regulatory risk and developing cross-border alternatives'},
+{key:'M',label:'Manufacturing Opportunity',sub:'Assessing a potential acquisition and growth opportunity'}
+];
+
 function ensureConsulting(org){
 var migrated=false;
-if(!org.consulting||org.consulting.length!==8){
-org.consulting=OUTREACH_CYCLES.map(function(c){
-var existing=org.consulting?org.consulting.find(function(e){return e.code===c.code;}):null;
-return existing||{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,
-consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',hours:'',domainMovement:'',rag:'',completed:false};
-});
-migrated=true;
+var strandMode=(org.baseline_structure==='strand');
+var expectedLen=strandMode?(OUTREACH_CYCLES.length*STRANDS.length):OUTREACH_CYCLES.length;
+if(!org.consulting||org.consulting.length!==expectedLen){
+  var existing=Array.isArray(org.consulting)?org.consulting:[];
+  var byCode={};
+  existing.forEach(function(e){if(e&&e.code)byCode[e.code]=e;});
+  var fresh=[];
+  OUTREACH_CYCLES.forEach(function(c){
+    if(strandMode){
+      STRANDS.forEach(function(s){
+        var code=c.code+'-'+s.key;
+        var prior=byCode[code]||byCode[c.code]; // accept legacy un-stranded record once
+        fresh.push(Object.assign({
+          code:code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,
+          strand:s.key,strandLabel:s.label,strandSub:s.sub,
+          consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',
+          hours:'',domainMovement:'',domainMovementNA:false,
+          rag:'',ragRationale:'',notApplicable:false,completed:false,
+          lastSavedBy:'',lastSavedAt:''
+        },prior&&prior.strand===s.key?prior:{}));
+      });
+    }else{
+      var prior2=byCode[c.code];
+      fresh.push(prior2||{code:c.code,title:c.title,date:c.date,phase:c.phase,defaultFocus:c.focus,
+        consultedBy:'',format:'',smartProgressed:'',actionsAgreed:'',keyOutputs:'',
+        hours:'',domainMovement:'',rag:'',completed:false});
+    }
+  });
+  org.consulting=fresh;
+  migrated=true;
 }
 // Migrate legacy "days" field to "hours" (1 day = 8 hours) and persist.
 // Without this, the per-org tab auto-converts on render but the cohort
@@ -3243,14 +3273,79 @@ if(migrated&&isAssessor&&typeof AT!=='undefined'&&AT.saveData){
 return org.consulting;
 }
 
+function renderConsultingCard(c,i,ref){
+  // Renders the form body of a single cycle card. Index `i` is the position in
+  // org.consulting, so all data-con-* selectors continue to work for saveTracker.
+  // `ref` is the OUTREACH_CYCLES reference for this cycle (focus/title fallback).
+  var html='';
+  if(isAssessor){
+    // N/A toggle for strand sub-cards. When ticked, the strand is dormant for
+    // this cycle and the rest of the form is hidden — the row still exists in
+    // org.consulting (so codes round-trip cleanly), it just isn't being worked.
+    if(c.strand){
+      html+='<div style="margin:6px 0 8px;font-size:11px;color:var(--ts);display:flex;align-items:center;gap:8px">';
+      html+='<label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px"><input type="checkbox" data-con-na="'+i+'"'+(c.notApplicable?' checked':'')+' style="accent-color:var(--teal);margin:0">Not applicable this cycle</label>';
+      html+='</div>';
+    }
+    if(c.notApplicable){
+      html+='<div style="margin-top:8px;padding:10px 12px;background:var(--bg3);border-radius:var(--r);font-size:12px;color:var(--ts);font-style:italic">Dormant for this cycle. Untick \u201cNot applicable this cycle\u201d above to activate.</div>';
+      return html;
+    }
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">';
+    html+='<div><div style="font-size:11px;color:var(--tt)">Consulted by</div><select data-con-by="'+i+'"><option value="">--</option><option'+(c.consultedBy==='Fiona'?' selected':'')+'>Fiona</option><option'+(c.consultedBy==='Clodagh'?' selected':'')+'>Clodagh</option><option'+(c.consultedBy==='Both'?' selected':'')+'>Both</option></select></div>';
+    html+='<div><div style="font-size:11px;color:var(--tt)">Format</div><select data-con-format="'+i+'"><option value="">--</option><option'+(c.format==='In-person'?' selected':'')+'>In-person</option><option'+(c.format==='Online'?' selected':'')+'>Online</option><option'+(c.format==='Mixed'?' selected':'')+'>Mixed</option></select></div>';
+    html+='</div>';
+    html+='<div style="margin-top:10px"><div style="font-size:11px;color:var(--tt)">SMART objectives progressed</div><input data-con-smart="'+i+'" value="'+esc(c.smartProgressed||'')+'" placeholder="e.g. OBJ1, C2, A3"></div>';
+    html+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key actions agreed with CEO</div><textarea data-con-actions="'+i+'">'+esc(c.actionsAgreed||'')+'</textarea></div>';
+    html+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key outputs / evidence</div><textarea data-con-outputs="'+i+'">'+esc(c.keyOutputs||'')+'</textarea></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
+    html+='<div><div style="font-size:11px;color:var(--tt)">Hours used</div><input data-con-hours="'+i+'" value="'+esc(c.hours||getConsultHours(c)||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
+    // Domain movement input is hidden for strand-based orgs (no domain scoring)
+    if(c.strand){
+      html+='<div></div>';
+    }else{
+      html+='<div><div style="font-size:11px;color:var(--tt);display:flex;align-items:center;gap:6px">Domain movement? <label style="font-size:10px;font-weight:400;color:var(--ts);cursor:pointer;display:inline-flex;align-items:center;gap:3px"><input type="checkbox" data-con-domain-na="'+i+'"'+(c.domainMovementNA?' checked':'')+' style="accent-color:var(--teal);margin:0">N/A</label></div><input data-con-domain="'+i+'" value="'+esc(c.domainMovement||'')+'" placeholder="e.g. D2 \u2191, D5 \u2191"'+(c.domainMovementNA?' disabled style="opacity:0.5"':'')+'></div>';
+    }
+    html+='<div><div style="font-size:11px;color:var(--tt);display:flex;align-items:center;gap:4px">RAG <span title="Green: on track, no material risks; cycle objectives progressing as planned.&#10;&#10;Amber: live risks present but engagement strong and a plan is in place; cycle objectives still achievable.&#10;&#10;Red: cycle objectives at risk; intervention or escalation needed." style="cursor:help;color:var(--ts);font-weight:700;background:var(--bg2);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;border:1px solid var(--tb2)">?</span></div><select data-con-rag="'+i+'"><option value="">--</option><option'+(c.rag==='Green'?' selected':'')+'>Green</option><option'+(c.rag==='Amber'?' selected':'')+'>Amber</option><option'+(c.rag==='Red'?' selected':'')+'>Red</option></select></div>';
+    html+='</div>';
+    html+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">RAG rationale '+((c.rag==='Amber'||c.rag==='Red')?'<span style="color:#c62828">*</span>':'<span style="color:var(--tt);font-weight:400">(optional for Green)</span>')+'</div><input data-con-rationale="'+i+'" value="'+esc(c.ragRationale||'')+'" placeholder="One line: what\'s the live risk or why the colour" maxlength="160"'+((c.rag==='Amber'||c.rag==='Red')&&!c.ragRationale?' style="border:1px solid #c62828;background:#fff8f8"':'')+'></div>';
+    html+='<div style="margin-top:10px"><label style="font-size:12px;color:var(--ts2);cursor:pointer"><input type="checkbox" data-con-done="'+i+'"'+(c.completed?' checked':'')+' style="accent-color:var(--teal);margin-right:6px">Cycle completed</label></div>';
+  }else{
+    if(c.notApplicable){
+      html+='<div style="margin-top:8px;font-size:12px;color:var(--tt);font-style:italic">Not applicable this cycle</div>';
+    }else if(c.completed){
+      html+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Consulted by:</b> '+(c.consultedBy||'--')+' \u00b7 <b>Format:</b> '+(c.format||'--')+' \u00b7 <b>Hours:</b> '+(c.hours||'--')+'</div>';
+      if(c.actionsAgreed)html+='<div style="margin-top:6px;font-size:13px"><b>Actions agreed:</b> '+esc(c.actionsAgreed)+'</div>';
+      if(c.keyOutputs)html+='<div style="margin-top:4px;font-size:13px"><b>Outputs:</b> '+esc(c.keyOutputs)+'</div>';
+    }else{
+      html+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">Not yet completed</div>';
+    }
+  }
+  return html;
+}
+
 function renderConsulting(org){
 ensureConsulting(org);
-var totalHrsConsult=0;var completed=0;
+var strandMode=(org.baseline_structure==='strand');
+var perCycle=strandMode?STRANDS.length:1;
+
+// Hours: sum across all sub-records (works for both modes)
+var totalHrsConsult=0;
 org.consulting.forEach(function(c){
-  totalHrsConsult+=getConsultHours(c);
-  if(c.completed)completed++;
+  if(!c.notApplicable)totalHrsConsult+=getConsultHours(c);
 });
 totalHrsConsult=parseFloat(totalHrsConsult.toFixed(1));
+
+// Cycles completed: parent OR counts as complete when every active (non-N/A)
+// sub-record under it is completed. For standard CEOs perCycle=1 so this
+// reduces to the original "c.completed" count.
+var completed=0;
+for(var k=0;k<OUTREACH_CYCLES.length;k++){
+  var group=org.consulting.slice(k*perCycle,(k+1)*perCycle);
+  var active=group.filter(function(c){return !c.notApplicable;});
+  if(active.length&&active.every(function(c){return c.completed;}))completed++;
+}
+
 var html='<div class="coaching-stat"><div class="cs-val">'+totalHrsConsult.toFixed(1)+' / 35</div><div class="cs-lbl">Hours Used</div></div>';
 html+='<div class="coaching-stat"><div class="cs-val">'+(35-totalHrsConsult).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining</div></div>';
 html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 8</div><div class="cs-lbl">Cycles Completed</div></div>';
@@ -3258,43 +3353,39 @@ html+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val">9</div>
 document.getElementById('consultingSummary').innerHTML=html;
 
 var list='';
-org.consulting.forEach(function(c,i){
-var ref=OUTREACH_CYCLES[i];
-var phaseCls=ref.phase==='Diagnose'?'ph-diag':ref.phase==='Translate'?'ph-trans':ref.phase==='Sustain'?'ph-sust':'ph-str';
-list+='<div class="log-entry" style="border-left:4px solid var(--'+(ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy')+')">';
-list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
-list+='<div class="log-date">'+esc(c.code)+' -- '+esc(c.title)+'</div>';
-list+='<div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;color:#fff;background:var(--'+(ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy')+')">'+ref.phase+'</div>';
-list+='</div>';
-list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
-list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
-
-if(isAssessor){
-list+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">';
-list+='<div><div style="font-size:11px;color:var(--tt)">Consulted by</div><select data-con-by="'+i+'"><option value="">--</option><option'+(c.consultedBy==='Fiona'?' selected':'')+'>Fiona</option><option'+(c.consultedBy==='Clodagh'?' selected':'')+'>Clodagh</option><option'+(c.consultedBy==='Both'?' selected':'')+'>Both</option></select></div>';
-list+='<div><div style="font-size:11px;color:var(--tt)">Format</div><select data-con-format="'+i+'"><option value="">--</option><option'+(c.format==='In-person'?' selected':'')+'>In-person</option><option'+(c.format==='Online'?' selected':'')+'>Online</option><option'+(c.format==='Mixed'?' selected':'')+'>Mixed</option></select></div>';
-list+='</div>';
-list+='<div style="margin-top:10px"><div style="font-size:11px;color:var(--tt)">SMART objectives progressed</div><input data-con-smart="'+i+'" value="'+esc(c.smartProgressed||'')+'" placeholder="e.g. OBJ1, C2, A3"></div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key actions agreed with CEO</div><textarea data-con-actions="'+i+'">'+esc(c.actionsAgreed||'')+'</textarea></div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key outputs / evidence</div><textarea data-con-outputs="'+i+'">'+esc(c.keyOutputs||'')+'</textarea></div>';
-list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
-list+='<div><div style="font-size:11px;color:var(--tt)">Hours used</div><input data-con-hours="'+i+'" value="'+esc(c.hours||getConsultHours(c)||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
-list+='<div><div style="font-size:11px;color:var(--tt);display:flex;align-items:center;gap:6px">Domain movement? <label style="font-size:10px;font-weight:400;color:var(--ts);cursor:pointer;display:inline-flex;align-items:center;gap:3px"><input type="checkbox" data-con-domain-na="'+i+'"'+(c.domainMovementNA?' checked':'')+' style="accent-color:var(--teal);margin:0">N/A</label></div><input data-con-domain="'+i+'" value="'+esc(c.domainMovement||'')+'" placeholder="e.g. D2 \u2191, D5 \u2191"'+(c.domainMovementNA?' disabled style="opacity:0.5"':'')+'></div>';
-list+='<div><div style="font-size:11px;color:var(--tt);display:flex;align-items:center;gap:4px">RAG <span title="Green: on track, no material risks; cycle objectives progressing as planned.&#10;&#10;Amber: live risks present but engagement strong and a plan is in place; cycle objectives still achievable.&#10;&#10;Red: cycle objectives at risk; intervention or escalation needed." style="cursor:help;color:var(--ts);font-weight:700;background:var(--bg2);border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;border:1px solid var(--tb2)">?</span></div><select data-con-rag="'+i+'"><option value="">--</option><option'+(c.rag==='Green'?' selected':'')+'>Green</option><option'+(c.rag==='Amber'?' selected':'')+'>Amber</option><option'+(c.rag==='Red'?' selected':'')+'>Red</option></select></div>';
-list+='</div>';
-list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">RAG rationale '+((c.rag==='Amber'||c.rag==='Red')?'<span style="color:#c62828">*</span>':'<span style="color:var(--tt);font-weight:400">(optional for Green)</span>')+'</div><input data-con-rationale="'+i+'" value="'+esc(c.ragRationale||'')+'" placeholder="One line: what\'s the live risk or why the colour" maxlength="160"'+((c.rag==='Amber'||c.rag==='Red')&&!c.ragRationale?' style="border:1px solid #c62828;background:#fff8f8"':'')+'></div>';
-list+='<div style="margin-top:10px"><label style="font-size:12px;color:var(--ts2);cursor:pointer"><input type="checkbox" data-con-done="'+i+'"'+(c.completed?' checked':'')+' style="accent-color:var(--teal);margin-right:6px">Cycle completed</label></div>';
-}else{
-if(c.completed){
-list+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Consulted by:</b> '+(c.consultedBy||'--')+' · <b>Format:</b> '+(c.format||'--')+' · <b>Hours:</b> '+(c.hours||'--')+'</div>';
-if(c.actionsAgreed)list+='<div style="margin-top:6px;font-size:13px"><b>Actions agreed:</b> '+esc(c.actionsAgreed)+'</div>';
-if(c.keyOutputs)list+='<div style="margin-top:4px;font-size:13px"><b>Outputs:</b> '+esc(c.keyOutputs)+'</div>';
-}else{
-list+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">Not yet completed</div>';
+for(var k=0;k<OUTREACH_CYCLES.length;k++){
+  var ref=OUTREACH_CYCLES[k];
+  var phaseColor=ref.phase==='Diagnose'?'teal':ref.phase==='Translate'?'navy-mid':ref.phase==='Sustain'?'gold':'navy';
+  list+='<div class="log-entry" style="border-left:4px solid var(--'+phaseColor+')">';
+  list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+  list+='<div class="log-date">'+esc(ref.code)+' -- '+esc(ref.title)+'</div>';
+  list+='<div style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;color:#fff;background:var(--'+phaseColor+')">'+ref.phase+'</div>';
+  list+='</div>';
+  list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
+  list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
+  if(strandMode){
+    // Render three strand sub-cards inside this cycle container
+    for(var s=0;s<STRANDS.length;s++){
+      var sub=org.consulting[k*perCycle+s];
+      var subIdx=k*perCycle+s;
+      if(!sub)continue;
+      var dim=sub.notApplicable?'opacity:0.6;':'';
+      list+='<div style="margin-top:12px;padding:10px 12px;border:1px solid var(--tb2);border-left:3px solid var(--navy);border-radius:var(--r);'+dim+'background:var(--bg)">';
+      list+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:4px">';
+      list+='<div style="display:flex;align-items:center;gap:8px"><span style="background:#5B2245;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:0.3px">'+esc(sub.code)+'</span><span style="font-size:13px;font-weight:600;color:var(--tp)">'+esc(sub.strandLabel||'')+'</span></div>';
+      if(sub.completed&&!sub.notApplicable){
+        list+='<span style="font-size:10px;font-weight:700;color:#2e7d32;background:#e8f5e9;padding:2px 7px;border-radius:3px">COMPLETED</span>';
+      }
+      list+='</div>';
+      if(sub.strandSub)list+='<div style="font-size:11px;color:var(--ts);font-style:italic;margin-bottom:6px">'+esc(sub.strandSub)+'</div>';
+      list+=renderConsultingCard(sub,subIdx,ref);
+      list+='</div>';
+    }
+  }else{
+    list+=renderConsultingCard(org.consulting[k],k,ref);
+  }
+  list+='</div>';
 }
-}
-list+='</div>';
-});
 document.getElementById('consultingList').innerHTML=list;
 }
 
@@ -3545,6 +3636,7 @@ document.querySelectorAll('[data-con-domain]').forEach(function(el){var i=parseI
 document.querySelectorAll('[data-con-rag]').forEach(function(el){var i=parseInt(el.dataset.conRag);if(org.consulting[i])org.consulting[i].rag=el.value;});
 document.querySelectorAll('[data-con-rationale]').forEach(function(el){var i=parseInt(el.dataset.conRationale);if(org.consulting[i])org.consulting[i].ragRationale=el.value;});
 document.querySelectorAll('[data-con-domain-na]').forEach(function(el){var i=parseInt(el.dataset.conDomainNa);if(org.consulting[i]){org.consulting[i].domainMovementNA=el.checked;if(el.checked)org.consulting[i].domainMovement='';}});
+document.querySelectorAll('[data-con-na]').forEach(function(el){var i=parseInt(el.dataset.conNa);if(org.consulting[i])org.consulting[i].notApplicable=el.checked;});
 document.querySelectorAll('[data-con-done]').forEach(function(el){var i=parseInt(el.dataset.conDone);if(org.consulting[i])org.consulting[i].completed=el.checked;});
 // Coaching (5 pre-populated cycles)
 ensureCoaching(org);
