@@ -241,6 +241,88 @@ var AT = (function() {
                 if (cacheHasMore) o.smart = co.smart;
               }
 
+              // KPI: per-field merge — Airtable wins. Cache only fills in
+              // fields Airtable returned as empty. Previously the absence of
+              // any kpi merge rule meant the RAG fields (ragMode, ragBaseline,
+              // ragCurrent, ragSurplus, ragCbSales, ragNextActions) saved to
+              // Airtable would be blanked on every reload because the stale
+              // cached kpi values from before the save took precedence later
+              // in the merge chain. Same pattern as the per-row consulting/
+              // coaching/attendance merge above.
+              if (co.kpi && typeof co.kpi === 'object') {
+                if (!o.kpi || typeof o.kpi !== 'object') o.kpi = {};
+                Object.keys(co.kpi).forEach(function(k){
+                  var airtableVal = o.kpi[k];
+                  var cacheVal = co.kpi[k];
+                  var airtableEmpty = (airtableVal === '' || airtableVal === null || airtableVal === undefined);
+                  var cacheHasValue = (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined);
+                  if (airtableEmpty && cacheHasValue) {
+                    o.kpi[k] = cacheVal;
+                  }
+                });
+              }
+
+              // App-stage data: same per-field merge as kpi above. The app
+              // object holds the application-stage fields (turnover, employees,
+              // tradedPct, crossBorderPct, priorITI, crossBorderTarget) which
+              // had the same stale-cache risk as the RAG fields.
+              if (co.app && typeof co.app === 'object') {
+                if (!o.app || typeof o.app !== 'object') o.app = {};
+                Object.keys(co.app).forEach(function(k){
+                  var airtableVal = o.app[k];
+                  var cacheVal = co.app[k];
+                  var airtableEmpty = (airtableVal === '' || airtableVal === null || airtableVal === undefined);
+                  var cacheHasValue = (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined);
+                  if (airtableEmpty && cacheHasValue) {
+                    o.app[k] = cacheVal;
+                  }
+                });
+              }
+
+              // Cross-border: same per-field merge.
+              if (co.crossBorder && typeof co.crossBorder === 'object') {
+                if (!o.crossBorder || typeof o.crossBorder !== 'object') o.crossBorder = {};
+                Object.keys(co.crossBorder).forEach(function(k){
+                  var airtableVal = o.crossBorder[k];
+                  var cacheVal = co.crossBorder[k];
+                  var airtableEmpty = (airtableVal === '' || airtableVal === null || airtableVal === undefined);
+                  var cacheHasValue = (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined);
+                  if (airtableEmpty && cacheHasValue) {
+                    o.crossBorder[k] = cacheVal;
+                  }
+                });
+              }
+
+              // Assessor (validation, goals, checklist, priorities, lock):
+              // per-section merge. Airtable wins. Cache only fills in keys
+              // Airtable returned empty. This protects RAG and SMART data and
+              // also restores the same protection for Validation Notes and
+              // Goals & SMART Translation that previously could be wiped by
+              // stale cache after an Airtable round-trip.
+              if (co.assessor && typeof co.assessor === 'object') {
+                if (!o.assessor || typeof o.assessor !== 'object') o.assessor = {};
+                ['validation','goals','checklist','lock'].forEach(function(section){
+                  if (!co.assessor[section] || typeof co.assessor[section] !== 'object') return;
+                  if (!o.assessor[section] || typeof o.assessor[section] !== 'object') o.assessor[section] = {};
+                  Object.keys(co.assessor[section]).forEach(function(k){
+                    var airtableVal = o.assessor[section][k];
+                    var cacheVal = co.assessor[section][k];
+                    var airtableEmpty = (airtableVal === '' || airtableVal === null || airtableVal === undefined);
+                    var cacheHasValue = (cacheVal !== '' && cacheVal !== null && cacheVal !== undefined);
+                    if (airtableEmpty && cacheHasValue) {
+                      o.assessor[section][k] = cacheVal;
+                    }
+                  });
+                });
+                // priorities is an array, not an object — keep cache only if Airtable returned empty
+                if (Array.isArray(co.assessor.priorities) && co.assessor.priorities.length > 0
+                    && (!Array.isArray(o.assessor.priorities) || o.assessor.priorities.length === 0)) {
+                  o.assessor.priorities = co.assessor.priorities;
+                }
+                // Lead assessor name (string)
+                if (co.assessor.assessor && !o.assessor.assessor) o.assessor.assessor = co.assessor.assessor;
+              }
+
               // Baseline scores: per-domain merge
               if (Array.isArray(o.baseline) && Array.isArray(co.baseline)) {
                 o.baseline = o.baseline.map(function(airtableRow, idx){
