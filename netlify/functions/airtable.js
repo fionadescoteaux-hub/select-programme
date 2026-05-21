@@ -1,10 +1,11 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-21-v9 (Fix: 12 newer field constants were name-strings while reads use returnFieldsByFieldId=true; replaced with field IDs)
+// Version: 2026-05-21-v10 (v9 + read gSmart1-5 from ORGANISATIONS table into assessor.goals.g_smart1-5 so the Validation tab populates)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
 const TABLES = {
   ORG_PROFILE: "tbllTzw4lqgmyPIc3",
+  ORGANISATIONS: "tblYFWYwyK6nKQu9b",
   BASELINE_SCORES: "tblEyUOd2daJ1tMeu",
   ENDLINE_SCORES: "tblo7cpZsebw9TuNV",
   SMART: "tblHePg3WQAfX9vTN",
@@ -160,7 +161,28 @@ const F = {
   CO_LAST_SAVED_AT:  "fldkj1TbHk8QIiFxJ",
   CO_STRAND:         "fldBkEge6nqs2dpyE",
   CO_STRAND_LABEL:   "fldFjbAmmyD1guXbb",
-  CO_NOT_APPLICABLE: "fldzDK8sr0YiJmufB",
+  // ── ORGANISATIONS table (tblYFWYwyK6nKQu9b) — v10: gSmart1-5 source for Validation tab ──
+  ORGS_NAME:   "fldjeQ6vZBIXO9ATu",
+  ORGS_GSMART1: "fldE90jxx8DyB2kG9",
+  ORGS_GSMART2: "fldbQxopiNz58FnUr",
+  ORGS_GSMART3: "fldzGC58qN10otSpo",
+  ORGS_GSMART4: "fldlGwbsUigGgyPIz",
+  ORGS_GSMART5: "fldF4rTUnIixN3XtI",
+};
+
+// v10: maps OrgProfile.OrgCode -> ORGANISATIONS.Name (the slug used to join the two tables).
+// OrgCodes are long-form (e.g. "pace-social-enterprise"); ORGANISATIONS.Name uses short slugs (e.g. "pace").
+const ORG_CODE_TO_ORGS_NAME = {
+  "pace-social-enterprise": "pace",
+  "incredable": "incredible",
+  "youth-link": "youthlink",
+  "psycare-ireland-welfare-and-harm-reduction-clg": "psycare",
+  "waymaker-child-therapy-cic": "waymaker",
+  "siel-bleu": "siel-bleu",
+  "connections-arts": "connections-arts",
+  "codema-dublins-energy-agency": "codema",
+  "community-roots": "community-roots",
+  "leave-no-trace-ireland": "leave-no-trace",
 };
 
 const DOMAINS = [
@@ -250,9 +272,14 @@ function selectVal(v) {
   return s;
 }
 
-function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance) {
+function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance) {
   const f = profile.fields;
   const orgCode = f[F.ORG_CODE] || profile.id;
+
+  // v10: find the matching ORGANISATIONS row to source gSmart1-5 for the Validation tab
+  const orgsName = ORG_CODE_TO_ORGS_NAME[orgCode] || "";
+  const orgsRow = orgsName ? (organisations || []).find((o) => o.fields[F.ORGS_NAME] === orgsName) : null;
+  const orgsFields = orgsRow ? orgsRow.fields : {};
 
   const baselineRows = baseline.filter((r) => r.fields[F.BS_ORG] === orgCode).sort((a, b) => (a.fields[F.BS_DOMAIN_NUM] || 0) - (b.fields[F.BS_DOMAIN_NUM] || 0));
   const endlineRows = endline.filter((r) => r.fields[F.ES_ORG] === orgCode).sort((a, b) => (a.fields[F.ES_DOMAIN_NUM] || 0) - (b.fields[F.ES_DOMAIN_NUM] || 0));
@@ -292,9 +319,11 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       g_goal1: f[F.GOAL1] || "",
       g_goal2: f[F.GOAL2] || "",
       g_goal3: f[F.GOAL3] || "",
-      g_smart1: "",
-      g_smart2: "",
-      g_smart3: "",
+      g_smart1: orgsFields[F.ORGS_GSMART1] || "",
+      g_smart2: orgsFields[F.ORGS_GSMART2] || "",
+      g_smart3: orgsFields[F.ORGS_GSMART3] || "",
+      g_smart4: orgsFields[F.ORGS_GSMART4] || "",
+      g_smart5: orgsFields[F.ORGS_GSMART5] || "",
     },
     priorities: f[F.PRIORITIES] ? String(f[F.PRIORITIES]).split(",").map((s) => s.trim()).filter(Boolean) : [],
     lock: {
@@ -475,8 +504,9 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
 }
 
 async function loadAll() {
-  const [profiles, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance] = await Promise.all([
+  const [profiles, organisations, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance] = await Promise.all([
     listAllRecords(TABLES.ORG_PROFILE),
+    listAllRecords(TABLES.ORGANISATIONS),
     listAllRecords(TABLES.BASELINE_SCORES),
     listAllRecords(TABLES.ENDLINE_SCORES),
     listAllRecords(TABLES.SMART),
@@ -487,12 +517,12 @@ async function loadAll() {
     listAllRecords(TABLES.VALIDATION),
     listAllRecords(TABLES.ATTENDANCE),
   ]);
-  return { profiles, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance };
+  return { profiles, organisations, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance };
 }
 
 async function handleList() {
   const all = await loadAll();
-  const orgs = all.profiles.map((p) => buildOrgFromAirtable(p, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation, all.attendance));
+  const orgs = all.profiles.map((p) => buildOrgFromAirtable(p, all.organisations, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation, all.attendance));
   return jsonResponse(200, { orgs });
 }
 
@@ -500,7 +530,7 @@ async function handleGet(orgCode) {
   const all = await loadAll();
   const profile = all.profiles.find((p) => p.fields[F.ORG_CODE] === orgCode);
   if (!profile) return jsonResponse(404, { error: "Org not found" });
-  const org = buildOrgFromAirtable(profile, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation, all.attendance);
+  const org = buildOrgFromAirtable(profile, all.organisations, all.baseline, all.endline, all.smart, all.notes, all.consulting, all.coaching, all.checklist, all.validation, all.attendance);
   return jsonResponse(200, { org });
 }
 
