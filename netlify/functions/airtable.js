@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-21-v8 (RAG report fields + baseline_structure + cycle metadata: ragRationale, lastSavedBy/At, strand, strandLabel, notApplicable)
+// Version: 2026-05-21-v9 (Fix: 12 newer field constants were name-strings while reads use returnFieldsByFieldId=true; replaced with field IDs)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -143,21 +143,24 @@ const F = {
   AT_FORMAT: "fldu6YT6IvUAGb5Q5",
   AT_NOTES: "fldoRU1pT3dffHiWi",
   // ── 2026-05-21: RAG report data + baseline_structure + cycle metadata ──
-  // These were added to Airtable by name (not ID), so we reference by name.
-  // Airtable's API accepts field name in place of field ID.
-  RAG_MODE:          "ragMode",
-  RAG_BASELINE:      "ragBaseline",
-  RAG_CURRENT:       "ragCurrent",
-  RAG_SURPLUS:       "ragSurplus",
-  RAG_CB_SALES:      "ragCbSales",
-  RAG_NEXT_ACTIONS:  "ragNextActions",
-  BASELINE_STRUCT:   "baseline_structure",
-  CO_RATIONALE:      "ragRationale",
-  CO_LAST_SAVED_BY:  "lastSavedBy",
-  CO_LAST_SAVED_AT:  "lastSavedAt",
-  CO_STRAND:         "strand",
-  CO_STRAND_LABEL:   "strandLabel",
-  CO_NOT_APPLICABLE: "notApplicable",
+  // v9 fix: these MUST be field IDs because every read uses returnFieldsByFieldId=true.
+  // Previously stored as names, which silently returned undefined on every read.
+  // OrgProfile (tbllTzw4lqgmyPIc3) RAG fields:
+  RAG_MODE:          "fldFdw02pRfmYM33m",
+  RAG_BASELINE:      "fld3tIIwDvD0kcdo3",
+  RAG_CURRENT:       "fldjVRaQ7SBQD8gvD",
+  RAG_SURPLUS:       "fldu2G9hGevrUM7Lb",
+  RAG_CB_SALES:      "fldU8LUBosVBHjFaz",
+  RAG_NEXT_ACTIONS:  "fld1RY9dYKhOJ6UK6",
+  // OrgProfile (tbllTzw4lqgmyPIc3):
+  BASELINE_STRUCT:   "fld9vErnKEAgiIox3",
+  // ConsultingCycles (tblG8VPd93xafzBJ6):
+  CO_RATIONALE:      "fldodXZQQPb9Wsjw3",
+  CO_LAST_SAVED_BY:  "fld7KHaHbxvHix9cN",
+  CO_LAST_SAVED_AT:  "fldkj1TbHk8QIiFxJ",
+  CO_STRAND:         "fldBkEge6nqs2dpyE",
+  CO_STRAND_LABEL:   "fldFjbAmmyD1guXbb",
+  CO_NOT_APPLICABLE: "fldzDK8sr0YiJmufB",
 };
 
 const DOMAINS = [
