@@ -309,10 +309,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .rag-table col.c-inc{width:110px}
 .rag-table col.c-grow{width:78px}
 .rag-table col.c-prog{width:130px}
-.rag-table col.c-rag{width:78px}
+.rag-table col.c-rag{width:180px}
 .rag-table col.c-cbs{width:90px}
 .rag-table col.c-next{width:auto;min-width:280px}
 .rag-table td.c-next-td{white-space:normal;word-wrap:break-word;line-height:1.4}
+.rag-table td:nth-child(11){white-space:normal;vertical-align:top;padding-top:8px;padding-bottom:8px}
 .rag-table td.c-stage-td{font-size:12px;line-height:1.4;white-space:normal;word-wrap:break-word;color:var(--ts2)}
 .stage-pill{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase}
 .stage-pill.s-flow{background:#e3f2fd;color:#1565c0}
@@ -1055,6 +1056,18 @@ function renderRagReport(){
     if(org.baseline&&org.baseline.length){var tot=0;org.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;});blScore=tot?parseFloat(tot.toFixed(2)):'';}
     var cbs=(org.kpi&&org.kpi.ragCbSales)?(sym+(org.kpi.ragCbSales)):'-';
     var nxt=(org.kpi&&org.kpi.ragNextActions)?org.kpi.ragNextActions:'';
+    // Latest cycle RAG + rationale (prefer latest completed; else latest with any RAG set)
+    var cycleRag='', cycleRationale='', cycleCode='';
+    if(org.consulting&&org.consulting.length){
+      var latestCompleted=null, latestWithRag=null;
+      org.consulting.forEach(function(cc){
+        if(cc&&cc.completed&&cc.rag)latestCompleted=cc;
+        if(cc&&cc.rag)latestWithRag=cc;
+      });
+      var pick=latestCompleted||latestWithRag;
+      if(pick){cycleRag=pick.rag||'';cycleRationale=pick.ragRationale||'';cycleCode=pick.code||'';}
+    }
+    var cycleRagCls=cycleRag==='Green'?'green':cycleRag==='Amber'?'amber':cycleRag==='Red'?'red':'';
     var stage=ragOrgStage(org);
     rows+='<tr>';
     rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button>';
@@ -1068,7 +1081,16 @@ function renderRagReport(){
     rows+='<td class="rag-right" style="font-weight:600">'+(blTrad?sym+blTrad.toLocaleString():'-')+'</td>';
     rows+='<td class="rag-right" style="'+growthCol+'">'+(tradGrowth!==null?(tradGrowth>=0?'+':'')+tradGrowth+'%':'-')+'</td>';
     rows+='<td class="rag-right"><div class="prog-bar-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill '+barCls+'" style="width:'+barW+'%"></div></div><span class="'+progCls+'">'+progStr+'</span></div></td>';
-    rows+='<td>'+ragBadge(prog)+'</td>';
+    rows+='<td>'+ragBadge(prog);
+    if(cycleRag){
+      var ragSwatch='<span class="rag-pill '+cycleRagCls+'" style="margin-top:6px;display:inline-flex;font-size:10px;padding:2px 7px" title="'+esc(cycleCode)+' RAG: '+esc(cycleRag)+(cycleRationale?' — '+esc(cycleRationale):'')+'">'+esc(cycleCode||'')+' '+esc(cycleRag)+'</span>';
+      rows+='<div style="margin-top:4px">'+ragSwatch+'</div>';
+      if(cycleRationale){
+        var ratShort=cycleRationale.length>80?cycleRationale.substring(0,78)+'...':cycleRationale;
+        rows+='<div style="font-size:10px;color:var(--ts);margin-top:3px;line-height:1.35;font-style:italic" title="'+esc(cycleRationale)+'">'+esc(ratShort)+'</div>';
+      }
+    }
+    rows+='</td>';
     rows+='<td class="rag-right">'+cbs+'</td>';
     rows+='<td class="c-next-td" style="font-size:12px;color:var(--ts)">'+esc(nxt||'-')+'</td>';
     rows+='</tr>';

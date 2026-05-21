@@ -184,6 +184,7 @@ var AT = (function() {
             if (!o._uiLocks   || typeof o._uiLocks   !== 'object') o._uiLocks   = {};
             if (typeof o.baselineNotes !== 'string') o.baselineNotes = '';
             if (typeof o.baselineReportUrl !== 'string') o.baselineReportUrl = '';
+            if (typeof o.baseline_structure !== 'string') o.baseline_structure = 'domain';
 
             // CACHE PROTECTS LOCAL EDITS: if cache has data Airtable returned empty, keep cache
             var co = cacheMap[o.code];
@@ -392,6 +393,7 @@ var AT = (function() {
           intensity:      org.intensity || basis.intensity || '',
           baselineNotes:  org.baselineNotes || basis.baselineNotes || '',
           baselineReportUrl: org.baselineReportUrl || basis.baselineReportUrl || '',
+          baseline_structure: org.baseline_structure || basis.baseline_structure || 'domain',
           // actionPlan and _uiLocks are simple JSON blobs — local wins when non-empty.
           actionPlan:     (org.actionPlan && Object.keys(org.actionPlan).length) ? org.actionPlan : (basis.actionPlan || {}),
           _uiLocks:       (org._uiLocks   && Object.keys(org._uiLocks).length)   ? org._uiLocks   : (basis._uiLocks   || {})
@@ -409,6 +411,7 @@ var AT = (function() {
           intensity: merged.intensity,
           baselineNotes: merged.baselineNotes,
           baselineReportUrl: merged.baselineReportUrl,
+          baseline_structure: merged.baseline_structure,
           assessor: merged.assessor,
           actionPlan: merged.actionPlan,
           _uiLocks: merged._uiLocks
