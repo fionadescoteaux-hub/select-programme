@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-20-v7 (consulting hours mapped to CO_DAYS column; read returns both hours and days)
+// Version: 2026-05-21-v8 (RAG report fields + baseline_structure + cycle metadata: ragRationale, lastSavedBy/At, strand, strandLabel, notApplicable)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -142,6 +142,22 @@ const F = {
   AT_APOLOGY: "fldhpYfCTMv7I0apK",
   AT_FORMAT: "fldu6YT6IvUAGb5Q5",
   AT_NOTES: "fldoRU1pT3dffHiWi",
+  // ── 2026-05-21: RAG report data + baseline_structure + cycle metadata ──
+  // These were added to Airtable by name (not ID), so we reference by name.
+  // Airtable's API accepts field name in place of field ID.
+  RAG_MODE:          "ragMode",
+  RAG_BASELINE:      "ragBaseline",
+  RAG_CURRENT:       "ragCurrent",
+  RAG_SURPLUS:       "ragSurplus",
+  RAG_CB_SALES:      "ragCbSales",
+  RAG_NEXT_ACTIONS:  "ragNextActions",
+  BASELINE_STRUCT:   "baseline_structure",
+  CO_RATIONALE:      "ragRationale",
+  CO_LAST_SAVED_BY:  "lastSavedBy",
+  CO_LAST_SAVED_AT:  "lastSavedAt",
+  CO_STRAND:         "strand",
+  CO_STRAND_LABEL:   "strandLabel",
+  CO_NOT_APPLICABLE: "notApplicable",
 };
 
 const DOMAINS = [
@@ -310,6 +326,7 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
     intensity: f[F.INTENSITY] || "",
     baselineNotes: f[F.BASELINE_NOTES] || "",
     baselineReportUrl: f[F.BASELINE_REPORT_URL] || "",
+    baseline_structure: f[F.BASELINE_STRUCT] || "domain",
     assessor: assessorObj,
     kpi: {
       jurisdiction: f[F.JURISDICTION] || "",
@@ -318,6 +335,12 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       newToITI: f[F.NEW_TO_ITI] || "",
       firstTimeCB: f[F.FIRST_TIME_CB] || "",
       firstTimeExp: f[F.FIRST_TIME_EXP] || "",
+      ragMode:        f[F.RAG_MODE]         || "",
+      ragBaseline:    f[F.RAG_BASELINE]     || "",
+      ragCurrent:     f[F.RAG_CURRENT]      || "",
+      ragSurplus:     f[F.RAG_SURPLUS]      || "",
+      ragCbSales:     f[F.RAG_CB_SALES]     || "",
+      ragNextActions: f[F.RAG_NEXT_ACTIONS] || "",
     },
     app: {
       turnover: f[F.TURNOVER] || "",
@@ -398,6 +421,12 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       hours: r.fields[F.CO_DAYS] || "",
       domainMovement: r.fields[F.CO_MOVEMENT] || "",
       rag: r.fields[F.CO_RAG] || "",
+      ragRationale: r.fields[F.CO_RATIONALE] || "",
+      lastSavedBy:  r.fields[F.CO_LAST_SAVED_BY] || "",
+      lastSavedAt:  r.fields[F.CO_LAST_SAVED_AT] || "",
+      strand:       r.fields[F.CO_STRAND] || "",
+      strandLabel:  r.fields[F.CO_STRAND_LABEL] || "",
+      notApplicable: !!r.fields[F.CO_NOT_APPLICABLE],
       completed: !!r.fields[F.CO_DONE],
       _rid: r.id,
     })),
@@ -664,7 +693,7 @@ async function batchDelete(tableId, ids) {
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl, baseline_structure } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
@@ -703,6 +732,13 @@ async function handleUpdate(payload) {
     if (kpi.turnoverBand !== undefined) profileFields[F.TURNOVER] = String(kpi.turnoverBand);
     if (kpi.employees !== undefined) profileFields[F.EMPLOYEES] = String(kpi.employees);
     if (kpi.tradedPct !== undefined) profileFields[F.TRADED_PCT] = pct(kpi.tradedPct);
+    // ── RAG report fields (2026-05-21) — all single-line text in Airtable ──
+    if (kpi.ragMode        !== undefined) profileFields[F.RAG_MODE]         = String(kpi.ragMode        || "");
+    if (kpi.ragBaseline    !== undefined) profileFields[F.RAG_BASELINE]     = String(kpi.ragBaseline    || "");
+    if (kpi.ragCurrent     !== undefined) profileFields[F.RAG_CURRENT]      = String(kpi.ragCurrent     || "");
+    if (kpi.ragSurplus     !== undefined) profileFields[F.RAG_SURPLUS]      = String(kpi.ragSurplus     || "");
+    if (kpi.ragCbSales     !== undefined) profileFields[F.RAG_CB_SALES]     = String(kpi.ragCbSales     || "");
+    if (kpi.ragNextActions !== undefined) profileFields[F.RAG_NEXT_ACTIONS] = String(kpi.ragNextActions || "");
   }
 
   // Application-stage data (new — was previously dropped)
@@ -784,6 +820,10 @@ async function handleUpdate(payload) {
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
   if (baselineReportUrl !== undefined) profileFields[F.BASELINE_REPORT_URL] = String(baselineReportUrl || "");
+  if (baseline_structure !== undefined) {
+    const v = selectVal(baseline_structure);
+    if (v !== undefined) profileFields[F.BASELINE_STRUCT] = v;
+  }
 
   // Assessor: NEW supports rich object {assessor (lead name), checklist, validation, goals, priorities, lock}
   // OR legacy plain string. Detect and handle both.
@@ -932,7 +972,14 @@ async function handleUpdate(payload) {
         [F.CO_DAYS]: (c.hours !== undefined && c.hours !== "") ? c.hours : (c.days || ""),
         [F.CO_MOVEMENT]: c.domainMovement || "",
         [F.CO_DONE]: !!c.completed,
+        // ── 2026-05-21: cycle metadata ──
+        [F.CO_RATIONALE]:      c.ragRationale || "",
+        [F.CO_LAST_SAVED_BY]:  c.lastSavedBy  || "",
+        [F.CO_STRAND_LABEL]:   c.strandLabel  || "",
+        [F.CO_NOT_APPLICABLE]: !!c.notApplicable,
       };
+      // lastSavedAt: only set when client provides a value (Airtable rejects "" for Date)
+      if (c.lastSavedAt) fields[F.CO_LAST_SAVED_AT] = c.lastSavedAt;
       // Select fields: only set if non-empty (else Airtable rejects with INVALID_MULTIPLE_CHOICE_OPTIONS)
       const phase = selectVal(c.phase);
       if (phase !== undefined) fields[F.CO_PHASE] = phase;
@@ -942,6 +989,8 @@ async function handleUpdate(payload) {
       if (fmt !== undefined) fields[F.CO_FORMAT] = fmt;
       const rag = selectVal(c.rag);
       if (rag !== undefined) fields[F.CO_RAG] = rag;
+      const strandVal = selectVal(c.strand);
+      if (strandVal !== undefined) fields[F.CO_STRAND] = strandVal;
 
       const exists = byCode[c.code];
       if (exists) updates.push({ id: exists.id, fields });
