@@ -1,10 +1,10 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-21-v13 (Repoint ORG_PROFILE to tblYFWYwyK6nKQu9b which is the actual OrgProfile table with camelCase ragMode/ragBaseline/gSmart1-5 fields. The previous ID tbllTzw4lqgmyPIc3 was ORGANISATIONS which only has the underscore-prefixed RAG_Mode fields the code doesn't read.)
+// Version: 2026-05-21-v8 (RAG report fields + baseline_structure + cycle metadata: ragRationale, lastSavedBy/At, strand, strandLabel, notApplicable)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
 const TABLES = {
-  ORG_PROFILE: "tblYFWYwyK6nKQu9b",
+  ORG_PROFILE: "tbllTzw4lqgmyPIc3",
   BASELINE_SCORES: "tblEyUOd2daJ1tMeu",
   ENDLINE_SCORES: "tblo7cpZsebw9TuNV",
   SMART: "tblHePg3WQAfX9vTN",
@@ -158,12 +158,6 @@ const F = {
   CO_STRAND:         "strand",
   CO_STRAND_LABEL:   "strandLabel",
   CO_NOT_APPLICABLE: "notApplicable",
-  // ── 2026-05-21-v9: Diagnosis Save & Lock persistence ──
-  // Holds JSON-serialised lock state for the four Diagnosis sections
-  // (problemStatement, observation, constraints, scenario). Stored as
-  // long-text on OrgProfile rather than four boolean columns so adding
-  // future lockable sections doesn't require schema changes.
-  DIAGNOSIS_LOCKS:   "diagnosisLocks",
 };
 
 const DOMAINS = [
@@ -285,14 +279,6 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
   const generalNotes = noteRows.filter((r) => r.fields[F.N_TYPE] === "Consulting" || r.fields[F.N_TYPE] === "Coaching" || r.fields[F.N_TYPE] === "Form Submission").map((r) => ({ type: r.fields[F.N_TYPE], date: r.fields[F.N_DATE] || "", text: r.fields[F.N_TEXT] || "", _rid: r.id }));
 
   // Build rich assessor object expected by Validation tab
-  // SMART objectives (g_smart1 through g_smart5) read from the SMARTObjectives
-  // table — same source as org.smart[] — so Validation and the SMART tab show
-  // the same data. Added 2026-05-21-v10. Previously hardcoded to empty strings.
-  const smartObjByNum = {};
-  smartRows.forEach((r) => {
-    const n = r.fields[F.SM_NUM];
-    if (n) smartObjByNum[n] = r.fields[F.SM_OBJ] || "";
-  });
   const assessorObj = {
     assessor: f[F.ASSESSOR] || "",
     checklist: {},
@@ -303,11 +289,9 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
       g_goal1: f[F.GOAL1] || "",
       g_goal2: f[F.GOAL2] || "",
       g_goal3: f[F.GOAL3] || "",
-      g_smart1: smartObjByNum[1] || "",
-      g_smart2: smartObjByNum[2] || "",
-      g_smart3: smartObjByNum[3] || "",
-      g_smart4: smartObjByNum[4] || "",
-      g_smart5: smartObjByNum[5] || "",
+      g_smart1: "",
+      g_smart2: "",
+      g_smart3: "",
     },
     priorities: f[F.PRIORITIES] ? String(f[F.PRIORITIES]).split(",").map((s) => s.trim()).filter(Boolean) : [],
     lock: {
@@ -380,16 +364,6 @@ function buildOrgFromAirtable(profile, baseline, endline, smart, notes, consulti
         f[F.CONSTRAINT_2] || "",
         f[F.CONSTRAINT_3] || "",
       ],
-      // Lock state for Diagnosis sections (added 2026-05-21-v9). Stored as
-      // JSON in a single Airtable long-text column. Parsed defensively — if
-      // the cell is blank or malformed we return an empty object rather than
-      // letting JSON.parse crash the whole load.
-      _locks: (function(){
-        var raw = f[F.DIAGNOSIS_LOCKS];
-        if (!raw) return {};
-        try { var parsed = JSON.parse(raw); return (parsed && typeof parsed === "object") ? parsed : {}; }
-        catch (e) { return {}; }
-      })(),
     },
     crossBorder: {
       baseline: f[F.CB_BASELINE] || "",
@@ -804,20 +778,6 @@ async function handleUpdate(payload) {
       if (diagnosis.constraints[1] !== undefined) profileFields[F.CONSTRAINT_2] = diagnosis.constraints[1] || "";
       if (diagnosis.constraints[2] !== undefined) profileFields[F.CONSTRAINT_3] = diagnosis.constraints[2] || "";
     }
-    // ── 2026-05-21-v9: persist Diagnosis section locks ──
-    // Front-end sends diagnosis._locks as { problemStatement: true, observation: false, ... }
-    // Serialise to JSON string. Empty/cleared lock state writes "" so Airtable
-    // shows a blank cell rather than the literal string "{}".
-    if (diagnosis._locks !== undefined && diagnosis._locks !== null) {
-      try {
-        var hasAny = Object.keys(diagnosis._locks).some(function(k){ return diagnosis._locks[k]; });
-        profileFields[F.DIAGNOSIS_LOCKS] = hasAny ? JSON.stringify(diagnosis._locks) : "";
-      } catch (e) {
-        // If something pathological is in _locks, skip persisting rather than
-        // crashing the whole save.
-        console.warn("[SELECT API] Failed to serialise diagnosis._locks for " + code + ":", e.message);
-      }
-    }
   }
 
   // Cross-border baseline/target/endline (existing structured fields)
@@ -910,45 +870,6 @@ async function handleUpdate(payload) {
 
   await patchProfile(profile.id, profileFields);
 
-  // ── 2026-05-21-v10: Merge Validation g_smart1-5 text into SMART array ──
-  // Validation captures SMART objectives as free text fields g_smart1..g_smart5
-  // on assessor.goals. These need to land in the SMARTObjectives table so they
-  // appear on the SMART tab, the cohort RAG report, and the Excel export.
-  //
-  // Strategy: if the payload has assessor.goals.g_smart* values, fold them into
-  // the `smart` array's `objective` field at the matching index — but ONLY
-  // where the structured SMART slot is empty. This means the SMART tab is the
-  // source of truth once a structured row exists (with target/timeline/etc),
-  // and Validation only fills in slots that haven't been worked yet.
-  //
-  // Edge: if a slot exists on the SMART tab but has empty objective text, the
-  // validation text fills it in. That's intentional — empty objective with
-  // filled target/timeline is meaningless, so we accept Validation's value.
-  let mergedSmart = Array.isArray(smart) ? smart.slice() : null;
-  if (assessor && typeof assessor === "object" && assessor.goals && typeof assessor.goals === "object") {
-    const valSmarts = [
-      assessor.goals.g_smart1, assessor.goals.g_smart2, assessor.goals.g_smart3,
-      assessor.goals.g_smart4, assessor.goals.g_smart5
-    ];
-    const anyDefined = valSmarts.some((v) => v !== undefined && v !== "");
-    if (anyDefined) {
-      if (!mergedSmart) mergedSmart = [];
-      for (let i = 0; i < 5; i++) {
-        const txt = valSmarts[i];
-        if (!txt) continue; // Skip undefined and empty — don't overwrite structured data with blank
-        // Ensure slot exists in the merged array
-        while (mergedSmart.length <= i) {
-          mergedSmart.push({ objective: "", target: "", timeline: "", owner: "", status: "" });
-        }
-        // Only fill objective when it's currently empty on the SMART tab side.
-        // If the SMART tab has structured data here, it wins.
-        if (!mergedSmart[i].objective) {
-          mergedSmart[i].objective = String(txt);
-        }
-      }
-    }
-  }
-
   // ── BASELINE SCORES table ──
   if (Array.isArray(baseline)) {
     const existing = await listAllRecords(TABLES.BASELINE_SCORES);
@@ -994,15 +915,12 @@ async function handleUpdate(payload) {
   // record id on each save and was the source of orphan rows / 404 save
   // failures. Surplus rows (objective count reduced) are intentionally left in
   // place rather than deleted, so no data is ever destroyed by a save.
-  // 2026-05-21-v10: uses mergedSmart (which folds in Validation g_smart1-5)
-  // rather than the raw `smart` payload so Validation entries always reach
-  // the SMARTObjectives table.
-  if (Array.isArray(mergedSmart)) {
+  if (Array.isArray(smart)) {
     const existing = await listAllRecords(TABLES.SMART);
     const byNum = {};
     existing.filter((r) => r.fields[F.SM_ORG] === code).forEach((r) => (byNum[r.fields[F.SM_NUM]] = r));
     const ops = [];
-    mergedSmart.forEach((s, i) => {
+    smart.forEach((s, i) => {
       const num = i + 1;
       const fields = {
         [F.SM_ORG]: code,
