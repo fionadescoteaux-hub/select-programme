@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-21-v10 (Validation g_smart1-5 now persisted to SMARTObjectives table; read side surfaces them on assessor.goals)
+// Version: 2026-05-21-v11 (Defensive SMART dedupe: orphan rows with null SM_NUM or beyond mergedSmart.length are deleted on every save, preventing the accumulation seen on Pearse where g_smart3 was re-pushed as Obj 4-10)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -992,15 +992,55 @@ async function handleUpdate(payload) {
   // Match existing rows by SM_NUM and update in place, mirroring the Baseline
   // block. The previous delete-all-then-recreate pattern regenerated every
   // record id on each save and was the source of orphan rows / 404 save
-  // failures. Surplus rows (objective count reduced) are intentionally left in
-  // place rather than deleted, so no data is ever destroyed by a save.
+  // failures.
   // 2026-05-21-v10: uses mergedSmart (which folds in Validation g_smart1-5)
   // rather than the raw `smart` payload so Validation entries always reach
   // the SMARTObjectives table.
+  // 2026-05-21-v11: defensive dedupe. Previously, if any historical row had
+  // an empty/null SM_NUM (e.g. created by a faulty earlier save) it would not
+  // be picked up by byNum, so the next save created new rows instead of
+  // updating — accumulating duplicates on every call. We now:
+  //   1. Filter existing rows for this org to only those with a valid SM_NUM
+  //   2. Build byNum from the valid set; keep the FIRST occurrence per number
+  //      and mark the rest as orphans to delete
+  //   3. Also mark as orphans any row with a missing/invalid SM_NUM
+  //   4. Delete orphans BEFORE creating new rows so the SMART tab never
+  //      shows a duplicated objective again
   if (Array.isArray(mergedSmart)) {
     const existing = await listAllRecords(TABLES.SMART);
+    const allForOrg = existing.filter((r) => r.fields[F.SM_ORG] === code);
     const byNum = {};
-    existing.filter((r) => r.fields[F.SM_ORG] === code).forEach((r) => (byNum[r.fields[F.SM_NUM]] = r));
+    const orphanIds = [];
+    allForOrg.forEach((r) => {
+      const rawNum = r.fields[F.SM_NUM];
+      const n = rawNum === null || rawNum === undefined || rawNum === "" ? null : parseInt(rawNum, 10);
+      if (n === null || isNaN(n) || n < 1) {
+        // Row has no usable SM_NUM — orphan from a previous bad save
+        orphanIds.push(r.id);
+        return;
+      }
+      if (byNum[n]) {
+        // Duplicate row for this number — keep the first, mark this one for deletion
+        orphanIds.push(r.id);
+        return;
+      }
+      byNum[n] = r;
+    });
+    // Also mark any row whose number is beyond the new mergedSmart length as
+    // an orphan. Previously these were left in place "to never destroy data"
+    // but that allowed Pearse's stale duplicates to accumulate. Anything
+    // numbered above the count we're saving was promoted in error.
+    Object.keys(byNum).forEach((numStr) => {
+      const n = parseInt(numStr, 10);
+      if (n > mergedSmart.length) {
+        orphanIds.push(byNum[n].id);
+        delete byNum[n];
+      }
+    });
+    // Delete orphans first
+    if (orphanIds.length > 0) {
+      await batchDelete(TABLES.SMART, orphanIds);
+    }
     const ops = [];
     mergedSmart.forEach((s, i) => {
       const num = i + 1;
