@@ -7,7 +7,7 @@
 
 [[redirects]]
   from = "/api/airtable"
-  to = "/.netlify/functions/airtable-api"
+  to = "/.netlify/functions/airtable"
   status = 200
   force = true
 
