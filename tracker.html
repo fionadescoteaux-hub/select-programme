@@ -742,6 +742,65 @@ var SOP_STEPS=[
 function loadData(){return AT.loadDataSync();}
 function saveData(d){AT.saveData(d, currentOrg);}
 
+// ═══════════════════════════════════════════════════════════════
+// 2026-05-22: URL hash routing so the browser back button works.
+// Format: #org=<code>&tab=<tabname>   |   #cohort   |   (empty = login)
+// _setHash() writes current state to URL; _readHash() restores it.
+// ═══════════════════════════════════════════════════════════════
+var _suppressHashChange=false;
+function _setHash(){
+  if(_suppressHashChange)return;
+  var hash='';
+  if(currentOrg){
+    hash='#org='+encodeURIComponent(currentOrg);
+    var activeTabBtn=document.querySelector('.tab-btn.active');
+    if(activeTabBtn){
+      var tab=activeTabBtn.getAttribute('data-tab');
+      if(tab)hash+='&tab='+encodeURIComponent(tab);
+    }
+  }else if(document.getElementById('dashScreen') && document.getElementById('dashScreen').style.display!=='none' && (isAssessor||isViewer)){
+    hash='#cohort';
+  }
+  if(hash && window.location.hash!==hash){
+    try{history.pushState({},'',hash);}catch(e){window.location.hash=hash.slice(1);}
+  }
+}
+function _parseHash(){
+  var h=window.location.hash||'';
+  if(!h)return {};
+  if(h.charAt(0)==='#')h=h.slice(1);
+  if(h==='cohort')return {cohort:true};
+  var out={};
+  h.split('&').forEach(function(pair){
+    var kv=pair.split('=');
+    if(kv.length===2)out[kv[0]]=decodeURIComponent(kv[1]);
+  });
+  return out;
+}
+function _readHash(){
+  // Only act if we have a valid auth state — otherwise login screen handles it.
+  if(!isAssessor && !isViewer && !currentOrg)return;
+  var p=_parseHash();
+  _suppressHashChange=true;
+  try{
+    if(p.cohort){
+      if((isAssessor||isViewer) && currentOrg){currentOrg=null;showDash();}
+      else if((isAssessor||isViewer) && !currentOrg){showDash();}
+      // CEO trying to hit #cohort: ignore — keep them on their org
+    }else if(p.org){
+      // Only open if user is allowed (assessor/viewer OR this is their own org)
+      if(isAssessor || isViewer || p.org===currentOrg){
+        if(p.org!==currentOrg)openTracker(p.org);
+        if(p.tab){
+          var tabBtn=document.querySelector('[data-tab="'+p.tab+'"]');
+          if(tabBtn)switchTab(p.tab,tabBtn);
+        }
+      }
+    }
+  }finally{_suppressHashChange=false;}
+}
+window.addEventListener('hashchange',_readHash);
+
 function switchDashView(view,btn){
   document.querySelectorAll('.dash-view').forEach(function(v){v.style.display='none';});
   document.querySelectorAll('.view-btn').forEach(function(b){b.classList.remove('active');});
@@ -1873,7 +1932,8 @@ else assessorName='Assessor';
 pw=MASTER_PW;
 AT.setAuth(pw);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(data){showDash();});
+// 2026-05-22: after loadData completes, restore deep link from URL hash
+AT.loadData(function(data){showDash();_readHash();});
 showDash();
 return;
 }
@@ -1882,7 +1942,7 @@ if(VIEWER_PASSWORDS.indexOf(pw)>-1){
 isAssessor=false;isViewer=true;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(data){showDash();});
+AT.loadData(function(data){showDash();_readHash();});
 showDash();
 return;
 }
@@ -1908,7 +1968,7 @@ if(org&&(org.password===pw||org.code===mappedCode||org.code===pw)){
 isAssessor=false;currentOrg=org.code;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(d){openTracker(org.code);});
+AT.loadData(function(d){openTracker(org.code);_readHash();});
 return;
 }
 // Fallback: if the password is in CEO_PASSWORDS_MAP and matches the URL target, accept it
@@ -1917,7 +1977,7 @@ if(mappedCode&&mappedCode===targetOrgId){
 isAssessor=false;currentOrg=mappedCode;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(d){openTracker(mappedCode);});
+AT.loadData(function(d){openTracker(mappedCode);_readHash();});
 return;
 }
 document.getElementById('authErr').style.display='block';return;
@@ -1930,7 +1990,7 @@ if(o.password===pw||o.code===mappedCode||(mappedCode&&o.code===mappedCode)){
 isAssessor=false;currentOrg=o.code;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(){openTracker(o.code);});
+AT.loadData(function(){openTracker(o.code);_readHash();});
 return;}
 }
 // Fallback: if the password is in CEO_PASSWORDS_MAP but cache is empty/stale,
@@ -1939,13 +1999,14 @@ if(mappedCode){
 isAssessor=false;currentOrg=mappedCode;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
-AT.loadData(function(d){openTracker(mappedCode);});
+AT.loadData(function(d){openTracker(mappedCode);_readHash();});
 return;
 }
 document.getElementById('authErr').style.display='block';
 }
 
 function showDash(){
+currentOrg=null;
 document.getElementById('dashScreen').style.display='block';
 document.getElementById('trackerScreen').style.display='none';
 document.getElementById('sopScreen').style.display='none';
@@ -1957,6 +2018,7 @@ if(migBtn)migBtn.style.display=isAssessor?'':'none';
 AT.setStatus && AT._updateStamp && AT._updateStamp();
 renderCohortBar();
 renderOrgGrid();
+_setHash();
 }
 
 function renderCohortBar(){
@@ -2069,6 +2131,7 @@ document.getElementById('trkOrgName').textContent=org.name;
 document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · '+org.code+' · '+(org.kpi.jurisdiction||'')+(org.intensity?' · '+org.intensity:'');
 switchTab('profile',document.querySelector('[data-tab="profile"]'));
 renderAll(org);
+_setHash();
 
 // AUTO-SAVE: any change to any field in the tracker triggers a save.
 // input/change events are debounced (2000ms) so typing isn't interrupted.
@@ -2190,12 +2253,17 @@ document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('
 document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
 document.getElementById('tab-'+tab).classList.add('active');
 btn.classList.add('active');
+// 2026-05-22: Update URL hash so browser back button works.
+_setHash();
 // On the Action Plan tab, CEOs can edit even though they can't edit other tabs.
 // Update the read-only banner so it doesn't mislead them on this one.
 var notice=document.getElementById('readonlyNotice');
 if(notice&&!isAssessor){
   if(tab==='actionplan'){
     notice.textContent='You can add and edit actions here \u2014 this is your live action plan. Other tabs remain read-only.';
+    notice.style.display='block';
+  }else if(tab==='validation'){
+    notice.textContent='You can edit your Commercial Problem Statement and SMART Objectives below; other Validation fields are read-only.';
     notice.style.display='block';
   }else{
     notice.textContent='You are viewing this tracker in read-only mode. Contact Fiona or Clodagh if anything needs updating.';
@@ -2444,6 +2512,11 @@ var GOAL_FIELDS=[
 {key:'g_smart5',label:'SMART Objective 5',ta:true,ph:''}
 ];
 
+// 2026-05-22: CEOs can edit their own Goal statement and 5 SMART objectives under Validation.
+// All other Validation fields (problem-why, goal1/2/3, validation notes, priority domains, lock) remain assessor-only.
+var CEO_EDITABLE_GOAL_FIELDS={g_problem:1,g_smart1:1,g_smart2:1,g_smart3:1,g_smart4:1,g_smart5:1};
+function canEditGoalField(key){return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[key];}
+
 var LOCK_CHECKS=[
 {key:'lk1',label:'CEO has reviewed and signed off on baseline scores'},
 {key:'lk2',label:'Problem statement and SMART objectives agreed in writing'},
@@ -2533,15 +2606,19 @@ html+='</div>';
 html+='</div>';
 
 // SECTION 3: Goals & SMART Translation
+// 2026-05-22: CEOs can now edit g_problem and g_smart1..5 (their Goal + SMARTs).
+// Other Goal fields remain assessor-only. Lock still applies to the whole section
+// for assessors; CEOs can edit their 6 fields regardless of assessor lock.
 var lgs=uiLockGet(org,'goals','main');
-html+='<div class="problem-card'+(lgs?' pc-locked':'')+'">';
-html+='<div class="pc-header"><div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>'+uiLockBtn('goals','main',lgs)+'</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into directional goals and SMART objectives. SMARTs populate the SMART tab.</div>';
+html+='<div class="problem-card'+(lgs&&isAssessor?' pc-locked':'')+'">';
+html+='<div class="pc-header"><div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>'+(isAssessor?uiLockBtn('goals','main',lgs):'')+'</div>';
+html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into directional goals and SMART objectives. SMARTs populate the SMART tab.'+(isAssessor?'':' You can edit your Commercial Problem Statement and SMART Objectives below; other fields are read-only.')+'</div>';
 GOAL_FIELDS.forEach(function(g){
 var val=a.goals[g.key]||'';
+var canEdit=canEditGoalField(g.key) && !(isAssessor && lgs);
 html+='<div style="margin-bottom:12px">';
-html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(g.label)+'</label>';
-if(isAssessor&&!lgs){
+html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(g.label)+(canEdit&&!isAssessor?' <span style="color:var(--teal);font-weight:600;text-transform:none;letter-spacing:0;font-style:italic">(editable)</span>':'')+'</label>';
+if(canEdit){
 if(g.ta){
 html+='<textarea data-val-goal="'+g.key+'" placeholder="'+esc(g.ph||'')+'" style="width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
 }else{
@@ -2613,6 +2690,21 @@ var el=document.getElementById('validationContent');
 if(!el)return;
 el.innerHTML=html;
 
+// 2026-05-22: data-val-goal listener moved outside the isAssessor block so
+// that CEO edits to g_problem and g_smart1..5 also save. Other goal fields
+// won't have an editable element rendered for CEOs (per canEditGoalField), so
+// there's nothing to wire — but we double-check on save just in case.
+el.querySelectorAll('[data-val-goal]').forEach(function(t){
+t.addEventListener('change',function(){
+var key=this.getAttribute('data-val-goal');
+if(!canEditGoalField(key)){return;}
+var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
+if(!o)return;ensureAssessor(o);
+o.assessor.goals[key]=this.value;
+saveData(d,o.code);
+});
+});
+
 if(isAssessor){
 // Wire up immediate-save handlers (the global Save button also catches all of these)
 el.querySelectorAll('[data-val-ck]').forEach(function(cb){
@@ -2631,15 +2723,6 @@ var key=this.getAttribute('data-val-vn');
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
 o.assessor.validation[key]=this.value;
-saveData(d,o.code);
-});
-});
-el.querySelectorAll('[data-val-goal]').forEach(function(t){
-t.addEventListener('change',function(){
-var key=this.getAttribute('data-val-goal');
-var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
-if(!o)return;ensureAssessor(o);
-o.assessor.goals[key]=this.value;
 saveData(d,o.code);
 });
 });
