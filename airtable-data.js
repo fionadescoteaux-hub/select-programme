@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // SELECT Programme — Airtable Data Layer
-// Version: 2026-05-20-DIAGNOSTIC-PUSHORG-GATES
+// Version: 2026-05-22-SMART-MERGE-FIX
 //
 // CRITICAL SAFETY RULES (prevent Airtable wipes):
 // 1. NEVER push to Airtable until loadData() succeeds at least once.
@@ -14,6 +14,16 @@
 // pushOrg() now does a read-merge-write: fetch latest Airtable state, merge
 // local edits into it, then push. loadData() also flipped to "Airtable wins
 // for shared per-row fields"; cache only fills empty slots.
+//
+// SMART MERGE FIX (2026-05-22):
+// Before this fix, pushOrg() replaced Airtable's SMART rows wholesale whenever
+// local org.smart had any rows. Result: opening the SMART tab with stale
+// localStorage data overwrote clean Airtable rows with stale duplicates.
+// SMART now merges per-row by _rid using mergeRowsByRid: Airtable rows are
+// preserved unless local has the same _rid AND non-empty edits.
+// TRADE-OFF: deleting a SMART row from the UI no longer propagates to
+// Airtable via push — deletes must be done at the Airtable layer for now.
+// This is the safer failure mode; data preservation > delete convenience.
 // ═══════════════════════════════════════════════════════════════
 
 var AT = (function() {
@@ -465,7 +475,7 @@ var AT = (function() {
           assessor:     mergeObj(basis.assessor, org.assessor),
           baseline:     mergeRowsByIndex(basis.baseline, org.baseline),
           endline:      mergeRowsByIndex(basis.endline, org.endline),
-          smart:        org.smart && org.smart.length ? org.smart : (basis.smart || []),
+          smart:        mergeRowsByRid(basis.smart, org.smart),
           notes:        unionNotes(basis.notes, org.notes),
           consulting:   mergeRowsByCode(basis.consulting, org.consulting),
           coaching:     mergeRowsByCode(basis.coaching,   org.coaching),
@@ -528,6 +538,42 @@ var AT = (function() {
       if (v !== '' && v !== null && v !== undefined) out[k] = v;
       else if (!(k in out)) out[k] = v;
     });
+    return out;
+  }
+  // mergeRowsByRid: per-row, per-field merge keyed on `_rid` (for SMART).
+  // Airtable rows are preserved unless local has same _rid with non-empty edits.
+  // Local rows without _rid are appended (treated as new rows).
+  // Airtable rows that local doesn't have are kept (no delete via push).
+  function mergeRowsByRid(remoteRows, localRows) {
+    var r = Array.isArray(remoteRows) ? remoteRows : [];
+    var l = Array.isArray(localRows)  ? localRows  : [];
+    if (!r.length && !l.length) return [];
+    if (!l.length) return r;
+    var localByRid = {};
+    var localWithoutRid = [];
+    l.forEach(function(row){
+      if (!row) return;
+      if (row._rid) localByRid[row._rid] = row;
+      else localWithoutRid.push(row);
+    });
+    var out = r.map(function(remoteRow){
+      if (!remoteRow || !remoteRow._rid) return remoteRow;
+      var localRow = localByRid[remoteRow._rid];
+      if (!localRow) return remoteRow;
+      var merged = Object.assign({}, remoteRow);
+      Object.keys(localRow).forEach(function(field){
+        if (field === '_rid') return;
+        var v = localRow[field];
+        if (typeof v === 'boolean') {
+          if (v === true) merged[field] = true;
+        } else if (v !== '' && v !== null && v !== undefined) {
+          merged[field] = v;
+        }
+      });
+      return merged;
+    });
+    // Append local rows that have no _rid (new rows the user added but never saved before).
+    localWithoutRid.forEach(function(row){ out.push(row); });
     return out;
   }
   // mergeRowsByCode: per-row, per-field merge keyed on `code` (consulting/coaching/attendance).
