@@ -2353,13 +2353,7 @@ org.baseline.forEach(function(b,i){var s=parseFloat(b.score)||0;if(s>0)hasScores
 var overall=totalWtd.toFixed(2);
 var maturity=totalWtd<2?'Foundational':totalWtd<3?'Emerging':totalWtd<3.75?'Defined':totalWtd<4.5?'Embedded':'Optimised';
 var foot='<tr style="background:var(--bg2);font-weight:700"><td>Overall Weighted Score</td><td>100%</td><td colspan="2" style="text-align:center;font-family:var(--serif);font-size:18px;color:var(--navy)">'+(hasScores?overall:'--')+'</td><td style="font-size:13px;color:var(--teal)">'+(hasScores?maturity:'--')+'</td><td></td></tr>';
-if(isAssessor){
-  if(org.baselineLocked){
-    foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><span style="font-size:11px;color:var(--tt);margin-right:12px;font-style:italic">Baseline locked &mdash; scores read-only</span><button class="btn btn-sm btn-outline" onclick="unlockBaseline()" style="color:#c62828;border-color:#c62828">&#128275; Unlock baseline</button></td></tr>';
-  } else {
-    foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';
-  }
-}
+if(isAssessor&&!org.baselineLocked){foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';}
 document.getElementById('baselineFoot').innerHTML=foot;
 }
 
@@ -2367,57 +2361,6 @@ function lockBaseline(){
 if(!confirm('Lock baseline? This cannot be undone. Scores will be frozen.'))return;
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
 org.baselineLocked=true;saveData(data,currentOrg);renderBaseline(org);renderOrgGrid();
-}
-
-function unlockBaseline(){
-if(!isAssessor){alert('Only assessors can unlock a baseline.');return;}
-if(!confirm('Unlock this baseline?\n\nScores and evidence will become editable again. Use only when validated edits are required.'))return;
-if(!currentOrg){alert('No organisation selected.');return;}
-
-// Direct API call — bypasses the saveData chain entirely so a racing auto-save
-// in another render path cannot overwrite the unlock with stale state.
-// Try every known place the auth token might live; fall back to a prompt.
-var pw='';
-try{
-  if(typeof AT!=='undefined'){pw=AT._auth||AT.authToken||AT._authToken||AT.auth||'';}
-  if(!pw){
-    var keys=Object.keys(localStorage);
-    for(var i=0;i<keys.length;i++){
-      var k=keys[i];
-      if(/auth|pw|password|token/i.test(k)){
-        var v=localStorage.getItem(k);
-        if(v&&/^SELECT/i.test(v)){pw=v;break;}
-      }
-    }
-  }
-  if(!pw&&typeof MASTER_PW!=='undefined')pw=MASTER_PW;
-}catch(e){}
-if(!pw)pw=prompt('Confirm assessor password to authorise unlock:')||'';
-if(!pw)return;
-
-var btn=(window.event&&window.event.target)||null;
-if(btn){btn.textContent='Unlocking…';btn.disabled=true;}
-
-fetch('/.netlify/functions/airtable',{
-  method:'POST',
-  headers:{'Content-Type':'application/json','X-Auth':pw},
-  body:JSON.stringify({action:'update',code:currentOrg,baselineLocked:false,password:pw})
-}).then(function(r){
-  if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.slice(0,200));});
-  return r.json();
-}).then(function(){
-  // Hard reload — kills any in-memory stale state and any racing scripts.
-  // BUT first wipe localStorage: the running tracker caches the whole org list,
-  // and on next page load some init path auto-pushes cached orgs back to Airtable,
-  // which would silently overwrite this unlock. Clearing forces a clean fetch.
-  try{ localStorage.clear(); }catch(e){}
-  alert('Baseline unlocked. The page will reload — you will need to log in again.');
-  location.assign('/tracker');
-}).catch(function(e){
-  if(btn){btn.textContent='\u{1F513} Unlock baseline';btn.disabled=false;}
-  alert('Unlock failed: '+e.message+'\n\nIf this keeps happening, check the Netlify function logs.');
-  console.error('unlockBaseline error:',e);
-});
 }
 
 
@@ -3337,20 +3280,20 @@ function renderActionPlan(org){
     return out;
   }
 
-  // SMART OBJECTIVES section (shown if any exist on the SMART tab)
-  if(smarts.length){
-    html+='<div class="ap-section-label">Actions against SMART Objectives</div>';
-    smarts.forEach(function(s,idx){
-      html+=renderActionTable('s'+idx,'SMART Objective '+(idx+1),s.objective||'');
+  // GOALS section — the overarching SELECT goal(s), shown FIRST as the high-level
+  // direction the action plan is delivering against.
+  if(goalLines.length){
+    html+='<div class="ap-section-label">My Overarching SELECT Goal</div>';
+    goalLines.forEach(function(g){
+      html+=renderActionTable(g.key,'Goal '+g.idx,g.text);
     });
   }
 
-  // GOALS section (shown if any goals captured but no SMARTs, OR alongside SMARTs as supplementary)
-  if(goalLines.length){
-    var goalSectionLabel=smarts.length?'Actions against Goals (high-level direction)':'Actions against Goals';
-    html+='<div class="ap-section-label">'+esc(goalSectionLabel)+'</div>';
-    goalLines.forEach(function(g){
-      html+=renderActionTable(g.key,'Goal '+g.idx,g.text);
+  // SMART OBJECTIVES section — the practical objectives the goal breaks down into.
+  if(smarts.length){
+    html+='<div class="ap-section-label">SMART Objectives</div>';
+    smarts.forEach(function(s,idx){
+      html+=renderActionTable('s'+idx,'SMART Objective '+(idx+1),s.objective||'');
     });
   }
 
