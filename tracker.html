@@ -2699,6 +2699,8 @@ el.innerHTML=html;
 // that CEO edits to g_problem and g_smart1..5 also save. Other goal fields
 // won't have an editable element rendered for CEOs (per canEditGoalField), so
 // there's nothing to wire — but we double-check on save just in case.
+// 2026-05-25: g_smart1..5 edits also propagate to org.smart[i].objective so the
+// SMART Objectives tab and My Action Plan reflect the new text immediately.
 el.querySelectorAll('[data-val-goal]').forEach(function(t){
 t.addEventListener('change',function(){
 var key=this.getAttribute('data-val-goal');
@@ -2706,6 +2708,14 @@ if(!canEditGoalField(key)){return;}
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
 o.assessor.goals[key]=this.value;
+// Sync SMART objective text into the SMART table so derived views update too.
+var sm=key.match(/^g_smart([1-5])$/);
+if(sm){
+  var sIdx=parseInt(sm[1],10)-1;
+  if(!Array.isArray(o.smart))o.smart=[];
+  while(o.smart.length<=sIdx)o.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});
+  o.smart[sIdx].objective=this.value;
+}
 saveData(d,o.code);
 });
 });
@@ -3086,22 +3096,14 @@ function renderSMART(org){
 var html='';
 org.smart.forEach(function(s,i){
 var lkS=uiLockGet(org,'smart',String(i));
-// CEO can edit objective text always; assessor edits respect the per-SMART lock.
-// The rest of the SMART fields (target, timeline, domain, status) remain assessor-only.
-var canEditObjective=isAssessor?!lkS:true;
-var canEditFullSmart=isAssessor&&!lkS;
-html+='<div class="smart-obj'+(lkS&&isAssessor?' pc-locked':'')+'">';
-var headerCtrls=isAssessor?uiLockBtn('smart',String(i),lkS):'';
-if(canEditFullSmart){
+html+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
+var headerCtrls=uiLockBtn('smart',String(i),lkS);
+if(isAssessor&&!lkS){
   headerCtrls+='<button class="pc-lock-btn pc-del-btn" onclick="deleteSMART('+i+')" title="Remove this objective">&times; Delete</button>';
 }
-html+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+(canEditObjective&&!isAssessor?' <span style="color:var(--teal);font-weight:600;font-size:11px;font-style:italic;text-transform:none;letter-spacing:0;margin-left:6px">(editable)</span>':'')+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
-if(canEditObjective){
+html+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
+if(isAssessor&&!lkS){
 html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
-}else{
-html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
-}
-if(canEditFullSmart){
 html+='<div class="obj-row">';
 html+='<div class="target-cell"><label>Target</label><textarea data-smart-target="'+i+'" rows="3">'+esc(s.target||'')+'</textarea></div>';
 html+='<div><label>Timeline</label><textarea data-smart-timeline="'+i+'" rows="2">'+esc(s.timeline||'')+'</textarea></div>';
@@ -3109,6 +3111,7 @@ html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="
 html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
 html+='</div>';
 }else{
+html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
 html+='<div class="obj-row">';
 html+='<div class="target-cell"><label>Target</label><div class="readonly-val">'+(s.target||'--')+'</div></div>';
 html+='<div><label>Timeline</label><div class="readonly-val">'+(s.timeline||'--')+'</div></div>';
