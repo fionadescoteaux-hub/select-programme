@@ -199,6 +199,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .ap-del-btn:hover{color:#c62828}
 .ap-add-row{margin-top:8px}
 .ap-add-row button{font-size:12px;padding:6px 12px}
+.ap-edit-textarea{width:100%;padding:10px 12px;border:1px solid var(--tb2);border-radius:var(--r);font-size:14px;font-family:var(--sans);background:var(--card);color:var(--tp);box-sizing:border-box;line-height:1.55;resize:vertical;min-height:80px}
+.ap-edit-textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,140,130,0.12)}
+.ap-edit-textarea.ap-edit-problem{min-height:140px;color:var(--ts2)}
+.ap-edit-textarea.ap-edit-goal,.ap-edit-textarea.ap-edit-smart{font-weight:600;color:var(--tp);margin-bottom:14px}
+.ap-edit-hint{font-size:11px;color:var(--tt);font-style:italic;margin-top:4px;line-height:1.4}
 .ap-status-pill{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
 .aps-not{background:var(--bg3);color:var(--ts)}
 .aps-prog{background:#e3f2fd;color:#1565c0}
@@ -3237,22 +3242,32 @@ function renderActionPlan(org){
   var smarts=(org.smart||[]).filter(function(s){return s&&(s.objective||'').trim();});
   var goalLines=[];
   ['g_goal1','g_goal2','g_goal3'].forEach(function(k,i){
-    if(goals[k])goalLines.push({key:'g'+(i+1),idx:i+1,text:goals[k]});
+    if(goals[k])goalLines.push({key:'g'+(i+1),idx:i+1,goalKey:k,text:goals[k]});
   });
   var html='';
 
-  // Context block: problem statement (read-only)
+  // Context block: problem statement is now editable inline (saves on blur).
   html+='<div class="ap-context">';
   html+='<div class="ap-ctx-label">Commercial Problem Statement</div>';
-  html+='<div class="ap-ctx-val">'+(problem||'<em style="color:var(--tt)">Not yet captured. Fiona or Clodagh will complete this at the validation meeting.</em>')+'</div>';
+  html+='<textarea class="ap-edit-textarea ap-edit-problem" data-mp-field="problem" '+
+        'placeholder="Describe the commercial problem this action plan addresses. If you\'re unsure, your assessor will draft this with you.">'+esc(problem)+'</textarea>';
+  html+='<div class="ap-edit-hint">Edit this text directly. Changes save automatically when you click out of the box.</div>';
   html+='</div>';
 
   function renderActionTable(anchorKey,headerLabel,headerText){
     var actions=org.actionPlan[anchorKey]||[];
+    var isSmart=/^s\d+$/.test(anchorKey);
+    var smartIdxOriginal=isSmart?org.smart.indexOf(smarts[parseInt(anchorKey.substring(1),10)]):-1;
     var out='';
     out+='<div class="ap-card">';
     out+='<div class="ap-obj-num">'+esc(headerLabel)+'</div>';
-    out+='<div class="ap-obj-text">'+esc(headerText)+'</div>';
+    if(isSmart && smartIdxOriginal >= 0){
+      // SMART objective text is editable
+      out+='<textarea class="ap-edit-textarea ap-edit-smart" data-mp-field="smart" data-mp-idx="'+smartIdxOriginal+'" '+
+           'placeholder="Write the SMART objective here. Specific, Measurable, Achievable, Relevant, Time-bound.">'+esc(headerText)+'</textarea>';
+    }else{
+      out+='<div class="ap-obj-text">'+esc(headerText)+'</div>';
+    }
     out+='<table class="ap-table">';
     out+='<thead><tr><th class="ap-col-desc">Action</th><th class="ap-col-who">Who</th><th class="ap-col-when">By when</th><th class="ap-col-status">Status</th><th class="ap-col-action"></th></tr></thead>';
     out+='<tbody>';
@@ -3281,19 +3296,20 @@ function renderActionPlan(org){
   }
 
   // GOALS section — the overarching SELECT goal(s), shown FIRST as the high-level
-  // direction the action plan is delivering against. Display-only: actions live
-  // under SMART Objectives, not against the overarching goal itself.
+  // direction. Editable text, no action table (actions live under SMART Objectives).
   if(goalLines.length){
     html+='<div class="ap-section-label">My Overarching SELECT Goal</div>';
     goalLines.forEach(function(g){
       html+='<div class="ap-card">';
       html+='<div class="ap-obj-num">Goal '+g.idx+'</div>';
-      html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(g.text)+'</div>';
+      html+='<textarea class="ap-edit-textarea ap-edit-goal" data-mp-field="goal" data-mp-idx="'+g.idx+'" '+
+            'placeholder="Write your overarching SELECT goal. What do you want to have achieved by the end of the programme?">'+esc(g.text)+'</textarea>';
       html+='</div>';
     });
   }
 
-  // SMART OBJECTIVES section — the practical objectives the goal breaks down into.
+  // SMART OBJECTIVES section — practical objectives the goal breaks down into.
+  // Objective text is editable; actions sit under each.
   if(smarts.length){
     html+='<div class="ap-section-label">SMART Objectives</div>';
     smarts.forEach(function(s,idx){
@@ -3308,11 +3324,45 @@ function renderActionPlan(org){
 
   el.innerHTML=html;
 
-  // Wire up inline-save handlers for all editable fields
+  // Wire up inline-save handlers for action table fields
   el.querySelectorAll('[data-ap-field]').forEach(function(field){
     var ev=field.tagName==='SELECT'||field.type==='date'?'change':'blur';
     field.addEventListener(ev,function(){saveActionField(this);});
   });
+
+  // Wire up inline-save handlers for problem statement, goal, and SMART objective edits
+  el.querySelectorAll('[data-mp-field]').forEach(function(field){
+    field.addEventListener('blur',function(){saveMyPlanField(this);});
+  });
+}
+
+// Save handler for inline My Action Plan edits (problem statement, goal text, SMART objective text).
+// Writes back to the original org property so the source-of-truth fields update everywhere they're used.
+function saveMyPlanField(field){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  var kind=field.dataset.mpField;
+  var val=(field.value||'').trim();
+  if(kind==='problem'){
+    if(!org.diagnosis)org.diagnosis={};
+    org.diagnosis.problemStatement=val;
+    org.diagnosis.problem=val; // keep both names in sync
+  }else if(kind==='goal'){
+    if(!org.assessor)org.assessor={};
+    if(!org.assessor.goals)org.assessor.goals={};
+    var gIdx=parseInt(field.dataset.mpIdx,10);
+    if(gIdx>=1&&gIdx<=3){
+      org.assessor.goals['g_goal'+gIdx]=val;
+    }
+  }else if(kind==='smart'){
+    if(!Array.isArray(org.smart))org.smart=[];
+    var sIdx=parseInt(field.dataset.mpIdx,10);
+    if(!isNaN(sIdx)&&org.smart[sIdx]){
+      org.smart[sIdx].objective=val;
+    }
+  }
+  saveData(data,currentOrg);
 }
 
 var OUTREACH_CYCLES=[
