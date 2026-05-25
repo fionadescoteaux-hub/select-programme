@@ -2519,7 +2519,7 @@ var GOAL_FIELDS=[
 
 // 2026-05-22: CEOs can edit their own Goal statement and 5 SMART objectives under Validation.
 // All other Validation fields (problem-why, goal1/2/3, validation notes, priority domains, lock) remain assessor-only.
-var CEO_EDITABLE_GOAL_FIELDS={g_problem:1,g_smart1:1,g_smart2:1,g_smart3:1,g_smart4:1,g_smart5:1};
+var CEO_EDITABLE_GOAL_FIELDS={g_problem:1,g_goal1:1,g_goal2:1,g_goal3:1,g_smart1:1,g_smart2:1,g_smart3:1,g_smart4:1,g_smart5:1};
 function canEditGoalField(key){return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[key];}
 
 var LOCK_CHECKS=[
@@ -2617,7 +2617,7 @@ html+='</div>';
 var lgs=uiLockGet(org,'goals','main');
 html+='<div class="problem-card'+(lgs&&isAssessor?' pc-locked':'')+'">';
 html+='<div class="pc-header"><div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>'+(isAssessor?uiLockBtn('goals','main',lgs):'')+'</div>';
-html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into directional goals and SMART objectives. SMARTs populate the SMART tab.'+(isAssessor?'':' You can edit your Commercial Problem Statement and SMART Objectives below; other fields are read-only.')+'</div>';
+html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into directional goals and SMART objectives. SMARTs populate the SMART tab.'+(isAssessor?'':' You can edit your Commercial Problem Statement, Goals and SMART Objectives below. Changes flow through to the My Action Plan and SMART tabs after saving.')+'</div>';
 GOAL_FIELDS.forEach(function(g){
 var val=a.goals[g.key]||'';
 var canEdit=canEditGoalField(g.key) && !(isAssessor && lgs);
@@ -3086,14 +3086,22 @@ function renderSMART(org){
 var html='';
 org.smart.forEach(function(s,i){
 var lkS=uiLockGet(org,'smart',String(i));
-html+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
-var headerCtrls=uiLockBtn('smart',String(i),lkS);
-if(isAssessor&&!lkS){
+// CEO can edit objective text always; assessor edits respect the per-SMART lock.
+// The rest of the SMART fields (target, timeline, domain, status) remain assessor-only.
+var canEditObjective=isAssessor?!lkS:true;
+var canEditFullSmart=isAssessor&&!lkS;
+html+='<div class="smart-obj'+(lkS&&isAssessor?' pc-locked':'')+'">';
+var headerCtrls=isAssessor?uiLockBtn('smart',String(i),lkS):'';
+if(canEditFullSmart){
   headerCtrls+='<button class="pc-lock-btn pc-del-btn" onclick="deleteSMART('+i+')" title="Remove this objective">&times; Delete</button>';
 }
-html+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
-if(isAssessor&&!lkS){
+html+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+(canEditObjective&&!isAssessor?' <span style="color:var(--teal);font-weight:600;font-size:11px;font-style:italic;text-transform:none;letter-spacing:0;margin-left:6px">(editable)</span>':'')+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
+if(canEditObjective){
 html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
+}else{
+html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
+}
+if(canEditFullSmart){
 html+='<div class="obj-row">';
 html+='<div class="target-cell"><label>Target</label><textarea data-smart-target="'+i+'" rows="3">'+esc(s.target||'')+'</textarea></div>';
 html+='<div><label>Timeline</label><textarea data-smart-timeline="'+i+'" rows="2">'+esc(s.timeline||'')+'</textarea></div>';
@@ -3101,7 +3109,6 @@ html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="
 html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
 html+='</div>';
 }else{
-html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
 html+='<div class="obj-row">';
 html+='<div class="target-cell"><label>Target</label><div class="readonly-val">'+(s.target||'--')+'</div></div>';
 html+='<div><label>Timeline</label><div class="readonly-val">'+(s.timeline||'--')+'</div></div>';
@@ -3242,32 +3249,22 @@ function renderActionPlan(org){
   var smarts=(org.smart||[]).filter(function(s){return s&&(s.objective||'').trim();});
   var goalLines=[];
   ['g_goal1','g_goal2','g_goal3'].forEach(function(k,i){
-    if(goals[k])goalLines.push({key:'g'+(i+1),idx:i+1,goalKey:k,text:goals[k]});
+    if(goals[k])goalLines.push({key:'g'+(i+1),idx:i+1,text:goals[k]});
   });
   var html='';
 
-  // Context block: problem statement is now editable inline (saves on blur).
+  // Context block: problem statement (read-only on this tab; edit on Validation tab)
   html+='<div class="ap-context">';
   html+='<div class="ap-ctx-label">Commercial Problem Statement</div>';
-  html+='<textarea class="ap-edit-textarea ap-edit-problem" data-mp-field="problem" '+
-        'placeholder="Describe the commercial problem this action plan addresses. If you\'re unsure, your assessor will draft this with you.">'+esc(problem)+'</textarea>';
-  html+='<div class="ap-edit-hint">Edit this text directly. Changes save automatically when you click out of the box.</div>';
+  html+='<div class="ap-ctx-val">'+(problem||'<em style="color:var(--tt)">Not yet captured. Fiona or Clodagh will complete this at the validation meeting.</em>')+'</div>';
   html+='</div>';
 
   function renderActionTable(anchorKey,headerLabel,headerText){
     var actions=org.actionPlan[anchorKey]||[];
-    var isSmart=/^s\d+$/.test(anchorKey);
-    var smartIdxOriginal=isSmart?org.smart.indexOf(smarts[parseInt(anchorKey.substring(1),10)]):-1;
     var out='';
     out+='<div class="ap-card">';
     out+='<div class="ap-obj-num">'+esc(headerLabel)+'</div>';
-    if(isSmart && smartIdxOriginal >= 0){
-      // SMART objective text is editable
-      out+='<textarea class="ap-edit-textarea ap-edit-smart" data-mp-field="smart" data-mp-idx="'+smartIdxOriginal+'" '+
-           'placeholder="Write the SMART objective here. Specific, Measurable, Achievable, Relevant, Time-bound.">'+esc(headerText)+'</textarea>';
-    }else{
-      out+='<div class="ap-obj-text">'+esc(headerText)+'</div>';
-    }
+    out+='<div class="ap-obj-text">'+esc(headerText)+'</div>';
     out+='<table class="ap-table">';
     out+='<thead><tr><th class="ap-col-desc">Action</th><th class="ap-col-who">Who</th><th class="ap-col-when">By when</th><th class="ap-col-status">Status</th><th class="ap-col-action"></th></tr></thead>';
     out+='<tbody>';
@@ -3296,20 +3293,19 @@ function renderActionPlan(org){
   }
 
   // GOALS section — the overarching SELECT goal(s), shown FIRST as the high-level
-  // direction. Editable text, no action table (actions live under SMART Objectives).
+  // direction. Read-only display; edit on the Validation tab.
   if(goalLines.length){
     html+='<div class="ap-section-label">My Overarching SELECT Goal</div>';
     goalLines.forEach(function(g){
       html+='<div class="ap-card">';
       html+='<div class="ap-obj-num">Goal '+g.idx+'</div>';
-      html+='<textarea class="ap-edit-textarea ap-edit-goal" data-mp-field="goal" data-mp-idx="'+g.idx+'" '+
-            'placeholder="Write your overarching SELECT goal. What do you want to have achieved by the end of the programme?">'+esc(g.text)+'</textarea>';
+      html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(g.text)+'</div>';
       html+='</div>';
     });
   }
 
-  // SMART OBJECTIVES section — practical objectives the goal breaks down into.
-  // Objective text is editable; actions sit under each.
+  // SMART OBJECTIVES section — practical objectives plus their action tables.
+  // Objective text is read-only here; edit on the SMART Objectives tab.
   if(smarts.length){
     html+='<div class="ap-section-label">SMART Objectives</div>';
     smarts.forEach(function(s,idx){
@@ -3329,40 +3325,6 @@ function renderActionPlan(org){
     var ev=field.tagName==='SELECT'||field.type==='date'?'change':'blur';
     field.addEventListener(ev,function(){saveActionField(this);});
   });
-
-  // Wire up inline-save handlers for problem statement, goal, and SMART objective edits
-  el.querySelectorAll('[data-mp-field]').forEach(function(field){
-    field.addEventListener('blur',function(){saveMyPlanField(this);});
-  });
-}
-
-// Save handler for inline My Action Plan edits (problem statement, goal text, SMART objective text).
-// Writes back to the original org property so the source-of-truth fields update everywhere they're used.
-function saveMyPlanField(field){
-  var data=loadData();
-  var org=data.orgs.find(function(o){return o.code===currentOrg;});
-  if(!org)return;
-  var kind=field.dataset.mpField;
-  var val=(field.value||'').trim();
-  if(kind==='problem'){
-    if(!org.diagnosis)org.diagnosis={};
-    org.diagnosis.problemStatement=val;
-    org.diagnosis.problem=val; // keep both names in sync
-  }else if(kind==='goal'){
-    if(!org.assessor)org.assessor={};
-    if(!org.assessor.goals)org.assessor.goals={};
-    var gIdx=parseInt(field.dataset.mpIdx,10);
-    if(gIdx>=1&&gIdx<=3){
-      org.assessor.goals['g_goal'+gIdx]=val;
-    }
-  }else if(kind==='smart'){
-    if(!Array.isArray(org.smart))org.smart=[];
-    var sIdx=parseInt(field.dataset.mpIdx,10);
-    if(!isNaN(sIdx)&&org.smart[sIdx]){
-      org.smart[sIdx].objective=val;
-    }
-  }
-  saveData(data,currentOrg);
 }
 
 var OUTREACH_CYCLES=[
