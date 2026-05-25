@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-25-v11 (v10 + persist _uiLocks JSON blob for all Save & Lock View buttons + ready for unlockBaseline)
+// Version: 2026-05-25-v12 (v11 + unify _uiLocks AND diagnosis._locks into single UI_LOCKS field so EVERY Save & Lock View persists)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -47,7 +47,7 @@ const F = {
   // (Save & Lock View buttons across all tabs). Persisted as long-text on ORG_PROFILE.
   // FIONA: replace the placeholder with the real fldXXXXXXXXXXXXX after creating
   // the field in Airtable (Long text, name = "UI_LOCKS").
-  UI_LOCKS: "fldUI_LOCKS_TODO",
+  UI_LOCKS: "fldkoqllZgluDxPbp",
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -278,6 +278,26 @@ function selectVal(v) {
   return s;
 }
 
+// ── UI Locks read helper (unified blob, holds both generic uiLocks and diagnosis locks) ──
+// Blob schema: { ui: {scope.key:bool}, diag: {section:bool} }
+// Backward compat: a flat blob (no ui/diag wrappers) is treated as ui-only.
+function parseLocksBlob(rawValue) {
+  var empty = { ui: {}, diag: {} };
+  if (!rawValue) return empty;
+  try {
+    var parsed = JSON.parse(rawValue);
+    if (!parsed || typeof parsed !== "object") return empty;
+    if (parsed.ui || parsed.diag) {
+      return {
+        ui: (parsed.ui && typeof parsed.ui === "object") ? parsed.ui : {},
+        diag: (parsed.diag && typeof parsed.diag === "object") ? parsed.diag : {},
+      };
+    }
+    // Flat shape (pre-v12 deploys) → all keys are ui-scope
+    return { ui: parsed, diag: {} };
+  } catch (e) { return empty; }
+}
+
 function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance) {
   const f = profile.fields;
   const orgCode = f[F.ORG_CODE] || profile.id;
@@ -402,6 +422,7 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
         f[F.CONSTRAINT_2] || "",
         f[F.CONSTRAINT_3] || "",
       ],
+      _locks: parseLocksBlob(f[F.UI_LOCKS]).diag,
     },
     crossBorder: {
       baseline: f[F.CB_BASELINE] || "",
@@ -506,12 +527,7 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
       _rid: r.id,
     })),
     baselineLocked: !!f[F.BASELINE_LOCKED],
-    _uiLocks: (function(){
-      var raw = f[F.UI_LOCKS];
-      if (!raw) return {};
-      try { var parsed = JSON.parse(raw); return (parsed && typeof parsed === "object") ? parsed : {}; }
-      catch(e){ return {}; }
-    })(),
+    _uiLocks: parseLocksBlob(f[F.UI_LOCKS]).ui,
   };
 }
 
@@ -865,14 +881,21 @@ async function handleUpdate(payload) {
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
   if (baselineReportUrl !== undefined) profileFields[F.BASELINE_REPORT_URL] = String(baselineReportUrl || "");
-  if (_uiLocks !== undefined && _uiLocks !== null && typeof _uiLocks === "object") {
-    // Persist all per-section visual lock states as a JSON blob.
-    // Skip write if the field ID is still the placeholder (i.e. Fiona hasn't added
-    // the UI_LOCKS column yet) — avoids 422 errors against unknown fields.
-    if (F.UI_LOCKS && !/TODO/.test(F.UI_LOCKS)) {
-      try { profileFields[F.UI_LOCKS] = JSON.stringify(_uiLocks); }
-      catch(e){ /* malformed object, skip */ }
-    }
+  // ── Combined UI Locks write (covers both generic _uiLocks and diagnosis._locks) ──
+  // Both lock systems share one Airtable field, packed as { ui: {...}, diag: {...} }.
+  // We read-then-merge so a partial payload (e.g. client only sends _uiLocks) doesn't
+  // wipe the other side. Skip entirely if the field ID is still the TODO placeholder.
+  var diagLocks = (diagnosis && diagnosis._locks && typeof diagnosis._locks === "object") ? diagnosis._locks : null;
+  var hasUiLocksPayload = (_uiLocks !== undefined && _uiLocks !== null && typeof _uiLocks === "object");
+  var hasDiagLocksPayload = (diagLocks !== null);
+  if ((hasUiLocksPayload || hasDiagLocksPayload) && F.UI_LOCKS && !/TODO/.test(F.UI_LOCKS)) {
+    var existing = parseLocksBlob(profile.fields[F.UI_LOCKS]);
+    var newBlob = {
+      ui: hasUiLocksPayload ? _uiLocks : (existing.ui || {}),
+      diag: hasDiagLocksPayload ? diagLocks : (existing.diag || {}),
+    };
+    try { profileFields[F.UI_LOCKS] = JSON.stringify(newBlob); }
+    catch (e) { /* malformed, skip */ }
   }
   if (baseline_structure !== undefined) {
     const v = selectVal(baseline_structure);
