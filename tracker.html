@@ -2353,7 +2353,13 @@ org.baseline.forEach(function(b,i){var s=parseFloat(b.score)||0;if(s>0)hasScores
 var overall=totalWtd.toFixed(2);
 var maturity=totalWtd<2?'Foundational':totalWtd<3?'Emerging':totalWtd<3.75?'Defined':totalWtd<4.5?'Embedded':'Optimised';
 var foot='<tr style="background:var(--bg2);font-weight:700"><td>Overall Weighted Score</td><td>100%</td><td colspan="2" style="text-align:center;font-family:var(--serif);font-size:18px;color:var(--navy)">'+(hasScores?overall:'--')+'</td><td style="font-size:13px;color:var(--teal)">'+(hasScores?maturity:'--')+'</td><td></td></tr>';
-if(isAssessor&&!org.baselineLocked){foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';}
+if(isAssessor){
+  if(org.baselineLocked){
+    foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><span style="font-size:11px;color:var(--tt);margin-right:12px;font-style:italic">Baseline locked &mdash; scores read-only</span><button class="btn btn-sm btn-outline" onclick="unlockBaseline()" style="color:#c62828;border-color:#c62828">&#128275; Unlock baseline</button></td></tr>';
+  } else {
+    foot+='<tr><td colspan="6" style="padding:14px;text-align:right"><button class="btn btn-coral" onclick="lockBaseline()">Lock baseline (2b)</button></td></tr>';
+  }
+}
 document.getElementById('baselineFoot').innerHTML=foot;
 }
 
@@ -2361,6 +2367,28 @@ function lockBaseline(){
 if(!confirm('Lock baseline? This cannot be undone. Scores will be frozen.'))return;
 var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
 org.baselineLocked=true;saveData(data,currentOrg);renderBaseline(org);renderOrgGrid();
+}
+
+function unlockBaseline(){
+if(!isAssessor){alert('Only assessors can unlock a baseline.');return;}
+if(!confirm('Unlock this baseline?\n\nScores and evidence will become editable again. Use only when validated edits are required.'))return;
+var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});
+if(!org)return;
+org.baselineLocked=false;
+saveData(data,currentOrg);
+// Force a fresh read from Airtable after the save lands, so any stale localStorage
+// cached elsewhere in the app sees the unlocked state and cannot overwrite it.
+setTimeout(function(){
+  if(AT&&AT.loadData){
+    AT.loadData(function(d){
+      var o=d.orgs.find(function(x){return x.code===currentOrg;});
+      if(o)renderAll(o);
+      renderOrgGrid();
+    });
+  }else{
+    renderBaseline(org);renderOrgGrid();
+  }
+},900);
 }
 
 
