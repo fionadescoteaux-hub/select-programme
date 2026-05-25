@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-21-v10 (v9 + read gSmart1-5 from ORGANISATIONS table into assessor.goals.g_smart1-5 so the Validation tab populates)
+// Version: 2026-05-25-v11 (v10 + persist _uiLocks JSON blob for all Save & Lock View buttons + ready for unlockBaseline)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -42,6 +42,12 @@ const F = {
   BASELINE_LOCKED: "fld8UegLqlAhxOQn5",
   BASELINE_NOTES: "fldIxpNkCRpdtsc7O",
   BASELINE_REPORT_URL: "fldgWfVtyPV160vxL",
+  // ── UI Locks (added 2026-05-25) ──
+  // JSON blob holding all per-section visual lock states for the assessor view
+  // (Save & Lock View buttons across all tabs). Persisted as long-text on ORG_PROFILE.
+  // FIONA: replace the placeholder with the real fldXXXXXXXXXXXXX after creating
+  // the field in Airtable (Long text, name = "UI_LOCKS").
+  UI_LOCKS: "fldUI_LOCKS_TODO",
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -500,6 +506,12 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
       _rid: r.id,
     })),
     baselineLocked: !!f[F.BASELINE_LOCKED],
+    _uiLocks: (function(){
+      var raw = f[F.UI_LOCKS];
+      if (!raw) return {};
+      try { var parsed = JSON.parse(raw); return (parsed && typeof parsed === "object") ? parsed : {}; }
+      catch(e){ return {}; }
+    })(),
   };
 }
 
@@ -726,7 +738,7 @@ async function batchDelete(tableId, ids) {
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl, baseline_structure } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl, baseline_structure, _uiLocks } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
@@ -853,6 +865,15 @@ async function handleUpdate(payload) {
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
   if (baselineReportUrl !== undefined) profileFields[F.BASELINE_REPORT_URL] = String(baselineReportUrl || "");
+  if (_uiLocks !== undefined && _uiLocks !== null && typeof _uiLocks === "object") {
+    // Persist all per-section visual lock states as a JSON blob.
+    // Skip write if the field ID is still the placeholder (i.e. Fiona hasn't added
+    // the UI_LOCKS column yet) — avoids 422 errors against unknown fields.
+    if (F.UI_LOCKS && !/TODO/.test(F.UI_LOCKS)) {
+      try { profileFields[F.UI_LOCKS] = JSON.stringify(_uiLocks); }
+      catch(e){ /* malformed object, skip */ }
+    }
+  }
   if (baseline_structure !== undefined) {
     const v = selectVal(baseline_structure);
     if (v !== undefined) profileFields[F.BASELINE_STRUCT] = v;
