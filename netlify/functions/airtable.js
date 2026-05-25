@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-25-v12 (v11 + unify _uiLocks AND diagnosis._locks into single UI_LOCKS field so EVERY Save & Lock View persists)
+// Version: 2026-05-25-v13 (v12 minus the diagnosis._locks read that triggered a client save loop; generic _uiLocks persistence preserved)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -422,7 +422,10 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
         f[F.CONSTRAINT_2] || "",
         f[F.CONSTRAINT_3] || "",
       ],
-      _locks: parseLocksBlob(f[F.UI_LOCKS]).diag,
+      // NOTE: diagnosis._locks intentionally NOT included in read response.
+      // The client treats new fields appearing in payload as "changes" and
+      // triggers a save, which loops. Diagnosis Save & Lock persistence is
+      // deferred until airtable-data.js can be inspected.
     },
     crossBorder: {
       baseline: f[F.CB_BASELINE] || "",
@@ -881,18 +884,15 @@ async function handleUpdate(payload) {
   if (baselineLocked !== undefined) profileFields[F.BASELINE_LOCKED] = !!baselineLocked;
   if (baselineNotes !== undefined) profileFields[F.BASELINE_NOTES] = String(baselineNotes || "");
   if (baselineReportUrl !== undefined) profileFields[F.BASELINE_REPORT_URL] = String(baselineReportUrl || "");
-  // ── Combined UI Locks write (covers both generic _uiLocks and diagnosis._locks) ──
-  // Both lock systems share one Airtable field, packed as { ui: {...}, diag: {...} }.
-  // We read-then-merge so a partial payload (e.g. client only sends _uiLocks) doesn't
-  // wipe the other side. Skip entirely if the field ID is still the TODO placeholder.
-  var diagLocks = (diagnosis && diagnosis._locks && typeof diagnosis._locks === "object") ? diagnosis._locks : null;
-  var hasUiLocksPayload = (_uiLocks !== undefined && _uiLocks !== null && typeof _uiLocks === "object");
-  var hasDiagLocksPayload = (diagLocks !== null);
-  if ((hasUiLocksPayload || hasDiagLocksPayload) && F.UI_LOCKS && !/TODO/.test(F.UI_LOCKS)) {
+  // ── UI Locks write (generic _uiLocks only — diagnosis._locks deferred in v13) ──
+  // Single Airtable field holds the JSON blob. Read-then-merge protects against
+  // partial payloads wiping each other. Skip entirely if the field ID is still TODO.
+  if (_uiLocks !== undefined && _uiLocks !== null && typeof _uiLocks === "object"
+      && F.UI_LOCKS && !/TODO/.test(F.UI_LOCKS)) {
     var existing = parseLocksBlob(profile.fields[F.UI_LOCKS]);
     var newBlob = {
-      ui: hasUiLocksPayload ? _uiLocks : (existing.ui || {}),
-      diag: hasDiagLocksPayload ? diagLocks : (existing.diag || {}),
+      ui: _uiLocks,
+      diag: existing.diag || {},  // preserve any diag locks already in the field
     };
     try { profileFields[F.UI_LOCKS] = JSON.stringify(newBlob); }
     catch (e) { /* malformed, skip */ }
