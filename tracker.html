@@ -3281,11 +3281,15 @@ function renderActionPlan(org){
   }
 
   // GOALS section — the overarching SELECT goal(s), shown FIRST as the high-level
-  // direction the action plan is delivering against.
+  // direction the action plan is delivering against. Display-only: actions live
+  // under SMART Objectives, not against the overarching goal itself.
   if(goalLines.length){
     html+='<div class="ap-section-label">My Overarching SELECT Goal</div>';
     goalLines.forEach(function(g){
-      html+=renderActionTable(g.key,'Goal '+g.idx,g.text);
+      html+='<div class="ap-card">';
+      html+='<div class="ap-obj-num">Goal '+g.idx+'</div>';
+      html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(g.text)+'</div>';
+      html+='</div>';
     });
   }
 
