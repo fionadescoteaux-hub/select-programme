@@ -2407,9 +2407,12 @@ fetch('/.netlify/functions/airtable',{
   return r.json();
 }).then(function(){
   // Hard reload — kills any in-memory stale state and any racing scripts.
-  // Fresh page load fetches the now-false state from Airtable.
-  alert('Baseline unlocked. The page will now reload.');
-  location.reload();
+  // BUT first wipe localStorage: the running tracker caches the whole org list,
+  // and on next page load some init path auto-pushes cached orgs back to Airtable,
+  // which would silently overwrite this unlock. Clearing forces a clean fetch.
+  try{ localStorage.clear(); }catch(e){}
+  alert('Baseline unlocked. The page will reload — you will need to log in again.');
+  location.assign('/tracker');
 }).catch(function(e){
   if(btn){btn.textContent='\u{1F513} Unlock baseline';btn.disabled=false;}
   alert('Unlock failed: '+e.message+'\n\nIf this keeps happening, check the Netlify function logs.');
