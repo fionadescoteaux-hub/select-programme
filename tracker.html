@@ -2571,12 +2571,42 @@ function _matchGoalToDomain(goalText, domainsList){
 // Older prefix-only extractor — kept as a secondary fallback for the case where a goal
 // has a prefix style like "Community Cafés — …" but the org.smart domain list is empty
 // (e.g. brand-new tracker before any SMARTs have been domain-tagged).
+// 2026-05-27: Improved to handle Fiona's "Goal N — Domain ..." labelling — when the
+// prefix matches a generic label like "Goal 1" or "SMART 2", look past the dash for the
+// actual domain name (the first 1-2 Title Case words). Handles:
+//   "Goal 3 — Manufacturing Opportunity Nigel and the board…" → "Manufacturing Opportunity"
+//   "Community Cafés — A café income model…" → "Community Cafés" (unchanged, no Goal prefix)
 function _extractDomainFromGoal(text){
   if(!text)return '';
   var t=String(text).trim();
   var m=t.match(/^(.{1,80}?)\s+[\u2014\-\u2013]\s+/);
-  if(m)return m[1].trim();
-  return '';
+  if(!m)return '';
+  var prefix=m[1].trim();
+  // If the prefix is a generic numeric label, the real domain name lives just after the dash.
+  if(/^(Goal|SMART|Objective)\s*\d+$/i.test(prefix)){
+    var rest=t.substring(m[0].length).trim();
+    return _extractLeadingTitleCasePhrase(rest);
+  }
+  return prefix;
+}
+
+// Extract 1-2 leading Title Case words from a text. Stops on a lowercase word, a
+// single-letter capital (likely an article like "A"), or after 2 words — enough to
+// capture two-word business case names like "Community Cafés", "Short-Term Accommodation",
+// and "Manufacturing Opportunity" without overshooting into the descriptive sentence
+// that follows (e.g. avoids picking up "Nigel" as a third word in Goal 3).
+function _extractLeadingTitleCasePhrase(text){
+  if(!text)return '';
+  var words=String(text).trim().split(/\s+/);
+  var phrase=[];
+  for(var i=0;i<words.length&&i<2;i++){
+    var w=words[i];
+    if(!w)break;
+    if(!/^[A-Z\u00C0-\u017F]/.test(w))break;
+    if(w.length===1)break;
+    phrase.push(w);
+  }
+  return phrase.join(' ').trim();
 }
 
 // 2026-05-27: Resolve a SMART row's effective domain. Priority order:
@@ -2776,6 +2806,9 @@ html+='<div class="pc-val">'+(s.objective||'--')+'</div>';
 html+='</div>';
 });
 html+='</div>';
+}else{
+// No SMARTs in this goal yet — show a hint so it's obvious to click + Add.
+html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 0 4px 16px;border-left:2px solid var(--tb2);margin:10px 0">No SMART objectives yet for this goal. Click + Add below to create the first one.</div>';
 }
 if(isAssessor&&!lgs){
 html+='<div class="bc-val-addbtn"><button class="btn btn-sm btn-outline" onclick="addSMARTUnderGoal('+JSON.stringify(_dom)+')">+ Add SMART under this goal</button></div>';
