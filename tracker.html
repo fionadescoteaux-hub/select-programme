@@ -2548,6 +2548,24 @@ var GOAL_FIELDS=[
 var CEO_EDITABLE_GOAL_FIELDS={g_problem:1,g_goal1:1,g_goal2:1,g_goal3:1,g_smart1:1,g_smart2:1,g_smart3:1,g_smart4:1,g_smart5:1};
 function canEditGoalField(key){return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[key];}
 
+// 2026-05-27: Extract a business-case domain name from a goal text. Convention is that
+// the goal text begins with the domain name followed by " — " (em dash with spaces),
+// e.g. "Community Cafés — A café income model that is no longer dependent on a single site…".
+// Used by renderValidation and renderSMART to map each goal slot deterministically to its
+// matching SMART rows in org.smart, so the display order is always Goal 1 → SMARTs for Goal 1,
+// Goal 2 → SMARTs for Goal 2, Goal 3 → SMARTs for Goal 3, regardless of org.smart array order.
+function _extractDomainFromGoal(text){
+  if(!text)return '';
+  var t=String(text).trim();
+  // Domain prefix is whatever appears before the first " — " (em dash, en dash, or hyphen,
+  // each with required whitespace on BOTH sides). The whitespace requirement is essential —
+  // it allows compound words like "Short-Term Accommodation" to be captured intact, because
+  // the hyphen in "Short-Term" has no surrounding whitespace and so isn't treated as a delimiter.
+  var m=t.match(/^(.{1,80}?)\s+[\u2014\-\u2013]\s+/);
+  if(m)return m[1].trim();
+  return '';
+}
+
 var LOCK_CHECKS=[
 {key:'lk1',label:'CEO has reviewed and signed off on baseline scores'},
 {key:'lk2',label:'Problem statement and SMART objectives agreed in writing'},
@@ -2682,13 +2700,20 @@ return h;
 
 if(_vUseGrouping){
 // Grouped layout — problem fields first, then each business case (goal + its SMARTs).
+// Each goal slot's domain is determined by extracting the prefix from its goal text
+// (e.g. "Community Cafés — …" → domain "Community Cafés"). This guarantees the order
+// is always Goal 1 → SMARTs for Goal 1, Goal 2 → SMARTs for Goal 2, Goal 3 → SMARTs
+// for Goal 3, regardless of how org.smart is ordered. Falls back to first-appearance
+// order when a goal has no extractable domain prefix.
 ['g_problem','g_problem_why'].forEach(function(k){
 var spec=null;GOAL_FIELDS.forEach(function(g){if(g.key===k)spec=g;});
 if(spec)html+=_renderGoalField(spec);
 });
 for(var _bcI=0;_bcI<3;_bcI++){
-var _dom=_vDomainOrder[_bcI]||'';
 var _goalKey='g_goal'+(_bcI+1);
+var _goalText=(a.goals[_goalKey]||'');
+var _dom=_extractDomainFromGoal(_goalText);
+if(!_dom)_dom=_vDomainOrder[_bcI]||'';
 var _goalSpec=null;GOAL_FIELDS.forEach(function(g){if(g.key===_goalKey)_goalSpec=g;});
 html+='<div class="bc-val-block">';
 if(_dom)html+='<div class="bc-val-title">'+esc(_dom)+'</div>';
@@ -3249,8 +3274,18 @@ var domainCounts={};
 var useGrouping=Object.keys(domainCounts).some(function(d){return domainCounts[d]>=2;});
 var goalsByDomain={};
 var _g=((org.assessor&&org.assessor.goals)||{});
-['g_goal1','g_goal2','g_goal3'].forEach(function(k,idx){
-  if(domainOrder[idx])goalsByDomain[domainOrder[idx]]=(_g[k]||'').trim();
+// Pass 1: explicit extraction from goal text — domain prefix "Community Cafés —" etc.
+// This makes mapping deterministic by goal CONTENT rather than by SMART array order.
+['g_goal1','g_goal2','g_goal3'].forEach(function(k){
+  var dom=_extractDomainFromGoal(_g[k]||'');
+  if(dom)goalsByDomain[dom]=(_g[k]||'').trim();
+});
+// Pass 2: fall back to appearance order for any domains the explicit extraction missed.
+domainOrder.forEach(function(d,idx){
+  if(goalsByDomain[d]===undefined){
+    var fallbackKey='g_goal'+(idx+1);
+    goalsByDomain[d]=(_g[fallbackKey]||'').trim();
+  }
 });
 var lastGroup='';
 org.smart.forEach(function(s,i){
