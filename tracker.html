@@ -2783,24 +2783,65 @@ if(_vUseGrouping){
 var spec=null;GOAL_FIELDS.forEach(function(g){if(g.key===k)spec=g;});
 if(spec)html+=_renderGoalField(spec);
 });
+
+// 2026-05-27: Assignment-based SMART → goal mapping. Each SMART is assigned to EXACTLY
+// one goal slot (or marked as orphan) so it never disappears silently if its virtual
+// domain string drifts away from the resolved block _dom. Matching is LENIENT: a SMART
+// matches a goal if its virtual domain appears as a substring of the goal text in either
+// direction, OR if the goal's extracted domain appears in the SMART's objective text.
+// First-match-wins across goal slots so no SMART is shown twice.
+var _goalTexts=[(a.goals.g_goal1||''),(a.goals.g_goal2||''),(a.goals.g_goal3||'')];
+var _goalDomains=_goalTexts.map(_extractDomainFromGoal);
+function _smartAssignedGoal(sm){
+  if(!sm)return -1;
+  var explicit=String(sm.domain||'').trim().toLowerCase();
+  var objLc=String(sm.objective||'').toLowerCase();
+  // Strategy 1: explicit domain field against each goal text and extracted domain.
+  if(explicit){
+    for(var i=0;i<3;i++){
+      var gt=_goalTexts[i].toLowerCase();
+      if(gt&&gt.indexOf(explicit)>-1)return i;
+      var gd=(_goalDomains[i]||'').toLowerCase();
+      if(gd&&(gd.indexOf(explicit)>-1||explicit.indexOf(gd)>-1))return i;
+    }
+  }
+  // Strategy 2: extracted goal-domain appearing in the SMART's objective.
+  for(var j=0;j<3;j++){
+    var gd2=(_goalDomains[j]||'').toLowerCase();
+    if(gd2&&objLc.indexOf(gd2)>-1)return j;
+  }
+  // Strategy 3: parenthetical hint in SMART against goal text.
+  var pm=objLc.match(/\(([^)]{1,60})\)/);
+  if(pm){
+    var paren=pm[1].trim();
+    if(paren){
+      for(var k=0;k<3;k++){
+        var gt2=_goalTexts[k].toLowerCase();
+        if(gt2&&gt2.indexOf(paren)>-1)return k;
+      }
+    }
+  }
+  return -1;
+}
+// Pre-compute assignments for every SMART up-front.
+var _smartGoalIdx=(org.smart||[]).map(_smartAssignedGoal);
+
 for(var _bcI=0;_bcI<3;_bcI++){
 var _goalKey='g_goal'+(_bcI+1);
-var _goalText=(a.goals[_goalKey]||'');
-// Primary: substring match against known domains (handles all goal text formats).
-var _dom=_matchGoalToDomain(_goalText,_vDomainOrder);
-// Secondary: prefix extraction (legacy).
-if(!_dom)_dom=_extractDomainFromGoal(_goalText);
-// Tertiary: positional fallback.
+var _goalText=_goalTexts[_bcI];
+// Block title preference: extracted domain (cleaner) → match against existing SMARTs → positional fallback.
+var _dom=_goalDomains[_bcI];
+if(!_dom)_dom=_matchGoalToDomain(_goalText,_vDomainOrder);
 if(!_dom)_dom=_vDomainOrder[_bcI]||'';
 var _goalSpec=null;GOAL_FIELDS.forEach(function(g){if(g.key===_goalKey)_goalSpec=g;});
 html+='<div class="bc-val-block">';
 if(_dom)html+='<div class="bc-val-title">'+esc(_dom)+'</div>';
 if(_goalSpec)html+=_renderGoalField(_goalSpec);
-if(_dom){
+// Pull SMARTs assigned to THIS goal slot via the pre-computed map (NOT exact match —
+// this is what stops SMARTs from disappearing when their domain field drifts away
+// from the resolved _dom).
 var _smartIdxs=[];
-(org.smart||[]).forEach(function(s,i){
-if(s&&_smartVirtualDomain(s)===_dom)_smartIdxs.push(i);
-});
+_smartGoalIdx.forEach(function(gi,i){if(gi===_bcI)_smartIdxs.push(i);});
 if(_smartIdxs.length){
 html+='<div class="bc-val-smart-list">';
 _smartIdxs.forEach(function(sIdx,ord){
@@ -2823,16 +2864,19 @@ html+='</div>';
 // No SMARTs in this goal yet — show a hint so it's obvious to click + Add.
 html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 0 4px 16px;border-left:2px solid var(--tb2);margin:10px 0">No SMART objectives yet for this goal. Click + Add below to create the first one.</div>';
 }
+// Always render the + Add button (even when _dom is empty — fall back to extracted goal domain).
 if(isAssessor&&!lgs){
-html+='<div class="bc-val-addbtn"><button class="btn btn-sm btn-outline" onclick="addSMARTUnderGoal('+JSON.stringify(_dom).replace(/"/g,'&quot;')+')">+ Add SMART under this goal</button></div>';
-}
+var _addDom=_dom||_goalDomains[_bcI]||('Goal '+(_bcI+1));
+html+='<div class="bc-val-addbtn"><button class="btn btn-sm btn-outline" onclick="addSMARTUnderGoal('+JSON.stringify(_addDom).replace(/"/g,'&quot;')+')">+ Add SMART under this goal</button></div>';
 }
 html+='</div>';
 }
-// Orphan SMARTs (no domain set) — keep them visible so nothing gets hidden.
+// Orphans — any SMART whose assignment was -1 (couldn't match any goal). Still rendered
+// so nothing disappears; user can edit or delete from here.
 var _orphans=[];
-(org.smart||[]).forEach(function(s,i){
-if(s&&!_smartVirtualDomain(s)&&(s.objective||'').trim())_orphans.push(i);
+_smartGoalIdx.forEach(function(gi,i){
+var s=(org.smart||[])[i];
+if(gi===-1&&s&&(s.objective||'').trim())_orphans.push(i);
 });
 if(_orphans.length){
 html+='<div class="bc-val-orphans"><div class="bc-val-orphans-label">SMART objectives without a linked business case</div>';
@@ -2971,6 +3015,8 @@ cb.addEventListener('change',function(){
 var key=this.getAttribute('data-val-ck');
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
+// Harvest any unsaved textarea text BEFORE we re-render the whole tab.
+_harvestValidationDOM(o);
 o.assessor.checklist[key]=this.checked;
 o.assessor.checklist[key+'_ts']=this.checked?new Date().toISOString():'';
 saveData(d,o.code);renderValidation(o);
@@ -3033,6 +3079,8 @@ _uiLockRerenderMap['goals']=function(org){renderValidation(org);};
 function toggleValPriority(dKey){
 var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
 if(!o)return;ensureAssessor(o);
+// Harvest unsaved textarea text BEFORE the re-render destroys it.
+_harvestValidationDOM(o);
 var idx=o.assessor.priorities.indexOf(dKey);
 if(idx>-1){o.assessor.priorities.splice(idx,1);}
 else{
@@ -3347,10 +3395,14 @@ saveData(data,currentOrg);
 
 function renderSMART(org){
 var html='';
-// Business-case grouping: when 2+ SMARTs share a Linked Domain value, render a goal-bearing
-// group header above each domain block. Pulls the matching goal text from org.goals.g_goal1/2/3
-// by the order in which unique domains appear. CEOs whose SMARTs have unique-or-empty domains
-// see no grouping (the existing flat list is preserved).
+// 2026-05-27: Goal-slot-driven layout (matches renderValidation and renderActionPlan).
+// When 2+ SMARTs share a Linked Domain, iterate the three GOAL SLOTS in order
+// (Goal 1 → Goal 2 → Goal 3), and under each render the SMARTs assigned to it
+// via the same _smartAssignedGoal-style logic the other two tabs use. This
+// guarantees Validation, SMART Objectives and Action Plan all show the same
+// SMARTs under the same goals in the same order, regardless of how the
+// underlying org.smart array is sorted.
+//
 // Uses _smartVirtualDomain so SMARTs with parenthetical hints in their objective text
 // (e.g. "Four-site portfolio risk map (Cafés)") count for grouping even when the
 // `domain` field is empty.
@@ -3365,70 +3417,117 @@ var domainCounts={};
   if(d)domainCounts[d]=(domainCounts[d]||0)+1;
 });
 var useGrouping=Object.keys(domainCounts).some(function(d){return domainCounts[d]>=2;});
-var goalsByDomain={};
-var _g=((org.assessor&&org.assessor.goals)||{});
-// Pass 1: substring match — find which domain appears in each goal text.
-// Robust to formats like "Goal 1 — Community Cafés A café income model…".
-['g_goal1','g_goal2','g_goal3'].forEach(function(k){
-  var dom=_matchGoalToDomain(_g[k]||'',domainOrder);
-  if(dom)goalsByDomain[dom]=(_g[k]||'').trim();
-});
-// Pass 2: prefix-only extraction (legacy fallback if substring match found nothing).
-['g_goal1','g_goal2','g_goal3'].forEach(function(k){
-  if(Object.keys(goalsByDomain).length>=domainOrder.length)return;
-  var dom=_extractDomainFromGoal(_g[k]||'');
-  if(dom&&goalsByDomain[dom]===undefined)goalsByDomain[dom]=(_g[k]||'').trim();
-});
-// Pass 3: fall back to first-appearance order for any domains still unmapped.
-domainOrder.forEach(function(d,idx){
-  if(goalsByDomain[d]===undefined){
-    var fallbackKey='g_goal'+(idx+1);
-    goalsByDomain[d]=(_g[fallbackKey]||'').trim();
+var _sg=((org.assessor&&org.assessor.goals)||{});
+var _sGoalTexts=[(_sg.g_goal1||'').trim(),(_sg.g_goal2||'').trim(),(_sg.g_goal3||'').trim()];
+var _sGoalDomains=_sGoalTexts.map(_extractDomainFromGoal);
+// Same assignment logic as renderValidation/_smartAssignedGoal. Inlined here so
+// the three render functions stay independently testable.
+function _smtAssign(sm){
+  if(!sm)return -1;
+  var explicit=String(sm.domain||'').trim().toLowerCase();
+  var objLc=String(sm.objective||'').toLowerCase();
+  if(explicit){
+    for(var i=0;i<3;i++){
+      var gt=_sGoalTexts[i].toLowerCase();
+      if(gt&&gt.indexOf(explicit)>-1)return i;
+      var gd=(_sGoalDomains[i]||'').toLowerCase();
+      if(gd&&(gd.indexOf(explicit)>-1||explicit.indexOf(gd)>-1))return i;
+    }
   }
-});
-var lastGroup='';
-org.smart.forEach(function(s,i){
-var curDomain=_smartVirtualDomain(s);
-if(useGrouping&&curDomain&&curDomain!==lastGroup){
-  var goalTxt=goalsByDomain[curDomain]||'';
-  html+='<div class="smart-bc-group">';
-  html+='<div class="smart-bc-title">'+esc(curDomain)+'</div>';
-  if(goalTxt){
-    html+='<div class="smart-bc-goal"><span class="smart-bc-goal-label">Goal&nbsp;</span>'+esc(goalTxt)+'</div>';
+  for(var j=0;j<3;j++){
+    var gd2=(_sGoalDomains[j]||'').toLowerCase();
+    if(gd2&&objLc.indexOf(gd2)>-1)return j;
+  }
+  var pm=objLc.match(/\(([^)]{1,60})\)/);
+  if(pm){
+    var paren=pm[1].trim();
+    if(paren){
+      for(var k=0;k<3;k++){
+        var gt2=_sGoalTexts[k].toLowerCase();
+        if(gt2&&gt2.indexOf(paren)>-1)return k;
+      }
+    }
+  }
+  return -1;
+}
+var _smtGoalIdx=(org.smart||[]).map(_smtAssign);
+
+// Inline renderer for a single SMART card — kept identical to the legacy path
+// so the editing UI (textareas, target/timeline/domain/status, lock buttons) doesn't change.
+function _renderSmartCard(s,i){
+  var out='';
+  var lkS=uiLockGet(org,'smart',String(i));
+  out+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
+  var headerCtrls=uiLockBtn('smart',String(i),lkS);
+  if(isAssessor&&!lkS){
+    headerCtrls+='<button class="pc-lock-btn pc-del-btn" onclick="deleteSMART('+i+')" title="Remove this objective">&times; Delete</button>';
+  }
+  out+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
+  if(isAssessor&&!lkS){
+    out+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
+    out+='<div class="obj-row">';
+    out+='<div class="target-cell"><label>Target</label><textarea data-smart-target="'+i+'" rows="3">'+esc(s.target||'')+'</textarea></div>';
+    out+='<div><label>Timeline</label><textarea data-smart-timeline="'+i+'" rows="2">'+esc(s.timeline||'')+'</textarea></div>';
+    out+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="'+esc(s.domain||'')+'"></div>';
+    out+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
+    out+='</div>';
   }else{
-    html+='<div class="smart-bc-goal-empty">Goal not yet captured — edit under Validation tab (Goals &amp; SMART Translation).</div>';
+    out+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
+    out+='<div class="obj-row">';
+    out+='<div class="target-cell"><label>Target</label><div class="readonly-val">'+(s.target||'--')+'</div></div>';
+    out+='<div><label>Timeline</label><div class="readonly-val">'+(s.timeline||'--')+'</div></div>';
+    out+='<div><label>Domain</label><div class="readonly-val">'+(s.domain||'--')+'</div></div>';
+    out+='<div><label>Status</label><div class="readonly-val">'+(s.status||'--')+'</div></div>';
+    out+='</div>';
   }
-  html+='</div>';
-  lastGroup=curDomain;
-}else if(!curDomain){
-  lastGroup='';
+  out+='</div>';
+  return out;
 }
-var lkS=uiLockGet(org,'smart',String(i));
-html+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
-var headerCtrls=uiLockBtn('smart',String(i),lkS);
-if(isAssessor&&!lkS){
-  headerCtrls+='<button class="pc-lock-btn pc-del-btn" onclick="deleteSMART('+i+')" title="Remove this objective">&times; Delete</button>';
-}
-html+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
-if(isAssessor&&!lkS){
-html+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
-html+='<div class="obj-row">';
-html+='<div class="target-cell"><label>Target</label><textarea data-smart-target="'+i+'" rows="3">'+esc(s.target||'')+'</textarea></div>';
-html+='<div><label>Timeline</label><textarea data-smart-timeline="'+i+'" rows="2">'+esc(s.timeline||'')+'</textarea></div>';
-html+='<div><label>Linked Domain</label><input data-smart-domain="'+i+'" value="'+esc(s.domain||'')+'"></div>';
-html+='<div><label>Status</label><select data-smart-status="'+i+'"><option value="Not Started"'+(s.status==='Not Started'?' selected':'')+'>Not Started</option><option value="In Progress"'+(s.status==='In Progress'?' selected':'')+'>In Progress</option><option value="Achieved"'+(s.status==='Achieved'?' selected':'')+'>Achieved</option><option value="At Risk"'+(s.status==='At Risk'?' selected':'')+'>At Risk</option></select></div>';
-html+='</div>';
+
+if(useGrouping){
+  // Grouped layout: iterate the three goal slots in order.
+  for(var _gi=0;_gi<3;_gi++){
+    var _goalText=_sGoalTexts[_gi];
+    // Block title preference: extracted domain → match against existing SMARTs → positional fallback.
+    var _bcDom=_sGoalDomains[_gi];
+    if(!_bcDom)_bcDom=_matchGoalToDomain(_goalText,domainOrder);
+    if(!_bcDom)_bcDom=domainOrder[_gi]||'';
+    // Skip empty goal slots that also have no SMARTs assigned.
+    var _hasAny=false;
+    for(var _ck=0;_ck<_smtGoalIdx.length;_ck++){if(_smtGoalIdx[_ck]===_gi){_hasAny=true;break;}}
+    if(!_goalText&&!_hasAny&&!_bcDom)continue;
+    html+='<div class="smart-bc-group">';
+    html+='<div class="smart-bc-title">'+esc(_bcDom||('Goal '+(_gi+1)))+'</div>';
+    if(_goalText){
+      html+='<div class="smart-bc-goal"><span class="smart-bc-goal-label">Goal&nbsp;</span>'+esc(_goalText)+'</div>';
+    }else{
+      html+='<div class="smart-bc-goal-empty">Goal not yet captured — edit under Validation tab (Goals &amp; SMART Translation).</div>';
+    }
+    html+='</div>';
+    // SMARTs assigned to this goal slot.
+    _smtGoalIdx.forEach(function(gi,i){
+      if(gi!==_gi)return;
+      html+=_renderSmartCard(org.smart[i],i);
+    });
+    if(!_hasAny){
+      html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 16px;margin-bottom:14px">No SMART objectives yet for this goal. Add one under Validation.</div>';
+    }
+  }
+  // Orphan SMARTs — not assigned to any goal slot.
+  var _orphans=[];
+  _smtGoalIdx.forEach(function(gi,i){if(gi===-1)_orphans.push(i);});
+  if(_orphans.length){
+    html+='<div class="smart-bc-group" style="margin-top:14px"><div class="smart-bc-title">Unassigned</div><div class="smart-bc-goal-empty">These SMARTs do not match any goal. Edit their domain or objective text to link them.</div></div>';
+    _orphans.forEach(function(i){
+      html+=_renderSmartCard(org.smart[i],i);
+    });
+  }
 }else{
-html+='<div style="font-size:14px;color:var(--ts2);margin-top:4px;line-height:1.5;white-space:pre-wrap">'+(s.objective||'--')+'</div>';
-html+='<div class="obj-row">';
-html+='<div class="target-cell"><label>Target</label><div class="readonly-val">'+(s.target||'--')+'</div></div>';
-html+='<div><label>Timeline</label><div class="readonly-val">'+(s.timeline||'--')+'</div></div>';
-html+='<div><label>Domain</label><div class="readonly-val">'+(s.domain||'--')+'</div></div>';
-html+='<div><label>Status</label><div class="readonly-val">'+(s.status||'--')+'</div></div>';
-html+='</div>';
+  // Flat layout: legacy behaviour for orgs without business-case grouping.
+  org.smart.forEach(function(s,i){
+    html+=_renderSmartCard(s,i);
+  });
 }
-html+='</div>';
-});
 document.getElementById('smartList').innerHTML=html;
 document.getElementById('smartAddWrap').innerHTML=isAssessor?'<button class="btn btn-outline" onclick="addSMART()">+ Add objective</button>':'';
 }
@@ -3453,10 +3552,42 @@ function addSMART(){var data=loadData();var org=data.orgs.find(function(o){retur
 
 // Adds a SMART pre-tagged with a business case domain (used by the Validation tab
 // "+ Add SMART under this goal" button in the grouped layout).
+// 2026-05-27: Harvest all editable Validation-tab fields from the live DOM
+// into the given org before any mutation that triggers a renderValidation
+// re-render. Without this, typed text that hasn't yet fired a change event
+// (e.g. user types and clicks "+ Add SMART" without first blurring the textarea)
+// is destroyed when the DOM is rebuilt from the stale cache.
+// Mirrors what _uiLockCaptureMap['goals'] does for the lock flow.
+function _harvestValidationDOM(org){
+  if(!org)return;
+  ensureAssessor(org);
+  // Goal fields (problem statement, why, goals 1-3, smart 1-5 flat fields)
+  document.querySelectorAll('[data-val-goal]').forEach(function(el){
+    var k=el.getAttribute('data-val-goal');
+    if(k)org.assessor.goals[k]=el.value;
+  });
+  // Grouped-form SMART objective textareas
+  document.querySelectorAll('[data-val-smart-idx]').forEach(function(el){
+    var idx=parseInt(el.getAttribute('data-val-smart-idx'),10);
+    if(isNaN(idx))return;
+    if(!Array.isArray(org.smart))org.smart=[];
+    while(org.smart.length<=idx)org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});
+    org.smart[idx].objective=el.value;
+    if(idx<5){org.assessor.goals['g_smart'+(idx+1)]=el.value;}
+  });
+  // Validation notes
+  document.querySelectorAll('[data-val-vn]').forEach(function(el){
+    var k=el.getAttribute('data-val-vn');
+    if(k)org.assessor.validation[k]=el.value;
+  });
+}
+
 function addSMARTUnderGoal(domain){
   var data=loadData();
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
   if(!org)return;
+  // Capture any unsaved typed text from the live DOM before we re-render.
+  _harvestValidationDOM(org);
   if(!Array.isArray(org.smart))org.smart=[];
   org.smart.push({objective:'',target:'',timeline:'',domain:domain||'',status:'Not Started'});
   saveData(data,currentOrg);
@@ -3470,6 +3601,8 @@ function deleteSMART(idx){
   var data=loadData();
   var org=data.orgs.find(function(o){return o.code===currentOrg;});
   if(!org||!org.smart||!org.smart[idx])return;
+  // Capture unsaved typed text before re-render destroys it.
+  _harvestValidationDOM(org);
   var preview=(org.smart[idx].objective||'(empty objective)').substring(0,80);
   if(!confirm('Remove SMART Objective '+(idx+1)+'?\n\n"'+preview+(preview.length>=80?'...':'')+'"\n\nThis cannot be undone.'))return;
   org.smart.splice(idx,1);
@@ -3637,14 +3770,46 @@ function renderActionPlan(org){
   var _apUseGrouping=Object.keys(_apDomainCounts).some(function(d){return _apDomainCounts[d]>=2;});
 
   if(_apUseGrouping&&goalLines.length){
+    // 2026-05-27: Use the same assignment-based matching as Validation so SMARTs
+    // never disappear when their domain field drifts from the resolved block domain.
+    var _apGoalTexts=goalLines.map(function(g){return g.text||'';});
+    while(_apGoalTexts.length<3)_apGoalTexts.push('');
+    var _apGoalDomains=_apGoalTexts.map(_extractDomainFromGoal);
+    function _apAssign(sm){
+      if(!sm)return -1;
+      var explicit=String(sm.domain||'').trim().toLowerCase();
+      var objLc=String(sm.objective||'').toLowerCase();
+      if(explicit){
+        for(var i=0;i<3;i++){
+          var gt=_apGoalTexts[i].toLowerCase();
+          if(gt&&gt.indexOf(explicit)>-1)return i;
+          var gd=(_apGoalDomains[i]||'').toLowerCase();
+          if(gd&&(gd.indexOf(explicit)>-1||explicit.indexOf(gd)>-1))return i;
+        }
+      }
+      for(var j=0;j<3;j++){
+        var gd2=(_apGoalDomains[j]||'').toLowerCase();
+        if(gd2&&objLc.indexOf(gd2)>-1)return j;
+      }
+      var pm=objLc.match(/\(([^)]{1,60})\)/);
+      if(pm){
+        var paren=pm[1].trim();
+        if(paren){
+          for(var k=0;k<3;k++){
+            var gt2=_apGoalTexts[k].toLowerCase();
+            if(gt2&&gt2.indexOf(paren)>-1)return k;
+          }
+        }
+      }
+      return -1;
+    }
+    var _apSmartGoalIdx=smarts.map(_apAssign);
+
     // Grouped layout: Goal 1 → its action tables, Goal 2 → its action tables, Goal 3 → its action tables.
     html+='<div class="ap-section-label">Goals & Associated SMART Objectives</div>';
     goalLines.forEach(function(g){
       var goalText=g.text||'';
-      // Match this goal to a domain (substring → prefix → positional fallback).
-      var dom=_matchGoalToDomain(goalText,_apDomainOrder);
-      if(!dom)dom=_extractDomainFromGoal(goalText);
-      if(!dom)dom=_apDomainOrder[g.idx-1]||'';
+      var dom=_apGoalDomains[g.idx-1]||_matchGoalToDomain(goalText,_apDomainOrder)||_apDomainOrder[g.idx-1]||'';
 
       // Goal card
       html+='<div class="ap-card" style="border-left:4px solid var(--teal)">';
@@ -3652,36 +3817,25 @@ function renderActionPlan(org){
       html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(goalText)+'</div>';
       html+='</div>';
 
-      // SMART action tables for this goal's domain.
-      if(dom){
-        var matched=[];
-        smarts.forEach(function(s,sIdx){
-          if(_smartVirtualDomain(s)===dom)matched.push({s:s,sIdx:sIdx});
+      // SMART action tables for THIS goal slot via the pre-computed assignment map.
+      var matched=[];
+      _apSmartGoalIdx.forEach(function(gi,sIdx){
+        if(gi===g.idx-1)matched.push({s:smarts[sIdx],sIdx:sIdx});
+      });
+      if(matched.length){
+        matched.forEach(function(m){
+          html+=renderActionTable('s'+m.sIdx,'SMART Objective '+(m.sIdx+1),m.s.objective||'');
         });
-        if(matched.length){
-          matched.forEach(function(m,ord){
-            // Anchor key uses the SMART's index within the FILTERED smarts array to keep
-            // existing actionPlan keys (s0, s1, ...) aligned with what's been saved before.
-            html+=renderActionTable('s'+m.sIdx,'SMART Objective '+(m.sIdx+1),m.s.objective||'');
-          });
-        }else{
-          html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 16px;margin-bottom:14px">No SMART objectives yet for this goal. Add one on the SMART Objectives tab and set its Linked Domain to "'+esc(dom)+'".</div>';
-        }
+      }else{
+        html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 16px;margin-bottom:14px">No SMART objectives yet for this goal.</div>';
       }
     });
 
-    // Any SMARTs not matched to a goal (orphans) appear at the end.
-    var matchedIdxs={};
-    goalLines.forEach(function(g){
-      var dom=_matchGoalToDomain(g.text||'',_apDomainOrder)||_extractDomainFromGoal(g.text||'')||_apDomainOrder[g.idx-1]||'';
-      if(dom){
-        smarts.forEach(function(s,sIdx){
-          if(_smartVirtualDomain(s)===dom)matchedIdxs[sIdx]=1;
-        });
-      }
-    });
+    // Orphans — SMARTs not assigned to any goal.
     var orphans=[];
-    smarts.forEach(function(s,sIdx){ if(!matchedIdxs[sIdx])orphans.push({s:s,sIdx:sIdx}); });
+    _apSmartGoalIdx.forEach(function(gi,sIdx){
+      if(gi===-1)orphans.push({s:smarts[sIdx],sIdx:sIdx});
+    });
     if(orphans.length){
       html+='<div class="ap-section-label" style="margin-top:24px">SMART Objectives without a linked goal</div>';
       orphans.forEach(function(m){
