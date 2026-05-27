@@ -2548,19 +2548,30 @@ var GOAL_FIELDS=[
 var CEO_EDITABLE_GOAL_FIELDS={g_problem:1,g_goal1:1,g_goal2:1,g_goal3:1,g_smart1:1,g_smart2:1,g_smart3:1,g_smart4:1,g_smart5:1};
 function canEditGoalField(key){return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[key];}
 
-// 2026-05-27: Extract a business-case domain name from a goal text. Convention is that
-// the goal text begins with the domain name followed by " — " (em dash with spaces),
-// e.g. "Community Cafés — A café income model that is no longer dependent on a single site…".
-// Used by renderValidation and renderSMART to map each goal slot deterministically to its
-// matching SMART rows in org.smart, so the display order is always Goal 1 → SMARTs for Goal 1,
-// Goal 2 → SMARTs for Goal 2, Goal 3 → SMARTs for Goal 3, regardless of org.smart array order.
+// 2026-05-27: Map a goal text to a business-case domain by finding the domain name
+// anywhere within the goal text (case-insensitive substring match). This is the primary
+// matching mechanism — it handles all of these goal formats:
+//   "Community Cafés — A café income model that is no longer dependent on a single site."
+//   "Goal 1 — Community Cafés A café income model that is no longer dependent…"
+//   "Diversify revenue via the Community Cafés portfolio…"
+// Pass the list of known domains (gathered from org.smart entries). Returns the first
+// domain that appears in the goal text, or empty string if none match.
+function _matchGoalToDomain(goalText, domainsList){
+  if(!goalText||!domainsList||!domainsList.length)return '';
+  var lc=String(goalText).toLowerCase();
+  for(var i=0;i<domainsList.length;i++){
+    var d=domainsList[i];
+    if(d&&lc.indexOf(String(d).toLowerCase())>-1)return d;
+  }
+  return '';
+}
+
+// Older prefix-only extractor — kept as a secondary fallback for the case where a goal
+// has a prefix style like "Community Cafés — …" but the org.smart domain list is empty
+// (e.g. brand-new tracker before any SMARTs have been domain-tagged).
 function _extractDomainFromGoal(text){
   if(!text)return '';
   var t=String(text).trim();
-  // Domain prefix is whatever appears before the first " — " (em dash, en dash, or hyphen,
-  // each with required whitespace on BOTH sides). The whitespace requirement is essential —
-  // it allows compound words like "Short-Term Accommodation" to be captured intact, because
-  // the hyphen in "Short-Term" has no surrounding whitespace and so isn't treated as a delimiter.
   var m=t.match(/^(.{1,80}?)\s+[\u2014\-\u2013]\s+/);
   if(m)return m[1].trim();
   return '';
@@ -2712,7 +2723,11 @@ if(spec)html+=_renderGoalField(spec);
 for(var _bcI=0;_bcI<3;_bcI++){
 var _goalKey='g_goal'+(_bcI+1);
 var _goalText=(a.goals[_goalKey]||'');
-var _dom=_extractDomainFromGoal(_goalText);
+// Primary: substring match against known domains (handles all goal text formats).
+var _dom=_matchGoalToDomain(_goalText,_vDomainOrder);
+// Secondary: prefix extraction (legacy).
+if(!_dom)_dom=_extractDomainFromGoal(_goalText);
+// Tertiary: positional fallback.
 if(!_dom)_dom=_vDomainOrder[_bcI]||'';
 var _goalSpec=null;GOAL_FIELDS.forEach(function(g){if(g.key===_goalKey)_goalSpec=g;});
 html+='<div class="bc-val-block">';
@@ -3274,13 +3289,19 @@ var domainCounts={};
 var useGrouping=Object.keys(domainCounts).some(function(d){return domainCounts[d]>=2;});
 var goalsByDomain={};
 var _g=((org.assessor&&org.assessor.goals)||{});
-// Pass 1: explicit extraction from goal text — domain prefix "Community Cafés —" etc.
-// This makes mapping deterministic by goal CONTENT rather than by SMART array order.
+// Pass 1: substring match — find which domain appears in each goal text.
+// Robust to formats like "Goal 1 — Community Cafés A café income model…".
 ['g_goal1','g_goal2','g_goal3'].forEach(function(k){
-  var dom=_extractDomainFromGoal(_g[k]||'');
+  var dom=_matchGoalToDomain(_g[k]||'',domainOrder);
   if(dom)goalsByDomain[dom]=(_g[k]||'').trim();
 });
-// Pass 2: fall back to appearance order for any domains the explicit extraction missed.
+// Pass 2: prefix-only extraction (legacy fallback if substring match found nothing).
+['g_goal1','g_goal2','g_goal3'].forEach(function(k){
+  if(Object.keys(goalsByDomain).length>=domainOrder.length)return;
+  var dom=_extractDomainFromGoal(_g[k]||'');
+  if(dom&&goalsByDomain[dom]===undefined)goalsByDomain[dom]=(_g[k]||'').trim();
+});
+// Pass 3: fall back to first-appearance order for any domains still unmapped.
 domainOrder.forEach(function(d,idx){
   if(goalsByDomain[d]===undefined){
     var fallbackKey='g_goal'+(idx+1);
@@ -3519,25 +3540,95 @@ function renderActionPlan(org){
     return out;
   }
 
-  // GOALS section — the overarching SELECT goal(s), shown FIRST as the high-level
-  // direction. Read-only display; edit on the Validation tab.
-  if(goalLines.length){
-    html+='<div class="ap-section-label">My Overarching SELECT Goal</div>';
-    goalLines.forEach(function(g){
-      html+='<div class="ap-card">';
-      html+='<div class="ap-obj-num">Goal '+g.idx+'</div>';
-      html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(g.text)+'</div>';
-      html+='</div>';
-    });
-  }
+  // 2026-05-27: Detect grouped structure (Nigel/incredABLE pattern — 2+ SMARTs share
+  // a domain). When active, render Goal 1 → SMARTs for Goal 1 → Goal 2 → SMARTs for
+  // Goal 2 → Goal 3 → SMARTs for Goal 3. When not active, fall back to the original
+  // two-section layout (all goals together, then all SMARTs together).
+  var _apDomainOrder=[];
+  var _apDomainCounts={};
+  smarts.forEach(function(s){
+    var d=((s&&s.domain)||'').trim();
+    if(d){
+      if(_apDomainOrder.indexOf(d)===-1)_apDomainOrder.push(d);
+      _apDomainCounts[d]=(_apDomainCounts[d]||0)+1;
+    }
+  });
+  var _apUseGrouping=Object.keys(_apDomainCounts).some(function(d){return _apDomainCounts[d]>=2;});
 
-  // SMART OBJECTIVES section — practical objectives plus their action tables.
-  // Objective text is read-only here; edit on the SMART Objectives tab.
-  if(smarts.length){
-    html+='<div class="ap-section-label">SMART Objectives</div>';
-    smarts.forEach(function(s,idx){
-      html+=renderActionTable('s'+idx,'SMART Objective '+(idx+1),s.objective||'');
+  if(_apUseGrouping&&goalLines.length){
+    // Grouped layout: Goal 1 → its action tables, Goal 2 → its action tables, Goal 3 → its action tables.
+    html+='<div class="ap-section-label">Goals & Associated SMART Objectives</div>';
+    goalLines.forEach(function(g){
+      var goalText=g.text||'';
+      // Match this goal to a domain (substring → prefix → positional fallback).
+      var dom=_matchGoalToDomain(goalText,_apDomainOrder);
+      if(!dom)dom=_extractDomainFromGoal(goalText);
+      if(!dom)dom=_apDomainOrder[g.idx-1]||'';
+
+      // Goal card
+      html+='<div class="ap-card" style="border-left:4px solid var(--teal)">';
+      html+='<div class="ap-obj-num">Goal '+g.idx+(dom?' &middot; '+esc(dom):'')+'</div>';
+      html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(goalText)+'</div>';
+      html+='</div>';
+
+      // SMART action tables for this goal's domain.
+      if(dom){
+        var matched=[];
+        smarts.forEach(function(s,sIdx){
+          if(((s.domain||'').trim())===dom)matched.push({s:s,sIdx:sIdx});
+        });
+        if(matched.length){
+          matched.forEach(function(m,ord){
+            // Anchor key uses the SMART's index within the FILTERED smarts array to keep
+            // existing actionPlan keys (s0, s1, ...) aligned with what's been saved before.
+            html+=renderActionTable('s'+m.sIdx,'SMART Objective '+(m.sIdx+1),m.s.objective||'');
+          });
+        }else{
+          html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 16px;margin-bottom:14px">No SMART objectives yet for this goal. Add one on the SMART Objectives tab and set its Linked Domain to "'+esc(dom)+'".</div>';
+        }
+      }
     });
+
+    // Any SMARTs not matched to a goal (orphans) appear at the end.
+    var matchedIdxs={};
+    goalLines.forEach(function(g){
+      var dom=_matchGoalToDomain(g.text||'',_apDomainOrder)||_extractDomainFromGoal(g.text||'')||_apDomainOrder[g.idx-1]||'';
+      if(dom){
+        smarts.forEach(function(s,sIdx){
+          if(((s.domain||'').trim())===dom)matchedIdxs[sIdx]=1;
+        });
+      }
+    });
+    var orphans=[];
+    smarts.forEach(function(s,sIdx){ if(!matchedIdxs[sIdx])orphans.push({s:s,sIdx:sIdx}); });
+    if(orphans.length){
+      html+='<div class="ap-section-label" style="margin-top:24px">SMART Objectives without a linked goal</div>';
+      orphans.forEach(function(m){
+        html+=renderActionTable('s'+m.sIdx,'SMART Objective '+(m.sIdx+1),m.s.objective||'');
+      });
+    }
+  } else {
+    // Flat layout — original two-section behaviour for non-grouped orgs.
+    // GOALS section — the overarching SELECT goal(s), shown FIRST as the high-level
+    // direction. Read-only display; edit on the Validation tab.
+    if(goalLines.length){
+      html+='<div class="ap-section-label">My Overarching SELECT Goal</div>';
+      goalLines.forEach(function(g){
+        html+='<div class="ap-card">';
+        html+='<div class="ap-obj-num">Goal '+g.idx+'</div>';
+        html+='<div class="ap-obj-text" style="margin-bottom:0">'+esc(g.text)+'</div>';
+        html+='</div>';
+      });
+    }
+
+    // SMART OBJECTIVES section — practical objectives plus their action tables.
+    // Objective text is read-only here; edit on the SMART Objectives tab.
+    if(smarts.length){
+      html+='<div class="ap-section-label">SMART Objectives</div>';
+      smarts.forEach(function(s,idx){
+        html+=renderActionTable('s'+idx,'SMART Objective '+(idx+1),s.objective||'');
+      });
+    }
   }
 
   // If nothing to anchor actions to yet
