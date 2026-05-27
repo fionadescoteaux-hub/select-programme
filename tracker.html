@@ -1169,7 +1169,7 @@ function renderRagReport(){
     var cycleRagCls=cycleRag==='Green'?'green':cycleRag==='Amber'?'amber':cycleRag==='Red'?'red':'';
     var stage=ragOrgStage(org);
     rows+='<tr>';
-    rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'')+')">'+esc(org.name||'')+'</button>';
+    rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'').replace(/"/g,'&quot;')+')">'+esc(org.name||'')+'</button>';
     rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
     rows+='<td class="c-stage-td"><span class="stage-pill '+stage.cls+'">'+esc(stage.label)+'</span><span class="stage-sub">'+esc(stage.sub)+'</span></td>';
     rows+='<td class="rag-right" style="font-weight:600;color:var(--navy)">'+(blScore?blScore+'/5':'-')+'</td>';
@@ -2288,6 +2288,19 @@ document.getElementById('tab-'+tab).classList.add('active');
 btn.classList.add('active');
 // 2026-05-22: Update URL hash so browser back button works.
 _setHash();
+// 2026-05-27: Re-render the destination tab from fresh data so edits made on
+// one tab show up immediately on others. Only applies to the three tabs that
+// share data via org.smart / org.assessor.goals — other tabs handle their
+// own render flow and shouldn't be re-rendered here.
+try{
+  var d=loadData();
+  var o=d&&d.orgs?d.orgs.find(function(x){return x.code===currentOrg;}):null;
+  if(o){
+    if(tab==='validation'&&typeof renderValidation==='function')renderValidation(o);
+    else if(tab==='smart'&&typeof renderSMART==='function')renderSMART(o);
+    else if(tab==='actionplan'&&typeof renderActionPlan==='function')renderActionPlan(o);
+  }
+}catch(e){console.warn('switchTab re-render failed:',e);}
 // On the Action Plan tab, CEOs can edit even though they can't edit other tabs.
 // Update the read-only banner so it doesn't mislead them on this one.
 var notice=document.getElementById('readonlyNotice');
@@ -2811,7 +2824,7 @@ html+='</div>';
 html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 0 4px 16px;border-left:2px solid var(--tb2);margin:10px 0">No SMART objectives yet for this goal. Click + Add below to create the first one.</div>';
 }
 if(isAssessor&&!lgs){
-html+='<div class="bc-val-addbtn"><button class="btn btn-sm btn-outline" onclick="addSMARTUnderGoal('+JSON.stringify(_dom)+')">+ Add SMART under this goal</button></div>';
+html+='<div class="bc-val-addbtn"><button class="btn btn-sm btn-outline" onclick="addSMARTUnderGoal('+JSON.stringify(_dom).replace(/"/g,'&quot;')+')">+ Add SMART under this goal</button></div>';
 }
 }
 html+='</div>';
@@ -2934,6 +2947,7 @@ saveData(d,o.code);
 
 // 2026-05-27: grouped-form SMART inputs bind directly to org.smart[idx].objective.
 // Also mirror the first 5 entries back to g_smart1..5 so the cohort export sheet stays populated.
+// Re-render the SMART and Action Plan tabs too so their cached DOM doesn't go stale.
 el.querySelectorAll('[data-val-smart-idx]').forEach(function(t){
 t.addEventListener('change',function(){
 var idx=parseInt(this.getAttribute('data-val-smart-idx'),10);
@@ -2945,6 +2959,8 @@ while(o.smart.length<=idx)o.smart.push({objective:'',target:'',timeline:'',domai
 o.smart[idx].objective=this.value;
 if(idx<5){o.assessor.goals['g_smart'+(idx+1)]=this.value;}
 saveData(d,o.code);
+if(typeof renderSMART==='function')renderSMART(o);
+if(typeof renderActionPlan==='function')renderActionPlan(o);
 });
 });
 
