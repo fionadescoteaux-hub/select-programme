@@ -171,10 +171,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .bc-val-block:nth-of-type(3n){border-left-color:var(--gold)}
 .bc-val-title{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--navy);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--tb)}
 .bc-val-smart-list{margin-top:10px}
-.bc-val-smart{padding-left:16px;border-left:2px solid var(--tb2);margin-bottom:10px}
+.bc-val-smart{padding-left:16px;border-left:2px solid var(--tb2);margin-bottom:10px;position:relative}
 .bc-val-smart label{font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:4px}
 .bc-val-smart textarea{width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical;box-sizing:border-box}
 .bc-val-smart .pc-val{margin-top:0}
+.bc-val-smart-del{position:absolute;top:0;right:0;background:transparent;border:1px solid var(--tb2);color:var(--ts);width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:14px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}
+.bc-val-smart-del:hover{background:#fde8ec;border-color:var(--coral);color:var(--coral)}
 .bc-val-addbtn{margin-top:4px;padding-left:16px}
 .bc-val-orphans{margin-top:16px;padding-top:14px;border-top:1px dashed var(--tb2)}
 .bc-val-orphans-label{font-size:10px;color:var(--ts);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px}
@@ -2762,6 +2764,9 @@ _smartIdxs.forEach(function(sIdx,ord){
 var s=org.smart[sIdx];
 var canEditSmart=isAssessor?!lgs:true; // CEOs always editable; assessors when unlocked
 html+='<div class="bc-val-smart">';
+if(isAssessor&&!lgs){
+  html+='<button class="bc-val-smart-del" onclick="deleteSMART('+sIdx+')" title="Remove this SMART objective">&times;</button>';
+}
 html+='<label>SMART Objective '+(ord+1)+(canEditSmart&&!isAssessor?' <span style="color:var(--teal);font-weight:600;text-transform:none;letter-spacing:0;font-style:italic">(editable)</span>':'')+'</label>';
 if(canEditSmart){
 html+='<textarea data-val-smart-idx="'+sIdx+'" placeholder="Specific, measurable, time-bound...">'+esc(s.objective||'')+'</textarea>';
@@ -2789,6 +2794,9 @@ _orphans.forEach(function(sIdx,ord){
 var s=org.smart[sIdx];
 var canEditSmart=isAssessor?!lgs:true;
 html+='<div class="bc-val-smart">';
+if(isAssessor&&!lgs){
+  html+='<button class="bc-val-smart-del" onclick="deleteSMART('+sIdx+')" title="Remove this SMART objective">&times;</button>';
+}
 html+='<label>SMART '+(ord+1)+' (no business case set — edit Linked Domain on SMART tab to associate)</label>';
 if(canEditSmart){
 html+='<textarea data-val-smart-idx="'+sIdx+'">'+esc(s.objective||'')+'</textarea>';
@@ -3444,7 +3452,8 @@ function deleteSMART(idx){
   }
   saveData(data,currentOrg);
   renderSMART(org);
-  // Refresh the action plan too in case it's been rendered already
+  // Refresh whichever tabs may already be open
+  if(typeof renderValidation==='function')renderValidation(org);
   if(typeof renderActionPlan==='function')renderActionPlan(org);
 }
 
