@@ -153,6 +153,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 @media(max-width:600px){.smart-obj .obj-row{grid-template-columns:1fr}}
 .smart-obj label{font-size:10px;font-weight:600;color:var(--tt);text-transform:uppercase;letter-spacing:0.3px}
 
+/* SMART tab — business-case grouping (kicks in when 2+ SMARTs share a Linked Domain value).
+   Used by Nigel/incredABLE to group C1–C3 under Community Cafés, A1–A3 under Short-Term
+   Accommodation, M1–M3 under Manufacturing Opportunity. Invisible for CEOs with no
+   repeated domain values, so the other 9 trackers are unaffected. */
+.smart-bc-group{background:var(--teal-light);border:1px solid rgba(10,107,90,0.18);border-left:4px solid var(--teal);border-radius:var(--r);padding:12px 16px;margin:18px 0 10px 0}
+.smart-bc-group + .smart-obj{margin-top:0}
+.smart-bc-group .smart-bc-title{font-family:var(--serif);font-size:16px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.smart-bc-group .smart-bc-goal{font-size:13px;color:var(--ts2);line-height:1.55;white-space:pre-wrap}
+.smart-bc-group .smart-bc-goal-label{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-right:6px}
+.smart-bc-group .smart-bc-goal-empty{font-size:12px;color:var(--tt);font-style:italic}
+
 .log-entry{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .log-entry .log-date{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px}
 .log-entry textarea{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;min-height:60px;resize:vertical;background:var(--card);color:var(--tp)}
@@ -3094,7 +3105,43 @@ saveData(data,currentOrg);
 
 function renderSMART(org){
 var html='';
+// Business-case grouping: when 2+ SMARTs share a Linked Domain value, render a goal-bearing
+// group header above each domain block. Pulls the matching goal text from org.goals.g_goal1/2/3
+// by the order in which unique domains appear. CEOs whose SMARTs have unique-or-empty domains
+// see no grouping (the existing flat list is preserved).
+var domainOrder=[];
+(org.smart||[]).forEach(function(s){
+  var d=((s&&s.domain)||'').trim();
+  if(d&&domainOrder.indexOf(d)===-1)domainOrder.push(d);
+});
+var domainCounts={};
+(org.smart||[]).forEach(function(s){
+  var d=((s&&s.domain)||'').trim();
+  if(d)domainCounts[d]=(domainCounts[d]||0)+1;
+});
+var useGrouping=Object.keys(domainCounts).some(function(d){return domainCounts[d]>=2;});
+var goalsByDomain={};
+var _g=(org.goals||{});
+['g_goal1','g_goal2','g_goal3'].forEach(function(k,idx){
+  if(domainOrder[idx])goalsByDomain[domainOrder[idx]]=(_g[k]||'').trim();
+});
+var lastGroup='';
 org.smart.forEach(function(s,i){
+var curDomain=((s.domain||'')).trim();
+if(useGrouping&&curDomain&&curDomain!==lastGroup){
+  var goalTxt=goalsByDomain[curDomain]||'';
+  html+='<div class="smart-bc-group">';
+  html+='<div class="smart-bc-title">'+esc(curDomain)+'</div>';
+  if(goalTxt){
+    html+='<div class="smart-bc-goal"><span class="smart-bc-goal-label">Goal&nbsp;</span>'+esc(goalTxt)+'</div>';
+  }else{
+    html+='<div class="smart-bc-goal-empty">Goal not yet captured — edit under Validation tab (Goals &amp; SMART Translation).</div>';
+  }
+  html+='</div>';
+  lastGroup=curDomain;
+}else if(!curDomain){
+  lastGroup='';
+}
 var lkS=uiLockGet(org,'smart',String(i));
 html+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
 var headerCtrls=uiLockBtn('smart',String(i),lkS);
