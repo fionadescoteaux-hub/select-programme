@@ -2571,12 +2571,26 @@ function canEditGoalField(key){return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[k
 //   "Diversify revenue via the Community Cafés portfolio…"
 // Pass the list of known domains (gathered from org.smart entries). Returns the first
 // domain that appears in the goal text, or empty string if none match.
+// 2026-05-27: Match domains against goal text using Unicode-friendly word boundaries.
+// Plain substring matching caused "Dec" to match inside "December" or "decision",
+// which gave Goal 3's block title as "Dec" instead of the proper extracted domain.
+// A match must be flanked by non-letter characters (or string start/end) on both sides.
 function _matchGoalToDomain(goalText, domainsList){
   if(!goalText||!domainsList||!domainsList.length)return '';
   var lc=String(goalText).toLowerCase();
+  // Unicode-aware "is a letter" test — covers Latin extended (é, ñ, ö, etc).
+  var isLetter=function(c){return c&&/[a-z\u00C0-\u017F]/i.test(c);};
   for(var i=0;i<domainsList.length;i++){
     var d=domainsList[i];
-    if(d&&lc.indexOf(String(d).toLowerCase())>-1)return d;
+    if(!d)continue;
+    var needle=String(d).toLowerCase();
+    var pos=lc.indexOf(needle);
+    while(pos>-1){
+      var before=pos===0?'':lc[pos-1];
+      var after=(pos+needle.length>=lc.length)?'':lc[pos+needle.length];
+      if(!isLetter(before)&&!isLetter(after))return d;
+      pos=lc.indexOf(needle,pos+1);
+    }
   }
   return '';
 }
@@ -2624,8 +2638,10 @@ function _extractLeadingTitleCasePhrase(text){
 
 // 2026-05-27: Resolve a SMART row's effective domain. Priority order:
 //   1. The explicit `domain` field on the row (set by the seed or via the SMART tab).
-//   2. A parenthetical hint inside the objective text — e.g. "Four-site portfolio risk
-//      map (Cafés) By end of August 2026…" yields "Cafés".
+//   2. The first parenthetical inside the objective text that is NOT a date, month,
+//      module or year marker — e.g. "Four-site portfolio risk map (Cafés) By end of
+//      August 2026…" yields "Cafés". A parenthetical like "(Dec)" or "(M7)" is a
+//      timeline marker, not a domain, so it is skipped over.
 // This lets the grouped layout activate from text content alone, without requiring
 // every SMART row to have its `domain` field pre-tagged. Trackers that DO have explicit
 // domain values still take precedence.
@@ -2633,9 +2649,19 @@ function _smartVirtualDomain(smart){
   if(!smart)return '';
   var d=(smart.domain||'').trim();
   if(d)return d;
-  var obj=smart.objective||'';
-  var m=String(obj).match(/\(([^)]{1,60})\)/);
-  return m?m[1].trim():'';
+  var obj=String(smart.objective||'');
+  // Skip parentheticals matching: month abbreviations (Jan-Dec, Sept), module/quarter
+  // markers (M1-M9, Q1-Q4), 4-digit years, or pure number/digit runs.
+  var datelike=/^\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december|m\d{1,2}|q[1-4]|\d{4}|\d{1,2})\s*$/i;
+  var re=/\(([^)]{1,60})\)/g;
+  var m;
+  while((m=re.exec(obj))!==null){
+    var v=m[1].trim();
+    if(!v)continue;
+    if(datelike.test(v))continue;
+    return v;
+  }
+  return '';
 }
 
 var LOCK_CHECKS=[
