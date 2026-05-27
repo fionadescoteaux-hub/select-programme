@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // SELECT Programme — Airtable Data Layer
-// Version: 2026-05-22-SMART-MERGE-FIX
+// Version: 2026-05-27-SMART-DUPLICATE-CASCADE-FIX
 //
 // CRITICAL SAFETY RULES (prevent Airtable wipes):
 // 1. NEVER push to Airtable until loadData() succeeds at least once.
@@ -239,16 +239,21 @@ var AT = (function() {
                 co[key].forEach(function(r){ if (r && r.code && !airtableCodes[r.code]) o[key].push(r); });
               });
 
-              // SMART: array index based — if cache has more entries or any cache entry
-              // has more data than Airtable's, prefer cache wholesale
-              if ((co.smart || []).length > (o.smart || []).length) o.smart = co.smart;
-              else if (Array.isArray(co.smart) && co.smart.length > 0) {
-                var cacheHasMore = false;
-                for (var si = 0; si < co.smart.length; si++) {
-                  var cs = co.smart[si], as = o.smart[si];
-                  if (cs && cs.objective && (!as || !as.objective)) { cacheHasMore = true; break; }
-                }
-                if (cacheHasMore) o.smart = co.smart;
+              // SMART: AIRTABLE WINS, per-row merge by _rid with content-based
+              // de-dup fallback for legacy cache rows that lost their _rid.
+              // 2026-05-27 fix: the old array-index "cache wins wholesale" logic
+              // caused a duplicate cascade — cache rows with no _rid replaced
+              // Airtable's rows with _rid, then the save side appended every
+              // no-_rid local row as a new Airtable record. Every reload doubled
+              // the row count (8 → 16 → 32 → ...).
+              // New behaviour: remote rows (with _rid) are always kept. Cache
+              // rows merge their non-empty edits into the matching remote row,
+              // matched first by _rid, then (if no _rid) by objective text. Only
+              // truly orphan cache rows (no _rid AND no content match) are
+              // appended, treated as local-only new rows the user added but
+              // hasn't pushed yet.
+              if (Array.isArray(co.smart) && co.smart.length > 0) {
+                o.smart = mergeRowsByRid(o.smart, co.smart);
               }
 
               // KPI: per-field merge — Airtable wins. Cache only fills in
@@ -542,8 +547,15 @@ var AT = (function() {
   }
   // mergeRowsByRid: per-row, per-field merge keyed on `_rid` (for SMART).
   // Airtable rows are preserved unless local has same _rid with non-empty edits.
-  // Local rows without _rid are appended (treated as new rows).
-  // Airtable rows that local doesn't have are kept (no delete via push).
+  // Local rows without _rid are first matched against remote rows by objective
+  // text (content-based de-dup); truly orphan local rows are then appended as
+  // new. Airtable rows that local doesn't have are kept (no delete via push).
+  //
+  // 2026-05-27 fix: prior version blindly appended every local-no-_rid row,
+  // which combined with a broken load-merge produced an exponential duplicate
+  // cascade. Content-based de-dup is the safety net that keeps stale cache
+  // entries (from sessions before _rid tracking) from re-creating themselves
+  // as new Airtable records on every save.
   function mergeRowsByRid(remoteRows, localRows) {
     var r = Array.isArray(remoteRows) ? remoteRows : [];
     var l = Array.isArray(localRows)  ? localRows  : [];
@@ -556,6 +568,56 @@ var AT = (function() {
       if (row._rid) localByRid[row._rid] = row;
       else localWithoutRid.push(row);
     });
+
+    // Normalise objective text for content-based matching: trim, collapse
+    // whitespace, lowercase. Empty/missing objectives can't be content-matched.
+    function _objKey(row) {
+      if (!row) return '';
+      var o = row.objective;
+      if (!o || typeof o !== 'string') return '';
+      return o.replace(/\s+/g, ' ').trim().toLowerCase();
+    }
+
+    // Build a content index of remote rows so each orphan local row can find
+    // its remote twin without an O(N*M) scan. Multiple remote rows with the
+    // same objective text are rare but possible; we match the first.
+    var remoteByObj = {};
+    r.forEach(function(remoteRow){
+      var key = _objKey(remoteRow);
+      if (key && !remoteByObj[key]) remoteByObj[key] = remoteRow;
+    });
+
+    // For each orphan local row, look for a remote twin by objective text.
+    // If found, fold the local row's non-empty edits into its _rid bucket so
+    // the regular _rid merge below picks it up. If not, keep it as a true
+    // orphan to be appended.
+    var trueOrphans = [];
+    localWithoutRid.forEach(function(localRow){
+      var key = _objKey(localRow);
+      var remoteTwin = key ? remoteByObj[key] : null;
+      if (remoteTwin && remoteTwin._rid) {
+        var bucket = localByRid[remoteTwin._rid];
+        if (!bucket) {
+          // Re-key the orphan under the matched remote _rid.
+          localByRid[remoteTwin._rid] = Object.assign({ _rid: remoteTwin._rid }, localRow);
+        } else {
+          // A local row already exists for this _rid; merge non-empty fields
+          // from the orphan into the existing bucket (local wins for non-empty).
+          Object.keys(localRow).forEach(function(field){
+            if (field === '_rid') return;
+            var v = localRow[field];
+            if (v !== '' && v !== null && v !== undefined && typeof v !== 'boolean') {
+              bucket[field] = v;
+            }
+          });
+        }
+      } else if (key) {
+        // True orphan: a local row with content that doesn't match any remote.
+        // Keep for append. (Empty-objective rows are dropped — they're noise.)
+        trueOrphans.push(localRow);
+      }
+    });
+
     var out = r.map(function(remoteRow){
       if (!remoteRow || !remoteRow._rid) return remoteRow;
       var localRow = localByRid[remoteRow._rid];
@@ -572,8 +634,8 @@ var AT = (function() {
       });
       return merged;
     });
-    // Append local rows that have no _rid (new rows the user added but never saved before).
-    localWithoutRid.forEach(function(row){ out.push(row); });
+    // Append true orphan local rows (no _rid AND no content match against remote).
+    trueOrphans.forEach(function(row){ out.push(row); });
     return out;
   }
   // mergeRowsByCode: per-row, per-field merge keyed on `code` (consulting/coaching/attendance).
