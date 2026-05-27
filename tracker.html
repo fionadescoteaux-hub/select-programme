@@ -164,6 +164,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .smart-bc-group .smart-bc-goal-label{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-right:6px}
 .smart-bc-group .smart-bc-goal-empty{font-size:12px;color:var(--tt);font-style:italic}
 
+/* Validation tab — business-case grouped layout (Nigel/incredABLE).
+   Each business case becomes a section: the high-level goal followed by its SMART objectives. */
+.bc-val-block{background:var(--card);border:1px solid var(--tb2);border-left:4px solid var(--teal);border-radius:var(--r);padding:14px 16px;margin:14px 0}
+.bc-val-block:nth-of-type(odd){border-left-color:var(--coral)}
+.bc-val-block:nth-of-type(3n){border-left-color:var(--gold)}
+.bc-val-title{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--navy);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--tb)}
+.bc-val-smart-list{margin-top:10px}
+.bc-val-smart{padding-left:16px;border-left:2px solid var(--tb2);margin-bottom:10px}
+.bc-val-smart label{font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:4px}
+.bc-val-smart textarea{width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical;box-sizing:border-box}
+.bc-val-smart .pc-val{margin-top:0}
+.bc-val-addbtn{margin-top:4px;padding-left:16px}
+.bc-val-orphans{margin-top:16px;padding-top:14px;border-top:1px dashed var(--tb2)}
+.bc-val-orphans-label{font-size:10px;color:var(--ts);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px}
+
 .log-entry{background:var(--card);border:1px solid var(--tb2);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .log-entry .log-date{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.5px}
 .log-entry textarea{width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);margin-top:6px;min-height:60px;resize:vertical;background:var(--card);color:var(--tp)}
@@ -2625,26 +2640,113 @@ html+='</div>';
 // 2026-05-22: CEOs can now edit g_problem and g_smart1..5 (their Goal + SMARTs).
 // Other Goal fields remain assessor-only. Lock still applies to the whole section
 // for assessors; CEOs can edit their 6 fields regardless of assessor lock.
+// 2026-05-27: When 2+ org.smart entries share a "domain" value (Nigel/incredABLE case),
+// switch to a grouped layout: each high-level goal is followed by its associated SMARTs.
+// SMART inputs in the grouped form bind directly to org.smart[i] (not g_smart1..5).
 var lgs=uiLockGet(org,'goals','main');
+
+// Detect grouped layout: same trigger as the SMART tab.
+var _vDomainOrder=[];
+var _vDomainCounts={};
+(org.smart||[]).forEach(function(s){
+  var d=((s&&s.domain)||'').trim();
+  if(d){
+    if(_vDomainOrder.indexOf(d)===-1)_vDomainOrder.push(d);
+    _vDomainCounts[d]=(_vDomainCounts[d]||0)+1;
+  }
+});
+var _vUseGrouping=Object.keys(_vDomainCounts).some(function(d){return _vDomainCounts[d]>=2;});
+
 html+='<div class="problem-card'+(lgs&&isAssessor?' pc-locked':'')+'">';
 html+='<div class="pc-header"><div class="pc-label">Goals & SMART Translation (final, agreed with CEO)</div>'+(isAssessor?uiLockBtn('goals','main',lgs):'')+'</div>';
 html+='<div style="font-size:12px;color:var(--ts);font-style:italic;margin-bottom:10px">These translate the problem statement into directional goals and SMART objectives. SMARTs populate the SMART tab.'+(isAssessor?'':' You can edit your Commercial Problem Statement, Goals and SMART Objectives below. Changes flow through to the My Action Plan and SMART tabs after saving.')+'</div>';
-GOAL_FIELDS.forEach(function(g){
-var val=a.goals[g.key]||'';
-var canEdit=canEditGoalField(g.key) && !(isAssessor && lgs);
-html+='<div style="margin-bottom:12px">';
-html+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(g.label)+(canEdit&&!isAssessor?' <span style="color:var(--teal);font-weight:600;text-transform:none;letter-spacing:0;font-style:italic">(editable)</span>':'')+'</label>';
+
+// Helper: render a single goal field (problem, problem_why, or goal1/2/3).
+function _renderGoalField(spec){
+var val=a.goals[spec.key]||'';
+var canEdit=canEditGoalField(spec.key) && !(isAssessor && lgs);
+var h='<div style="margin-bottom:12px">';
+h+='<label style="font-size:11px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:5px">'+esc(spec.label)+(canEdit&&!isAssessor?' <span style="color:var(--teal);font-weight:600;text-transform:none;letter-spacing:0;font-style:italic">(editable)</span>':'')+'</label>';
 if(canEdit){
-if(g.ta){
-html+='<textarea data-val-goal="'+g.key+'" placeholder="'+esc(g.ph||'')+'" style="width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
+if(spec.ta){
+h+='<textarea data-val-goal="'+spec.key+'" placeholder="'+esc(spec.ph||'')+'" style="width:100%;min-height:55px;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp);resize:vertical">'+esc(val)+'</textarea>';
 }else{
-html+='<input data-val-goal="'+g.key+'" value="'+esc(val)+'" placeholder="'+esc(g.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
+h+='<input data-val-goal="'+spec.key+'" value="'+esc(val)+'" placeholder="'+esc(spec.ph||'')+'" style="width:100%;padding:8px 10px;border:1px solid var(--tb2);border-radius:var(--r);font-size:13px;font-family:var(--sans);background:var(--card);color:var(--tp)">';
 }
 }else{
-html+='<div class="pc-val">'+(val||'--')+'</div>';
+h+='<div class="pc-val">'+(val||'--')+'</div>';
+}
+h+='</div>';
+return h;
+}
+
+if(_vUseGrouping){
+// Grouped layout — problem fields first, then each business case (goal + its SMARTs).
+['g_problem','g_problem_why'].forEach(function(k){
+var spec=null;GOAL_FIELDS.forEach(function(g){if(g.key===k)spec=g;});
+if(spec)html+=_renderGoalField(spec);
+});
+for(var _bcI=0;_bcI<3;_bcI++){
+var _dom=_vDomainOrder[_bcI]||'';
+var _goalKey='g_goal'+(_bcI+1);
+var _goalSpec=null;GOAL_FIELDS.forEach(function(g){if(g.key===_goalKey)_goalSpec=g;});
+html+='<div class="bc-val-block">';
+if(_dom)html+='<div class="bc-val-title">'+esc(_dom)+'</div>';
+if(_goalSpec)html+=_renderGoalField(_goalSpec);
+if(_dom){
+var _smartIdxs=[];
+(org.smart||[]).forEach(function(s,i){
+if(s&&((s.domain||'').trim())===_dom)_smartIdxs.push(i);
+});
+if(_smartIdxs.length){
+html+='<div class="bc-val-smart-list">';
+_smartIdxs.forEach(function(sIdx,ord){
+var s=org.smart[sIdx];
+var canEditSmart=isAssessor?!lgs:true; // CEOs always editable; assessors when unlocked
+html+='<div class="bc-val-smart">';
+html+='<label>SMART Objective '+(ord+1)+(canEditSmart&&!isAssessor?' <span style="color:var(--teal);font-weight:600;text-transform:none;letter-spacing:0;font-style:italic">(editable)</span>':'')+'</label>';
+if(canEditSmart){
+html+='<textarea data-val-smart-idx="'+sIdx+'" placeholder="Specific, measurable, time-bound...">'+esc(s.objective||'')+'</textarea>';
+}else{
+html+='<div class="pc-val">'+(s.objective||'--')+'</div>';
 }
 html+='</div>';
 });
+html+='</div>';
+}
+if(isAssessor&&!lgs){
+html+='<div class="bc-val-addbtn"><button class="btn btn-sm btn-outline" onclick="addSMARTUnderGoal('+JSON.stringify(_dom)+')">+ Add SMART under this goal</button></div>';
+}
+}
+html+='</div>';
+}
+// Orphan SMARTs (no domain set) — keep them visible so nothing gets hidden.
+var _orphans=[];
+(org.smart||[]).forEach(function(s,i){
+if(s&&!((s.domain||'').trim())&&(s.objective||'').trim())_orphans.push(i);
+});
+if(_orphans.length){
+html+='<div class="bc-val-orphans"><div class="bc-val-orphans-label">SMART objectives without a linked business case</div>';
+_orphans.forEach(function(sIdx,ord){
+var s=org.smart[sIdx];
+var canEditSmart=isAssessor?!lgs:true;
+html+='<div class="bc-val-smart">';
+html+='<label>SMART '+(ord+1)+' (no business case set — edit Linked Domain on SMART tab to associate)</label>';
+if(canEditSmart){
+html+='<textarea data-val-smart-idx="'+sIdx+'">'+esc(s.objective||'')+'</textarea>';
+}else{
+html+='<div class="pc-val">'+(s.objective||'--')+'</div>';
+}
+html+='</div>';
+});
+html+='</div>';
+}
+}else{
+// Standard flat layout — unchanged from prior versions. Used by the other 9 CEOs.
+GOAL_FIELDS.forEach(function(g){
+html+=_renderGoalField(g);
+});
+}
 html+='</div>';
 
 // SECTION 4: Priority Domains
@@ -2731,6 +2833,22 @@ saveData(d,o.code);
 });
 });
 
+// 2026-05-27: grouped-form SMART inputs bind directly to org.smart[idx].objective.
+// Also mirror the first 5 entries back to g_smart1..5 so the cohort export sheet stays populated.
+el.querySelectorAll('[data-val-smart-idx]').forEach(function(t){
+t.addEventListener('change',function(){
+var idx=parseInt(this.getAttribute('data-val-smart-idx'),10);
+if(isNaN(idx))return;
+var d=loadData();var o=d.orgs.find(function(x){return x.code===currentOrg;});
+if(!o)return;ensureAssessor(o);
+if(!Array.isArray(o.smart))o.smart=[];
+while(o.smart.length<=idx)o.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});
+o.smart[idx].objective=this.value;
+if(idx<5){o.assessor.goals['g_smart'+(idx+1)]=this.value;}
+saveData(d,o.code);
+});
+});
+
 if(isAssessor){
 // Wire up immediate-save handlers (the global Save button also catches all of these)
 el.querySelectorAll('[data-val-ck]').forEach(function(cb){
@@ -2784,6 +2902,15 @@ _uiLockCaptureMap['goals']=function(org){
   ensureAssessor(org);
   document.querySelectorAll('[data-val-goal]').forEach(function(el){
     org.assessor.goals[el.dataset.valGoal]=el.value;
+  });
+  // Also capture grouped-form SMART inputs (Nigel case) before locking.
+  document.querySelectorAll('[data-val-smart-idx]').forEach(function(el){
+    var idx=parseInt(el.dataset.valSmartIdx,10);
+    if(isNaN(idx))return;
+    if(!Array.isArray(org.smart))org.smart=[];
+    while(org.smart.length<=idx)org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});
+    org.smart[idx].objective=el.value;
+    if(idx<5){org.assessor.goals['g_smart'+(idx+1)]=el.value;}
   });
 };
 _uiLockRerenderMap['goals']=function(org){renderValidation(org);};
@@ -3121,7 +3248,7 @@ var domainCounts={};
 });
 var useGrouping=Object.keys(domainCounts).some(function(d){return domainCounts[d]>=2;});
 var goalsByDomain={};
-var _g=(org.goals||{});
+var _g=((org.assessor&&org.assessor.goals)||{});
 ['g_goal1','g_goal2','g_goal3'].forEach(function(k,idx){
   if(domainOrder[idx])goalsByDomain[domainOrder[idx]]=(_g[k]||'').trim();
 });
@@ -3189,6 +3316,21 @@ _uiLockCaptureMap['smart']=function(org,key){
 };
 _uiLockRerenderMap['smart']=function(org){renderSMART(org);};
 function addSMART(){var data=loadData();var org=data.orgs.find(function(o){return o.code===currentOrg;});org.smart.push({objective:'',target:'',timeline:'',domain:'',status:'Not Started'});saveData(data,currentOrg);renderSMART(org);}
+
+// Adds a SMART pre-tagged with a business case domain (used by the Validation tab
+// "+ Add SMART under this goal" button in the grouped layout).
+function addSMARTUnderGoal(domain){
+  var data=loadData();
+  var org=data.orgs.find(function(o){return o.code===currentOrg;});
+  if(!org)return;
+  if(!Array.isArray(org.smart))org.smart=[];
+  org.smart.push({objective:'',target:'',timeline:'',domain:domain||'',status:'Not Started'});
+  saveData(data,currentOrg);
+  // Re-render whichever tab is open
+  if(typeof renderValidation==='function')renderValidation(org);
+  if(typeof renderSMART==='function')renderSMART(org);
+  if(typeof renderActionPlan==='function')renderActionPlan(org);
+}
 
 function deleteSMART(idx){
   var data=loadData();
