@@ -2577,6 +2577,22 @@ function _extractDomainFromGoal(text){
   return '';
 }
 
+// 2026-05-27: Resolve a SMART row's effective domain. Priority order:
+//   1. The explicit `domain` field on the row (set by the seed or via the SMART tab).
+//   2. A parenthetical hint inside the objective text — e.g. "Four-site portfolio risk
+//      map (Cafés) By end of August 2026…" yields "Cafés".
+// This lets the grouped layout activate from text content alone, without requiring
+// every SMART row to have its `domain` field pre-tagged. Trackers that DO have explicit
+// domain values still take precedence.
+function _smartVirtualDomain(smart){
+  if(!smart)return '';
+  var d=(smart.domain||'').trim();
+  if(d)return d;
+  var obj=smart.objective||'';
+  var m=String(obj).match(/\(([^)]{1,60})\)/);
+  return m?m[1].trim():'';
+}
+
 var LOCK_CHECKS=[
 {key:'lk1',label:'CEO has reviewed and signed off on baseline scores'},
 {key:'lk2',label:'Problem statement and SMART objectives agreed in writing'},
@@ -2675,10 +2691,12 @@ html+='</div>';
 var lgs=uiLockGet(org,'goals','main');
 
 // Detect grouped layout: same trigger as the SMART tab.
+// Uses _smartVirtualDomain so SMARTs with parenthetical hints like "(Cafés)" in their
+// objective text still count toward grouping even when the `domain` field is empty.
 var _vDomainOrder=[];
 var _vDomainCounts={};
 (org.smart||[]).forEach(function(s){
-  var d=((s&&s.domain)||'').trim();
+  var d=_smartVirtualDomain(s);
   if(d){
     if(_vDomainOrder.indexOf(d)===-1)_vDomainOrder.push(d);
     _vDomainCounts[d]=(_vDomainCounts[d]||0)+1;
@@ -2736,7 +2754,7 @@ if(_goalSpec)html+=_renderGoalField(_goalSpec);
 if(_dom){
 var _smartIdxs=[];
 (org.smart||[]).forEach(function(s,i){
-if(s&&((s.domain||'').trim())===_dom)_smartIdxs.push(i);
+if(s&&_smartVirtualDomain(s)===_dom)_smartIdxs.push(i);
 });
 if(_smartIdxs.length){
 html+='<div class="bc-val-smart-list">';
@@ -2763,7 +2781,7 @@ html+='</div>';
 // Orphan SMARTs (no domain set) — keep them visible so nothing gets hidden.
 var _orphans=[];
 (org.smart||[]).forEach(function(s,i){
-if(s&&!((s.domain||'').trim())&&(s.objective||'').trim())_orphans.push(i);
+if(s&&!_smartVirtualDomain(s)&&(s.objective||'').trim())_orphans.push(i);
 });
 if(_orphans.length){
 html+='<div class="bc-val-orphans"><div class="bc-val-orphans-label">SMART objectives without a linked business case</div>';
@@ -3276,14 +3294,17 @@ var html='';
 // group header above each domain block. Pulls the matching goal text from org.goals.g_goal1/2/3
 // by the order in which unique domains appear. CEOs whose SMARTs have unique-or-empty domains
 // see no grouping (the existing flat list is preserved).
+// Uses _smartVirtualDomain so SMARTs with parenthetical hints in their objective text
+// (e.g. "Four-site portfolio risk map (Cafés)") count for grouping even when the
+// `domain` field is empty.
 var domainOrder=[];
 (org.smart||[]).forEach(function(s){
-  var d=((s&&s.domain)||'').trim();
+  var d=_smartVirtualDomain(s);
   if(d&&domainOrder.indexOf(d)===-1)domainOrder.push(d);
 });
 var domainCounts={};
 (org.smart||[]).forEach(function(s){
-  var d=((s&&s.domain)||'').trim();
+  var d=_smartVirtualDomain(s);
   if(d)domainCounts[d]=(domainCounts[d]||0)+1;
 });
 var useGrouping=Object.keys(domainCounts).some(function(d){return domainCounts[d]>=2;});
@@ -3310,7 +3331,7 @@ domainOrder.forEach(function(d,idx){
 });
 var lastGroup='';
 org.smart.forEach(function(s,i){
-var curDomain=((s.domain||'')).trim();
+var curDomain=_smartVirtualDomain(s);
 if(useGrouping&&curDomain&&curDomain!==lastGroup){
   var goalTxt=goalsByDomain[curDomain]||'';
   html+='<div class="smart-bc-group">';
@@ -3544,10 +3565,12 @@ function renderActionPlan(org){
   // a domain). When active, render Goal 1 → SMARTs for Goal 1 → Goal 2 → SMARTs for
   // Goal 2 → Goal 3 → SMARTs for Goal 3. When not active, fall back to the original
   // two-section layout (all goals together, then all SMARTs together).
+  // Uses _smartVirtualDomain so SMARTs with parenthetical hints in their objective text
+  // count for grouping even when their `domain` field is empty.
   var _apDomainOrder=[];
   var _apDomainCounts={};
   smarts.forEach(function(s){
-    var d=((s&&s.domain)||'').trim();
+    var d=_smartVirtualDomain(s);
     if(d){
       if(_apDomainOrder.indexOf(d)===-1)_apDomainOrder.push(d);
       _apDomainCounts[d]=(_apDomainCounts[d]||0)+1;
@@ -3575,7 +3598,7 @@ function renderActionPlan(org){
       if(dom){
         var matched=[];
         smarts.forEach(function(s,sIdx){
-          if(((s.domain||'').trim())===dom)matched.push({s:s,sIdx:sIdx});
+          if(_smartVirtualDomain(s)===dom)matched.push({s:s,sIdx:sIdx});
         });
         if(matched.length){
           matched.forEach(function(m,ord){
@@ -3595,7 +3618,7 @@ function renderActionPlan(org){
       var dom=_matchGoalToDomain(g.text||'',_apDomainOrder)||_extractDomainFromGoal(g.text||'')||_apDomainOrder[g.idx-1]||'';
       if(dom){
         smarts.forEach(function(s,sIdx){
-          if(((s.domain||'').trim())===dom)matchedIdxs[sIdx]=1;
+          if(_smartVirtualDomain(s)===dom)matchedIdxs[sIdx]=1;
         });
       }
     });
