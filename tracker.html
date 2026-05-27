@@ -3480,15 +3480,21 @@ var _smtGoalIdx=(org.smart||[]).map(_smtAssign);
 
 // Inline renderer for a single SMART card — kept identical to the legacy path
 // so the editing UI (textareas, target/timeline/domain/status, lock buttons) doesn't change.
-function _renderSmartCard(s,i){
+// 2026-05-27: Added localOrd param. When the grouped layout passes a per-block ordinal
+// (1, 2, 3 within each goal block), the header reads "Objective 1/2/3" instead of the
+// global org.smart array index — which jumped around (6, 7, 9) when SMARTs weren't
+// in array order, clashing with the user's own "SMART Objective N" labels in the text.
+// Editing handlers still use the global idx via data-smart-obj=N etc.
+function _renderSmartCard(s,i,localOrd){
   var out='';
+  var displayNum=(typeof localOrd==='number'?localOrd:(i+1));
   var lkS=uiLockGet(org,'smart',String(i));
   out+='<div class="smart-obj'+(lkS?' pc-locked':'')+'">';
   var headerCtrls=uiLockBtn('smart',String(i),lkS);
   if(isAssessor&&!lkS){
     headerCtrls+='<button class="pc-lock-btn pc-del-btn" onclick="deleteSMART('+i+')" title="Remove this objective">&times; Delete</button>';
   }
-  out+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+(i+1)+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
+  out+='<div class="pc-header" style="margin-bottom:6px"><div class="obj-num">Objective '+displayNum+'</div><div style="display:flex;gap:6px;flex-shrink:0">'+headerCtrls+'</div></div>';
   if(isAssessor&&!lkS){
     out+='<textarea data-smart-obj="'+i+'">'+esc(s.objective||'')+'</textarea>';
     out+='<div class="obj-row">';
@@ -3531,9 +3537,11 @@ if(useGrouping){
     }
     html+='</div>';
     // SMARTs assigned to this goal slot.
+    var _localOrd=0;
     _smtGoalIdx.forEach(function(gi,i){
       if(gi!==_gi)return;
-      html+=_renderSmartCard(org.smart[i],i);
+      _localOrd++;
+      html+=_renderSmartCard(org.smart[i],i,_localOrd);
     });
     if(!_hasAny){
       html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 16px;margin-bottom:14px">No SMART objectives yet for this goal. Add one under Validation.</div>';
@@ -3544,8 +3552,10 @@ if(useGrouping){
   _smtGoalIdx.forEach(function(gi,i){if(gi===-1)_orphans.push(i);});
   if(_orphans.length){
     html+='<div class="smart-bc-group" style="margin-top:14px"><div class="smart-bc-title">Unassigned</div><div class="smart-bc-goal-empty">These SMARTs do not match any goal. Edit their domain or objective text to link them.</div></div>';
+    var _orphOrd=0;
     _orphans.forEach(function(i){
-      html+=_renderSmartCard(org.smart[i],i);
+      _orphOrd++;
+      html+=_renderSmartCard(org.smart[i],i,_orphOrd);
     });
   }
 }else{
@@ -3849,8 +3859,10 @@ function renderActionPlan(org){
         if(gi===g.idx-1)matched.push({s:smarts[sIdx],sIdx:sIdx});
       });
       if(matched.length){
+        var _apLocalOrd=0;
         matched.forEach(function(m){
-          html+=renderActionTable('s'+m.sIdx,'SMART Objective '+(m.sIdx+1),m.s.objective||'');
+          _apLocalOrd++;
+          html+=renderActionTable('s'+m.sIdx,'SMART Objective '+_apLocalOrd,m.s.objective||'');
         });
       }else{
         html+='<div style="font-size:13px;color:var(--ts);font-style:italic;padding:8px 16px;margin-bottom:14px">No SMART objectives yet for this goal.</div>';
@@ -3864,8 +3876,10 @@ function renderActionPlan(org){
     });
     if(orphans.length){
       html+='<div class="ap-section-label" style="margin-top:24px">SMART Objectives without a linked goal</div>';
+      var _apOrphOrd=0;
       orphans.forEach(function(m){
-        html+=renderActionTable('s'+m.sIdx,'SMART Objective '+(m.sIdx+1),m.s.objective||'');
+        _apOrphOrd++;
+        html+=renderActionTable('s'+m.sIdx,'SMART Objective '+_apOrphOrd,m.s.objective||'');
       });
     }
   } else {
