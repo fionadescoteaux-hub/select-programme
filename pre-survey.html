@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>SELECT Programme — Preliminary Reflections</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --plum:     #5B2245;
+      --magenta:  #C4467E;
+      --blush:    #FBF7F2;
+      --ink:      #2C1B24;
+      --mid:      #8B6070;
+      --border:   #E8DADE;
+      --white:    #FFFFFF;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--blush);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    /* Header */
+    .header {
+      background: var(--plum);
+      padding: 32px 24px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0; right: 0;
+      height: 20px;
+      background: var(--blush);
+      border-radius: 20px 20px 0 0;
+    }
+    .header-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--magenta);
+      margin-bottom: 10px;
+    }
+    .header-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    .header-sub {
+      font-size: 14px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.5;
+    }
+
+    /* Form */
+    .form-wrap {
+      padding: 32px 20px 0;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .field-group {
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--plum);
+      margin-bottom: 8px;
+    }
+
+    .field-hint {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--mid);
+      margin-bottom: 10px;
+      line-height: 1.5;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    textarea {
+      width: 100%;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px; /* 16px prevents iOS zoom */
+      font-weight: 400;
+      color: var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    textarea:focus {
+      border-color: var(--magenta);
+      box-shadow: 0 0 0 3px rgba(196,70,126,0.12);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.55;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 36px 0 28px;
+    }
+
+    .section-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--plum);
+      margin-bottom: 24px;
+    }
+
+    /* Submit */
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 18px 24px;
+      background: var(--magenta);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 40px;
+      transition: background 0.2s, transform 0.1s;
+      -webkit-appearance: none;
+    }
+    .submit-btn:active {
+      background: #a8385f;
+      transform: scale(0.98);
+    }
+
+    /* Thank you state */
+    .thankyou {
+      display: none;
+      text-align: center;
+      padding: 60px 24px;
+    }
+    .thankyou-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--plum);
+      border-radius: 50%;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thankyou-icon svg { width: 30px; height: 30px; }
+    .thankyou h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: var(--plum);
+      margin-bottom: 14px;
+    }
+    .thankyou p {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--mid);
+      line-height: 1.6;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    /* Required asterisk */
+    .req { color: var(--magenta); }
+
+    /* Error */
+    .error-msg {
+      display: none;
+      font-size: 13px;
+      color: #c0392b;
+      margin-top: 6px;
+    }
+    input.invalid, textarea.invalid {
+      border-color: #c0392b;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      font-size: 12px;
+      color: var(--mid);
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-eyebrow">InterTradeIreland · SELECT 2026</div>
+    <h1 class="header-title">Preliminary Reflections</h1>
+    <p class="header-sub">A few quick questions to capture where you're starting from. There are no right or wrong answers.</p>
+  </div>
+
+  <div class="form-wrap">
+
+    <form id="surveyForm">
+
+      <!-- Hidden fields for Formspree -->
+      <input type="hidden" name="_subject" value="SELECT Preliminary Reflections Response" />
+      <input type="hidden" name="_template" value="table" />
+
+      <div class="field-group">
+        <label for="name">Your name <span class="req">*</span></label>
+        <input type="text" id="name" name="Name" placeholder="Full name" autocomplete="name" required />
+        <div class="error-msg" id="name-err">Please enter your name.</div>
+      </div>
+
+      <div class="field-group">
+        <label for="email">Your email <span class="req">*</span></label>
+        <input type="email" id="email" name="Email" placeholder="email@organisation.com" autocomplete="email" required />
+        <div class="error-msg" id="email-err">Please enter a valid email address.</div>
+      </div>
+
+      <hr class="divider" />
+      <div class="section-label">Four quick questions</div>
+
+      <div class="field-group">
+        <label for="q1">How are you feeling? <span class="req">*</span></label>
+        <div class="field-hint">In a few words, how are you feeling about starting the SELECT programme?</div>
+        <textarea id="q1" name="1. How are you feeling about starting SELECT?" placeholder="Write whatever comes to mind…" required></textarea>
+        <div class="error-msg" id="q1-err">Please share how you're feeling.</div>
+      </div>
+
+      <div class="field-group">
+        <label for="q2">What are you hoping to achieve? <span class="req">*</span></label>
+        <div class="field-hint">What are you hoping the programme will help you achieve?</div>
+        <textarea id="q2" name="2. What are you hoping the programme will help you achieve?" placeholder="Your hopes and expectations…" required></textarea>
+        <div class="error-msg" id="q2-err">Please share what you're hoping to achieve.</div>
+      </div>
+
+      <div class="field-group">
+        <label for="q3">Success for you <span class="req">*</span></label>
+        <div class="field-hint">What would success look like for <strong>you</strong> at the end of this programme?</div>
+        <textarea id="q3" name="3. What would success look like for you personally?" placeholder="Personal success looks like…" required></textarea>
+        <div class="error-msg" id="q3-err">Please describe what success would look like for you.</div>
+      </div>
+
+      <div class="field-group">
+        <label for="q4">Success for your social enterprise <span class="req">*</span></label>
+        <div class="field-hint">What would success look like for <strong>your social enterprise</strong> at the end of this programme?</div>
+        <textarea id="q4" name="4. What would success look like for your social enterprise?" placeholder="Organisational success looks like…" required></textarea>
+        <div class="error-msg" id="q4-err">Please describe what success would look like for your organisation.</div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit my responses →</button>
+
+    </form>
+
+    <div class="thankyou" id="thankyou">
+      <div class="thankyou-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 13l4 4L19 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>Thank you.</h2>
+      <p>Your responses have been received. We're looking forward to working with you on SELECT 2026.</p>
+    </div>
+
+    <div class="footer">SELECT Programme · UNRAVEL Complexity Ltd · InterTradeIreland</div>
+
+  </div>
+
+  <script>
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xyknvdgk';
+
+    const form = document.getElementById('surveyForm');
+    const btn  = document.getElementById('submitBtn');
+    const ty   = document.getElementById('thankyou');
+
+    function validate() {
+      let ok = true;
+
+      const fields = [
+        { id: 'name',  errId: 'name-err',  check: v => v.trim().length > 0 },
+        { id: 'email', errId: 'email-err', check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) },
+        { id: 'q1',    errId: 'q1-err',    check: v => v.trim().length > 0 },
+        { id: 'q2',    errId: 'q2-err',    check: v => v.trim().length > 0 },
+        { id: 'q3',    errId: 'q3-err',    check: v => v.trim().length > 0 },
+        { id: 'q4',    errId: 'q4-err',    check: v => v.trim().length > 0 },
+      ];
+
+      fields.forEach(f => {
+        const el  = document.getElementById(f.id);
+        const err = document.getElementById(f.errId);
+        if (!f.check(el.value)) {
+          el.classList.add('invalid');
+          err.style.display = 'block';
+          ok = false;
+        } else {
+          el.classList.remove('invalid');
+          err.style.display = 'none';
+        }
+      });
+
+      return ok;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validate()) return;
+
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      const data = new FormData(form);
+
+      try {
+        const res = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          body: data,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (res.ok) {
+          form.style.display = 'none';
+          ty.style.display = 'block';
+        } else {
+          btn.textContent = 'Submit my responses →';
+          btn.disabled = false;
+          alert('Something went wrong. Please try again or contact the SELECT team.');
+        }
+      } catch (err) {
+        btn.textContent = 'Submit my responses →';
+        btn.disabled = false;
+        alert('Network error. Please check your connection and try again.');
+      }
+    });
+  </script>
+</body>
+</html>
