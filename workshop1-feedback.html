@@ -89,6 +89,24 @@
       outline-offset: 1px;
     }
 
+    /* Checkbox list (multi-select) */
+    .checks { display: flex; flex-direction: column; gap: 8px; }
+    .check { position: relative; display: flex; align-items: flex-start; gap: 12px;
+      cursor: pointer; border: 1.5px solid var(--line); border-radius: 10px;
+      background: var(--blush-2); padding: 12px 14px; transition: all .12s ease; }
+    .check input { position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      margin: 0; opacity: 0; cursor: pointer; }
+    .check .box { flex: 0 0 22px; width: 22px; height: 22px; border: 2px solid var(--tt);
+      border-radius: 6px; margin-top: 1px; display: flex; align-items: center;
+      justify-content: center; background: #fff; transition: all .12s ease; }
+    .check .box svg { width: 14px; height: 14px; opacity: 0; }
+    .check input:checked ~ .box { background: var(--magenta); border-color: var(--magenta); }
+    .check input:checked ~ .box svg { opacity: 1; }
+    .check .opt-check { font-size: 15px; color: var(--ink); line-height: 1.35; }
+    .check input:checked ~ .opt-check { color: var(--plum); font-weight: bold; }
+    .check input:focus-visible ~ .box { outline: 3px solid rgba(196,70,126,0.35); outline-offset: 2px; }
+    .subblock { border-left: 3px solid var(--blush); padding-left: 14px; margin-top: 14px; }
+
     /* Topic matrix rows */
     .matrix-row { padding: 14px 0; border-top: 1px solid var(--line); }
     .matrix-row:first-of-type { border-top: 0; padding-top: 4px; }
@@ -247,7 +265,54 @@
             <textarea class="field" name="future_topic" placeholder="Your answer"></textarea>
           </div>
 
-          <!-- Q7 Venue and catering -->
+          <!-- Q7 Peer learning (NEW) -->
+          <div class="q">
+            <p class="q-label">Are you interested in peer learning over the course of the programme?</p>
+            <p class="q-note">We're shaping how CEOs connect with each other. Tick whatever would suit you.</p>
+            <div class="checks">
+              <label class="check">
+                <input type="checkbox" name="peer_learning" value="One-to-one meetings with other CEOs over the programme" data-peer />
+                <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <span class="opt-check">One-to-one meetings with other CEOs over the programme</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" name="peer_learning" value="An online group" id="peerOnline" data-peer />
+                <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <span class="opt-check">An online group</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" name="peer_learning" value="None at this stage" id="peerNone" />
+                <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <span class="opt-check">None at this stage</span>
+              </label>
+            </div>
+
+            <div class="subblock" id="platformBlock" style="display:none">
+              <p class="q-note" style="margin:0 0 10px">If an online group, which would suit? Tick any.</p>
+              <div class="checks">
+                <label class="check">
+                  <input type="checkbox" name="peer_platform" value="LinkedIn" />
+                  <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span class="opt-check">LinkedIn</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="peer_platform" value="WhatsApp" />
+                  <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span class="opt-check">WhatsApp</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="peer_platform" value="Other" id="peerOther" />
+                  <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span class="opt-check">Other</span>
+                </label>
+              </div>
+              <input class="field" type="text" name="peer_platform_other" id="peerOtherText" placeholder="If other, which platform?" style="margin-top:10px;display:none" />
+            </div>
+
+            <textarea class="field" name="peer_suggestion" placeholder="Another suggestion for how peer learning could work? (optional)" style="margin-top:14px"></textarea>
+          </div>
+
+          <!-- Q8 Venue and catering -->
           <div class="q">
             <p class="q-label">How did you find the venue and catering?</p>
             <div class="scale">
@@ -351,6 +416,35 @@
         errBox.classList.add('show');
       });
     });
+
+    // Peer learning interactions
+    var peerOnline = document.getElementById('peerOnline');
+    var peerNone = document.getElementById('peerNone');
+    var peerOther = document.getElementById('peerOther');
+    var platformBlock = document.getElementById('platformBlock');
+    var peerOtherText = document.getElementById('peerOtherText');
+    var peerOpts = document.querySelectorAll('[data-peer]');
+
+    function syncPeer() {
+      platformBlock.style.display = peerOnline.checked ? 'block' : 'none';
+      if (!peerOnline.checked) {
+        document.querySelectorAll('input[name="peer_platform"]').forEach(function (c) { c.checked = false; });
+        peerOtherText.value = '';
+      }
+      peerOtherText.style.display = (peerOther && peerOther.checked) ? 'block' : 'none';
+    }
+
+    peerOpts.forEach(function (opt) {
+      opt.addEventListener('change', function () {
+        if (opt.checked) { peerNone.checked = false; }
+        syncPeer();
+      });
+    });
+    peerNone.addEventListener('change', function () {
+      if (peerNone.checked) { peerOpts.forEach(function (o) { o.checked = false; }); }
+      syncPeer();
+    });
+    if (peerOther) { peerOther.addEventListener('change', syncPeer); }
   </script>
 </body>
 </html>
