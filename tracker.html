@@ -4050,13 +4050,34 @@ function cancelCycleEdits(){
   renderConsulting(org);
 }
 
+function cycleLinksHtml(raw){
+  // Turn the multi-line links field into a stack of clickable links.
+  // One link per line. Optional "Label | https://…" syntax. Non-URL lines
+  // render as plain text so a stray note doesn't produce a broken anchor.
+  if(!raw)return'';
+  var lines=String(raw).split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+  if(!lines.length)return'';
+  return lines.map(function(line){
+    var label='',url='';
+    var pipe=line.indexOf('|');
+    if(pipe>-1){label=line.slice(0,pipe).trim();url=line.slice(pipe+1).trim();}
+    else{url=line;}
+    if(!/^https?:\/\//i.test(url)){
+      return '<div style="font-size:13px;color:var(--ts2)">'+esc(label?label+': '+url:url)+'</div>';
+    }
+    var safeUrl=url.replace(/"/g,'%22');
+    var text=label||url.replace(/^https?:\/\//i,'').replace(/\/$/,'');
+    return '<div style="font-size:13px"><a href="'+esc(safeUrl)+'" target="_blank" rel="noopener noreferrer" style="color:var(--navy);text-decoration:underline;word-break:break-all">'+esc(text)+'</a></div>';
+  }).join('');
+}
+
 function renderConsultingCard(c,i,ref){
   // Renders the form body of a single cycle card. Index `i` is the position in
   // org.consulting, so all data-con-* selectors continue to work for saveTracker.
   // `ref` is the OUTREACH_CYCLES reference for this cycle (focus/title fallback).
   var html='';
   var isEditing=(isAssessor&&editingCycleIdx===i);
-  var hasData=c.consultedBy||c.format||c.smartProgressed||c.actionsAgreed||c.keyOutputs||c.hours||c.rag||c.completed;
+  var hasData=c.consultedBy||c.format||c.smartProgressed||c.actionsAgreed||c.keyOutputs||c.hours||c.rag||c.completed||c.links;
   var lastSavedLine='';
   if(c.lastSavedBy||c.lastSavedAt){
     var savedAt='';
@@ -4079,6 +4100,7 @@ function renderConsultingCard(c,i,ref){
       html+='</div>';
       if(c.actionsAgreed)html+='<div style="margin-top:8px;font-size:13px"><span style="font-size:11px;color:var(--tt)">Key actions agreed:</span><br>'+esc(c.actionsAgreed)+'</div>';
       if(c.keyOutputs)html+='<div style="margin-top:8px;font-size:13px"><span style="font-size:11px;color:var(--tt)">Key outputs / evidence:</span><br>'+esc(c.keyOutputs)+'</div>';
+      if(c.links){var _lh=cycleLinksHtml(c.links);if(_lh)html+='<div style="margin-top:8px;font-size:13px"><span style="font-size:11px;color:var(--tt)">Links / attachments:</span><div style="margin-top:2px">'+_lh+'</div></div>';}
       if(!c.strand&&(c.domainMovement||c.domainMovementNA)){
         html+='<div style="margin-top:8px;font-size:13px"><span style="font-size:11px;color:var(--tt)">Domain movement:</span> '+esc(c.domainMovementNA?'N/A':(c.domainMovement||'\u2014'))+'</div>';
       }
@@ -4127,6 +4149,7 @@ function renderConsultingCard(c,i,ref){
     html+='<div style="margin-top:10px"><div style="font-size:11px;color:var(--tt)">SMART objectives progressed</div><input data-con-smart="'+i+'" value="'+esc(c.smartProgressed||'')+'" placeholder="e.g. OBJ1, C2, A3"></div>';
     html+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key actions agreed with CEO</div><textarea data-con-actions="'+i+'">'+esc(c.actionsAgreed||'')+'</textarea></div>';
     html+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Key outputs / evidence</div><textarea data-con-outputs="'+i+'">'+esc(c.keyOutputs||'')+'</textarea></div>';
+    html+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Links / attachments</div><div style="font-size:10px;color:var(--tt);font-style:italic;margin:1px 0 3px">One per line. Optional label: <span style="font-family:monospace">Label | https://…</span></div><textarea data-con-links="'+i+'" placeholder="https://drive.google.com/…&#10;Pre-session plan | https://…">'+esc(c.links||'')+'</textarea></div>';
     html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
     html+='<div><div style="font-size:11px;color:var(--tt)">Hours used</div><input data-con-hours="'+i+'" value="'+esc(c.hours||getConsultHours(c)||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
     if(c.strand){
@@ -4452,6 +4475,7 @@ document.querySelectorAll('[data-con-format]').forEach(function(el){var i=parseI
 document.querySelectorAll('[data-con-smart]').forEach(function(el){var i=parseInt(el.dataset.conSmart);if(org.consulting[i])org.consulting[i].smartProgressed=el.value;});
 document.querySelectorAll('[data-con-actions]').forEach(function(el){var i=parseInt(el.dataset.conActions);if(org.consulting[i])org.consulting[i].actionsAgreed=el.value;});
 document.querySelectorAll('[data-con-outputs]').forEach(function(el){var i=parseInt(el.dataset.conOutputs);if(org.consulting[i])org.consulting[i].keyOutputs=el.value;});
+document.querySelectorAll('[data-con-links]').forEach(function(el){var i=parseInt(el.dataset.conLinks);if(org.consulting[i])org.consulting[i].links=el.value;});
 document.querySelectorAll('[data-con-hours]').forEach(function(el){var i=parseInt(el.dataset.conHours);if(org.consulting[i]){org.consulting[i].hours=el.value;if(el.value)org.consulting[i].days='';}});
 document.querySelectorAll('[data-con-domain]').forEach(function(el){var i=parseInt(el.dataset.conDomain);if(org.consulting[i])org.consulting[i].domainMovement=el.value;});
 document.querySelectorAll('[data-con-rag]').forEach(function(el){var i=parseInt(el.dataset.conRag);if(org.consulting[i])org.consulting[i].rag=el.value;});

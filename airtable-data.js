@@ -128,7 +128,7 @@ var AT = (function() {
     if (Array.isArray(org.consulting)) {
       for (var k = 0; k < org.consulting.length; k++) {
         var c = org.consulting[k];
-        if (c && (c.consultedBy || c.actionsAgreed || c.keyOutputs || c.hours || c.completed)) return true;
+        if (c && (c.consultedBy || c.actionsAgreed || c.keyOutputs || c.hours || c.completed || c.links)) return true;
       }
     }
     if (Array.isArray(org.coaching)) {
