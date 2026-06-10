@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SELECT — Workshop 1 Feedback QR Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+    :root {
+      --plum: #5B2245; --magenta: #C4467E; --blush: #EFE6ED; --blush-2: #F7F2F4;
+      --ink: #2a2228; --ts: #6b6068; --line: #e6dce3;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--blush-2);
+      color: var(--ink); margin: 0; padding: 32px 16px; }
+    .panel { max-width: 560px; margin: 0 auto 24px; background: #fff;
+      border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    h1 { color: var(--plum); font-size: 20px; margin: 0 0 4px; }
+    .sub { color: var(--ts); font-size: 14px; margin: 0 0 20px; }
+    label { display: block; font-size: 13px; font-weight: bold; color: var(--plum); margin: 0 0 6px; }
+    input[type=text] { width: 100%; font-size: 15px; font-family: inherit; padding: 12px 14px;
+      border: 1.5px solid var(--line); border-radius: 10px; background: var(--blush-2); }
+    input[type=text]:focus { outline: none; border-color: var(--magenta); background: #fff; }
+    .row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    button { flex: 1 1 auto; min-width: 130px; border: 0; border-radius: 10px; cursor: pointer;
+      font-family: inherit; font-size: 15px; font-weight: bold; padding: 13px; color: #fff;
+      background: var(--magenta); }
+    button.ghost { background: #fff; color: var(--plum); border: 1.5px solid var(--line); }
+    button:hover { opacity: .92; }
+
+    /* The printable card */
+    .card-area { max-width: 560px; margin: 0 auto; display: flex; justify-content: center; }
+    #card {
+      width: 360px; background: #fff; border: 1px solid var(--line); border-radius: 18px;
+      padding: 32px 28px; text-align: center;
+    }
+    #card .brand { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--magenta); font-weight: bold; margin: 0 0 6px; }
+    #card .card-title { font-size: 22px; font-weight: bold; color: var(--plum); margin: 0 0 4px; line-height: 1.2; }
+    #card .card-sub { font-size: 13px; color: var(--ts); margin: 0 0 22px; }
+    #card .qbox { display: inline-block; padding: 14px; background: #fff;
+      border: 2px solid var(--blush); border-radius: 14px; }
+    #card canvas { display: block; }
+    #card .scan { font-size: 13px; color: var(--ts); margin: 18px 0 0; }
+    #card .foot { font-size: 10px; color: #b3a8af; margin: 14px 0 0; letter-spacing: .5px; }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .panel, .sub, h1 { display: none; }
+      .card-area { margin-top: 40px; }
+      #card { border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Workshop 1 Feedback — QR card</h1>
+    <p class="sub">Paste the live form URL, generate, then print the card or download it as a PNG for a slide or email.</p>
+    <label for="url">Live form URL</label>
+    <input type="text" id="url" value="https://select-programme.netlify.app/workshop1-feedback" />
+    <div class="row">
+      <button onclick="generate()">Generate</button>
+      <button class="ghost" onclick="window.print()">Print card</button>
+      <button class="ghost" onclick="downloadPNG()">Download PNG</button>
+    </div>
+  </div>
+
+  <div class="card-area">
+    <div id="card">
+      <p class="brand">SELECT Programme</p>
+      <div class="card-title">Workshop 1 Feedback</div>
+      <p class="card-sub">Two minutes to tell us how today landed.</p>
+      <div class="qbox"><canvas id="qr"></canvas></div>
+      <p class="scan">Scan with your phone camera to open the form.</p>
+      <p class="foot">UNRAVEL COMPLEXITY · FOR INTERTRADEIRELAND</p>
+    </div>
+  </div>
+
+  <script>
+    var qr = new QRious({
+      element: document.getElementById('qr'),
+      size: 220,
+      level: 'H',
+      foreground: '#5B2245',
+      background: '#ffffff'
+    });
+
+    function generate() {
+      var url = document.getElementById('url').value.trim();
+      if (!url) { alert('Please paste the live form URL first.'); return; }
+      qr.value = url;
+    }
+
+    function downloadPNG() {
+      generate();
+      var canvas = document.getElementById('qr');
+      var link = document.createElement('a');
+      link.download = 'SELECT_Workshop1_Feedback_QR.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Render on load with the prefilled URL
+    generate();
+  </script>
+</body>
+</html>
