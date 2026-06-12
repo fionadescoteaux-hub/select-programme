@@ -40,6 +40,7 @@ var AT = (function() {
   var _statusEl            = null;
   var _initialLoadComplete = false;  // THE KEY GUARD
   var _pendingPush         = [];
+  var _loadedByCode        = {};   // per-session snapshot of what THIS user loaded (for clear-detection)
 
   var _storageOk = (function(){
     try { localStorage.setItem('_st','1'); localStorage.removeItem('_st'); return true; }
@@ -370,6 +371,18 @@ var AT = (function() {
         // (Earlier versions stripped these "for safety" but doing so caused
         // every push to look like a new-org create, generating duplicates.)
 
+        // Snapshot what THIS user loaded, so the push-time merge can tell a
+        // deliberate field CLEAR (loaded a value, then blanked it) from a field
+        // the user simply never saw (a co-assessor's value). Without this, an
+        // empty value could never overwrite a stored one, so deletions silently
+        // reappeared on the next sync.
+        _loadedByCode = {};
+        if (data && Array.isArray(data.orgs)) {
+          data.orgs.forEach(function(o){
+            if (o && o.code) { try { _loadedByCode[o.code] = JSON.parse(JSON.stringify(o)); } catch (e) {} }
+          });
+        }
+
         cacheSet(data);
         _initialLoadComplete = true;  // unlock pushes
         setStatus('Synced ✓', 'ok');
@@ -580,26 +593,27 @@ var AT = (function() {
           }
         }
 
-        var basis = latestOrg ? latestOrg : org;
+        var basis  = latestOrg ? latestOrg : org;
+        var loaded = _loadedByCode[org.code] || {};
         var merged = {
-          kpi:          mergeObj(basis.kpi, org.kpi),
-          app:          mergeObj(basis.app, org.app),
-          diagnosis:    mergeObj(basis.diagnosis, org.diagnosis),
-          crossBorder:  mergeObj(basis.crossBorder, org.crossBorder),
-          financial:    mergeObj(basis.financial, org.financial),
-          assessor:     mergeObj(basis.assessor, org.assessor),
-          baseline:     mergeRowsByIndex(basis.baseline, org.baseline),
-          endline:      mergeRowsByIndex(basis.endline, org.endline),
-          smart:        mergeRowsByRid(basis.smart, org.smart),
+          kpi:          mergeObj(basis.kpi, org.kpi, loaded.kpi),
+          app:          mergeObj(basis.app, org.app, loaded.app),
+          diagnosis:    mergeObj(basis.diagnosis, org.diagnosis, loaded.diagnosis),
+          crossBorder:  mergeObj(basis.crossBorder, org.crossBorder, loaded.crossBorder),
+          financial:    mergeObj(basis.financial, org.financial, loaded.financial),
+          assessor:     mergeObj(basis.assessor, org.assessor, loaded.assessor),
+          baseline:     mergeRowsByIndex(basis.baseline, org.baseline, loaded.baseline),
+          endline:      mergeRowsByIndex(basis.endline, org.endline, loaded.endline),
+          smart:        mergeRowsByRid(basis.smart, org.smart, loaded.smart),
           notes:        unionNotes(basis.notes, org.notes),
-          consulting:   mergeRowsByCode(basis.consulting, org.consulting),
-          coaching:     mergeRowsByCode(basis.coaching,   org.coaching),
-          attendance:   mergeRowsByCode(basis.attendance, org.attendance),
+          consulting:   mergeRowsByCode(basis.consulting, org.consulting, loaded.consulting),
+          coaching:     mergeRowsByCode(basis.coaching,   org.coaching,   loaded.coaching),
+          attendance:   mergeRowsByCode(basis.attendance, org.attendance, loaded.attendance),
           progress:     org.progress || basis.progress || [],
           baselineLocked: !!(org.baselineLocked || basis.baselineLocked),
-          intensity:      org.intensity || basis.intensity || '',
-          baselineNotes:  org.baselineNotes || basis.baselineNotes || '',
-          baselineReportUrl: org.baselineReportUrl || basis.baselineReportUrl || '',
+          intensity:      _mergeField(org.intensity, basis.intensity, loaded.intensity),
+          baselineNotes:  _mergeField(org.baselineNotes, basis.baselineNotes, loaded.baselineNotes),
+          baselineReportUrl: _mergeField(org.baselineReportUrl, basis.baselineReportUrl, loaded.baselineReportUrl),
           baseline_structure: org.baseline_structure || basis.baseline_structure || 'domain',
           actionPlan:     (org.actionPlan && Object.keys(org.actionPlan).length) ? org.actionPlan : (basis.actionPlan || {}),
           _uiLocks:       (org._uiLocks   && Object.keys(org._uiLocks).length)   ? org._uiLocks   : (basis._uiLocks   || {})
@@ -628,17 +642,46 @@ var AT = (function() {
   }
 
   // ── Merge helpers used by read-merge-write pushOrg ──
-  // mergeObj: local non-empty fields win over remote; remote fills the rest.
-  function mergeObj(remote, local) {
-    var r = remote && typeof remote === 'object' ? remote : {};
-    var l = local  && typeof local  === 'object' ? local  : {};
+  // ── Three-way field merge primitives ──
+  // local  = value in this user's UI now
+  // base   = latest value in Airtable (fresh read at push time)
+  // loaded = value this user loaded at the start of the session
+  function _isEmptyVal(v){ return v === '' || v === null || v === undefined; }
+  function _eqVal(a, b){
+    if (a === b) return true;
+    if (_isEmptyVal(a) && _isEmptyVal(b)) return true;
+    return String(a) === String(b);
+  }
+  // Decide the value to write for one field:
+  //  - a non-empty local value always wins (an intentional set);
+  //  - an empty local value clears the field ONLY if the user loaded that exact
+  //    value and nobody changed it since (a deliberate delete); otherwise the
+  //    base value is kept, so a co-assessor's value the user never saw is safe;
+  //  - booleans: an explicit local tick/untick wins only when it differs from
+  //    what the user loaded AND the base hasn't moved underneath.
+  function _mergeField(local, base, loaded) {
+    if (typeof local === 'boolean') {
+      var ldb = (loaded === true);
+      if (local === ldb) return base;                 // user didn't change it
+      if ((base === true) === ldb) return local;      // no concurrent change -> apply
+      return base;                                    // concurrent change -> protect base
+    }
+    if (!_isEmptyVal(local)) return local;            // intentional value wins
+    if (_isEmptyVal(base))   return base;             // nothing to preserve
+    if (!_isEmptyVal(loaded) && _eqVal(loaded, base)) return '';  // deliberate clear
+    return base;                                      // never saw it / concurrent change
+  }
+
+  // mergeObj: three-way merge over the keys the user's local object carries;
+  // remote-only keys are preserved untouched.
+  function mergeObj(remote, local, loaded) {
+    var r  = remote && typeof remote === 'object' ? remote : {};
+    var l  = local  && typeof local  === 'object' ? local  : {};
+    var ld = loaded && typeof loaded === 'object' ? loaded : {};
     var out = {};
     Object.keys(r).forEach(function(k){ out[k] = r[k]; });
     Object.keys(l).forEach(function(k){
-      var v = l[k];
-      // Local wins for any non-empty value, including `false` (saved boolean).
-      if (v !== '' && v !== null && v !== undefined) out[k] = v;
-      else if (!(k in out)) out[k] = v;
+      out[k] = _mergeField(l[k], (k in r ? r[k] : undefined), ld[k]);
     });
     return out;
   }
@@ -653,7 +696,7 @@ var AT = (function() {
   // cascade. Content-based de-dup is the safety net that keeps stale cache
   // entries (from sessions before _rid tracking) from re-creating themselves
   // as new Airtable records on every save.
-  function mergeRowsByRid(remoteRows, localRows) {
+  function mergeRowsByRid(remoteRows, localRows, loadedRows) {
     var r = Array.isArray(remoteRows) ? remoteRows : [];
     var l = Array.isArray(localRows)  ? localRows  : [];
     if (!r.length && !l.length) return [];
@@ -664,6 +707,10 @@ var AT = (function() {
       if (!row) return;
       if (row._rid) localByRid[row._rid] = row;
       else localWithoutRid.push(row);
+    });
+    var loadedByRid = {};
+    (Array.isArray(loadedRows) ? loadedRows : []).forEach(function(row){
+      if (row && row._rid) loadedByRid[row._rid] = row;
     });
 
     // Normalise objective text for content-based matching: trim, collapse
@@ -719,15 +766,11 @@ var AT = (function() {
       if (!remoteRow || !remoteRow._rid) return remoteRow;
       var localRow = localByRid[remoteRow._rid];
       if (!localRow) return remoteRow;
+      var loadedRow = loadedByRid[remoteRow._rid] || {};
       var merged = Object.assign({}, remoteRow);
       Object.keys(localRow).forEach(function(field){
         if (field === '_rid') return;
-        var v = localRow[field];
-        if (typeof v === 'boolean') {
-          if (v === true) merged[field] = true;
-        } else if (v !== '' && v !== null && v !== undefined) {
-          merged[field] = v;
-        }
+        merged[field] = _mergeField(localRow[field], remoteRow[field], loadedRow[field]);
       });
       return merged;
     });
@@ -735,31 +778,26 @@ var AT = (function() {
     trueOrphans.forEach(function(row){ out.push(row); });
     return out;
   }
-  // mergeRowsByCode: per-row, per-field merge keyed on `code` (consulting/coaching/attendance).
-  // Local non-empty field values overlay remote. Rows present only in one side are kept.
-  function mergeRowsByCode(remoteRows, localRows) {
+  // mergeRowsByCode: per-row, per-field three-way merge keyed on `code`
+  // (consulting/coaching/attendance). Rows present only in one side are kept.
+  function mergeRowsByCode(remoteRows, localRows, loadedRows) {
     var r = Array.isArray(remoteRows) ? remoteRows : [];
     var l = Array.isArray(localRows)  ? localRows  : [];
     if (!r.length) return l;
     if (!l.length) return r;
     var localByCode = {};
     l.forEach(function(row){ if (row && row.code) localByCode[row.code] = row; });
+    var loadedByCode = {};
+    (Array.isArray(loadedRows) ? loadedRows : []).forEach(function(row){ if (row && row.code) loadedByCode[row.code] = row; });
     var out = r.map(function(remoteRow){
       if (!remoteRow || !remoteRow.code) return remoteRow;
       var localRow = localByCode[remoteRow.code];
       if (!localRow) return remoteRow;
+      var loadedRow = loadedByCode[remoteRow.code] || {};
       var merged = Object.assign({}, remoteRow);
       Object.keys(localRow).forEach(function(field){
         if (field === '_rid') return;
-        var v = localRow[field];
-        // Local wins for non-empty values. For booleans, only `true` overrides
-        // remote (a local `false` could be stale; if user genuinely unticked,
-        // they'll save again and remote will already be `false` next read).
-        if (typeof v === 'boolean') {
-          if (v === true) merged[field] = true;
-        } else if (v !== '' && v !== null && v !== undefined) {
-          merged[field] = v;
-        }
+        merged[field] = _mergeField(localRow[field], remoteRow[field], loadedRow[field]);
       });
       return merged;
     });
@@ -770,19 +808,20 @@ var AT = (function() {
     return out;
   }
   // mergeRowsByIndex: for fixed-length arrays like baseline/endline (9 domains).
-  // Local field value wins where non-empty.
-  function mergeRowsByIndex(remoteRows, localRows) {
-    var r = Array.isArray(remoteRows) ? remoteRows : [];
-    var l = Array.isArray(localRows)  ? localRows  : [];
+  // Three-way merge per field so a cleared score can be blanked.
+  function mergeRowsByIndex(remoteRows, localRows, loadedRows) {
+    var r  = Array.isArray(remoteRows) ? remoteRows : [];
+    var l  = Array.isArray(localRows)  ? localRows  : [];
+    var ld = Array.isArray(loadedRows) ? loadedRows : [];
     var len = Math.max(r.length, l.length);
     var out = [];
     for (var i = 0; i < len; i++) {
-      var rRow = r[i] || {};
-      var lRow = l[i] || {};
+      var rRow  = r[i]  || {};
+      var lRow  = l[i]  || {};
+      var ldRow = ld[i] || {};
       var merged = Object.assign({}, rRow);
       Object.keys(lRow).forEach(function(field){
-        var v = lRow[field];
-        if (v !== '' && v !== null && v !== undefined) merged[field] = v;
+        merged[field] = _mergeField(lRow[field], rRow[field], ldRow[field]);
       });
       out.push(merged);
     }
