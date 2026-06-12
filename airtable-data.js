@@ -411,22 +411,153 @@ var AT = (function() {
     pushOrg(org);
   }
 
+  // ── Serialised, debounced, backoff-aware save queue ──────────────────
+  // Airtable allows ~5 requests/sec per base. Each UPDATE below is two calls
+  // (list + update), and the UI can fire saveData many times in a burst
+  // (per-field blur, re-renders). Without throttling those stack up, Airtable
+  // returns 429 RATE_LIMIT_REACHED (the function relays it as a 500 whose body
+  // contains that text), the tracker drops to "Saved locally (offline)" and
+  // never recovers because every retry re-trips the limit. This queue collapses
+  // bursts (debounce), runs at most one push at a time with a minimum gap, and
+  // backs off on 429 instead of marking the whole tracker offline.
+
+  var _saveQueue        = {};     // code -> { org, callbacks, retries, dirty, ready }
+  var _saveTimers       = {};     // code -> debounce timeout id
+  var _runnerBusy       = false;
+  var _activeCode       = null;
+  var _lastPushAt       = 0;
+  var _rateLimitedUntil = 0;
+  var SAVE_DEBOUNCE_MS  = 1000;   // collapse a burst of edits into one push
+  var MIN_PUSH_GAP_MS   = 1200;   // minimum gap between push starts
+  var MAX_PUSH_RETRIES  = 5;      // 2+4+8+16+30 = ~60s, covers Airtable's penalty window
+
+  function _isRateLimit(err) {
+    if (!err) return false;
+    if (err.status === 429) return true;
+    var m = err.message || '';
+    return /RATE_LIMIT_REACHED|Airtable 429|\b429\b/i.test(m);
+  }
+
+  // PUBLIC: gate, then hand off to the queue. Never fires the network directly.
   function pushOrg(org, callback) {
-    console.log('[AT.pushOrg] called for', org && org.code, '— gates: initialLoadComplete=', _initialLoadComplete, 'authToken=', !!authToken, 'online=', _online);
-    if (!_initialLoadComplete) { console.warn('[AT.pushOrg] BLOCKED: initialLoadComplete is false'); if (callback) callback(false); return; }
-    if (!authToken) { console.warn('[AT.pushOrg] BLOCKED: authToken is empty'); if (callback) callback(false); return; }
-    if (!_online) { console.warn('[AT.pushOrg] BLOCKED: online is false'); if (callback) callback(false); return; }
-    if (!isOrgSafeToPush(org)) {
-      console.warn('[AT] pushOrg blocked - empty org:', org.code);
-      if (callback) callback(false);
+    if (!_initialLoadComplete) { console.warn('[AT.pushOrg] BLOCKED: initial sync not complete'); if (callback) callback(false); return; }
+    if (!authToken)            { console.warn('[AT.pushOrg] BLOCKED: no auth token');             if (callback) callback(false); return; }
+    if (!org || !org.code)     { console.warn('[AT.pushOrg] BLOCKED: empty org');                 if (callback) callback(false); return; }
+    if (!isOrgSafeToPush(org)) { console.warn('[AT.pushOrg] skipped — empty org:', org.code);     if (callback) callback(false); return; }
+    _queuePush(org, callback);
+  }
+
+  function _queuePush(org, callback) {
+    var code  = org.code;
+    var entry = _saveQueue[code];
+    if (!entry) { entry = _saveQueue[code] = { callbacks: [], retries: 0, dirty: false, ready: false }; }
+    entry.org = org;                                  // latest snapshot always wins
+    if (callback) entry.callbacks.push(callback);
+
+    if (code === _activeCode) { entry.dirty = true; return; }  // edited mid-flight; re-run after
+
+    if (_saveTimers[code]) clearTimeout(_saveTimers[code]);
+    setStatus('Saving…', 'info');
+    _saveTimers[code] = setTimeout(function(){
+      delete _saveTimers[code];
+      entry.ready = true;
+      _runQueue();
+    }, SAVE_DEBOUNCE_MS);
+  }
+
+  function _runQueue() {
+    if (_runnerBusy) return;
+    var codes = Object.keys(_saveQueue).filter(function(c){ return _saveQueue[c].ready; });
+    if (!codes.length) return;
+
+    var now  = Date.now();
+    var wait = 0;
+    if (_rateLimitedUntil > now) wait = _rateLimitedUntil - now;
+    if (now - _lastPushAt < MIN_PUSH_GAP_MS) wait = Math.max(wait, MIN_PUSH_GAP_MS - (now - _lastPushAt));
+
+    _runnerBusy = true;
+    setTimeout(function(){
+      var code  = codes[0];
+      var entry = _saveQueue[code];
+      if (!entry) { _runnerBusy = false; _runQueue(); return; }
+
+      _activeCode = code;
+      _lastPushAt = Date.now();
+      setStatus('Saving…', 'info');
+
+      _doPushOrg(entry.org)
+        .then(function(){
+          _online = true;
+          _activeCode = null;
+          setStatus('Saved ✓', 'ok');
+          setTimeout(function(){ setStatus('', 'ok'); }, 2000);
+          _finish(code, true);
+        })
+        .catch(function(err){
+          _activeCode = null;
+
+          if (_isRateLimit(err)) {
+            entry.retries = (entry.retries || 0) + 1;
+            if (entry.retries <= MAX_PUSH_RETRIES) {
+              var backoff = Math.min(30000, 2000 * Math.pow(2, entry.retries - 1));
+              _rateLimitedUntil = Date.now() + backoff;
+              _online = true;                       // 429 means throttled, NOT offline
+              setStatus('Airtable busy — retrying in ' + Math.round(backoff / 1000) + 's…', 'warn');
+              _runnerBusy = false;
+              entry.ready = true;                   // keep entry; try again after backoff
+              setTimeout(_runQueue, backoff);
+              return;
+            }
+            _online = true;
+            setStatus('Save paused (Airtable rate limit) — kept locally, will retry on next edit', 'warn');
+            _finish(code, false);
+            return;
+          }
+
+          if (typeof err.status === 'number') {
+            // Server responded with an error — we ARE online; this payload failed.
+            _online = true;
+            console.warn('[AT] save failed (' + err.status + '):', err.message);
+            setStatus('Save failed — kept locally', 'warn');
+            _finish(code, false);
+            return;
+          }
+
+          // fetch itself threw — genuinely offline.
+          _online = false;
+          console.warn('[AT] network error — offline:', err && err.message);
+          setStatus('Saved locally (offline)', 'warn');
+          _finish(code, false);
+        });
+    }, wait);
+  }
+
+  function _finish(code, ok) {
+    var entry = _saveQueue[code];
+    _runnerBusy = false;
+
+    if (entry && entry.dirty && ok) {
+      // Edited again while this push was in flight — re-run with the newest data.
+      entry.dirty   = false;
+      entry.ready   = true;
+      entry.retries = 0;
+      if (entry.callbacks && entry.callbacks.length) {
+        entry.callbacks.forEach(function(cb){ try { cb(true); } catch (e) {} });
+        entry.callbacks = [];
+      }
+      setTimeout(_runQueue, 0);
       return;
     }
-    console.log('[AT.pushOrg] all gates passed for', org.code, '— firing network call');
 
-    // KEEP _rid values intact — they tell the server we're updating, not creating.
-    // (Stripping them was the cause of the duplicate cascade.)
+    delete _saveQueue[code];
+    if (entry && entry.callbacks) entry.callbacks.forEach(function(cb){ try { cb(ok); } catch (e) {} });
+    setTimeout(_runQueue, 0);
+  }
 
-    setStatus('Saving…', 'info');
+  // Performs the actual network write for one org and returns a Promise.
+  // Create, or read-merge-write update. Throttling / retry / status are all
+  // handled by the queue above — this only builds and sends the request.
+  function _doPushOrg(org) {
     var isNew = !org._rid;
 
     if (isNew) {
@@ -435,31 +566,12 @@ var AT = (function() {
         name: org.name || '', ceo: org.ceo || '', code: org.code || '',
         jurisdiction: (org.kpi && org.kpi.jurisdiction) || 'ROI'
       };
-      request('POST', null, newPayload)
-        .then(function(){
-          _online = true;
-          setStatus('Saved ✓', 'ok');
-          setTimeout(function(){ setStatus('', 'ok'); }, 2000);
-          if (callback) callback(true);
-        })
-        .catch(function(err){
-          console.warn('Airtable create failed:', err.message);
-          setStatus('Save failed — kept locally', 'warn');
-          _online = false;
-          if (callback) callback(false);
-        });
-      return;
+      return request('POST', null, newPayload);
     }
 
-    // READ-MERGE-WRITE for updates:
-    // Before pushing, fetch the current Airtable state for THIS org so we can
-    // merge our local change into the latest shared record rather than
-    // overwriting the other assessor's saved edits with our stale full blob.
-    // Per-row arrays (consulting/coaching/attendance) merge by code at the
-    // field level. Simple/scalar fields use a "local wins if non-empty" rule
-    // — this is correct here because we KNOW the local copy was just edited
-    // by this user, so non-empty local values are intentional changes.
-    request('POST', null, { action: 'list' })
+    // READ-MERGE-WRITE for updates: fetch the current Airtable state for THIS
+    // org, merge the local change into the latest shared record, then write.
+    return request('POST', null, { action: 'list' })
       .then(function(latest){
         var latestOrg = null;
         if (latest && Array.isArray(latest.orgs)) {
@@ -468,8 +580,6 @@ var AT = (function() {
           }
         }
 
-        // Build the payload starting from the latest Airtable state, then
-        // overlay the local edits for this org.
         var basis = latestOrg ? latestOrg : org;
         var merged = {
           kpi:          mergeObj(basis.kpi, org.kpi),
@@ -491,7 +601,6 @@ var AT = (function() {
           baselineNotes:  org.baselineNotes || basis.baselineNotes || '',
           baselineReportUrl: org.baselineReportUrl || basis.baselineReportUrl || '',
           baseline_structure: org.baseline_structure || basis.baseline_structure || 'domain',
-          // actionPlan and _uiLocks are simple JSON blobs — local wins when non-empty.
           actionPlan:     (org.actionPlan && Object.keys(org.actionPlan).length) ? org.actionPlan : (basis.actionPlan || {}),
           _uiLocks:       (org._uiLocks   && Object.keys(org._uiLocks).length)   ? org._uiLocks   : (basis._uiLocks   || {})
         };
@@ -515,18 +624,6 @@ var AT = (function() {
         };
 
         return request('POST', null, payload);
-      })
-      .then(function(){
-        _online = true;
-        setStatus('Saved ✓', 'ok');
-        setTimeout(function(){ setStatus('', 'ok'); }, 2000);
-        if (callback) callback(true);
-      })
-      .catch(function(err){
-        console.warn('Airtable save failed:', err.message);
-        setStatus('Save failed — kept locally', 'warn');
-        _online = false;
-        if (callback) callback(false);
       });
   }
 
