@@ -1,5 +1,5 @@
 // SELECT Programme — Airtable API Function
-// Version: 2026-05-25-v13 (v12 minus the diagnosis._locks read that triggered a client save loop; generic _uiLocks persistence preserved)
+// Version: 2026-06-16-v14 (adds Action Plan persistence: read/write org.actionPlan as a JSON blob on ORG_PROFILE.ActionPlan, mirroring UI_LOCKS; v13 behaviour otherwise unchanged)
 // If you see this version logged at startup, the deploy is live.
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
@@ -48,6 +48,11 @@ const F = {
   // FIONA: replace the placeholder with the real fldXXXXXXXXXXXXX after creating
   // the field in Airtable (Long text, name = "UI_LOCKS").
   UI_LOCKS: "fldkoqllZgluDxPbp",
+  // ── Action Plan (added 2026-06-16) ──
+  // JSON blob holding the My Action Plan per-objective action tables, keyed by
+  // SMART slot (s0, s1, …); each value is an array of {desc,who,byWhen,status}.
+  // Persisted as long-text on ORG_PROFILE, mirroring UI_LOCKS.
+  ACTION_PLAN: "flduDNQr0iTtbUuzY",
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -299,6 +304,16 @@ function parseLocksBlob(rawValue) {
   } catch (e) { return empty; }
 }
 
+// Parse the Action Plan JSON blob into an object. Always returns an object so the
+// client can rely on org.actionPlan being defined. Malformed/empty → {}.
+function parseActionPlan(rawValue) {
+  if (!rawValue) return {};
+  try {
+    var parsed = JSON.parse(rawValue);
+    return (parsed && typeof parsed === "object") ? parsed : {};
+  } catch (e) { return {}; }
+}
+
 function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, notes, consulting, coaching, checklist, validation, attendance) {
   const f = profile.fields;
   const orgCode = f[F.ORG_CODE] || profile.id;
@@ -533,6 +548,7 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
     })),
     baselineLocked: !!f[F.BASELINE_LOCKED],
     _uiLocks: parseLocksBlob(f[F.UI_LOCKS]).ui,
+    actionPlan: parseActionPlan(f[F.ACTION_PLAN]),
   };
 }
 
@@ -759,7 +775,7 @@ async function batchDelete(tableId, ids) {
 }
 
 async function handleUpdate(payload) {
-  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl, baseline_structure, _uiLocks } = payload;
+  const { code, kpi, app, diagnosis, crossBorder, financial, baseline, endline, smart, progress, notes, consulting, coaching, attendance, baselineLocked, intensity, assessor, baselineNotes, baselineReportUrl, baseline_structure, _uiLocks, actionPlan } = payload;
   if (!code) return jsonResponse(400, { error: "code is required" });
 
   const profiles = await listAllRecords(TABLES.ORG_PROFILE);
@@ -897,6 +913,15 @@ async function handleUpdate(payload) {
       diag: existing.diag || {},  // preserve any diag locks already in the field
     };
     try { profileFields[F.UI_LOCKS] = JSON.stringify(newBlob); }
+    catch (e) { /* malformed, skip */ }
+  }
+  // ── Action Plan write (added 2026-06-16) ──
+  // Single Airtable long-text field holds the JSON blob. The client (airtable-data.js)
+  // already merges actionPlan against its cache before sending, so the payload is the
+  // authoritative full object — write it directly. Skip if the field ID is still TODO.
+  if (actionPlan !== undefined && actionPlan !== null && typeof actionPlan === "object"
+      && F.ACTION_PLAN && !/TODO/.test(F.ACTION_PLAN)) {
+    try { profileFields[F.ACTION_PLAN] = JSON.stringify(actionPlan); }
     catch (e) { /* malformed, skip */ }
   }
   if (baseline_structure !== undefined) {
