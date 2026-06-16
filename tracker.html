@@ -2652,7 +2652,7 @@ function _smartVirtualDomain(smart){
   var obj=String(smart.objective||'');
   // Skip parentheticals matching: month abbreviations (Jan-Dec, Sept), module/quarter
   // markers (M1-M9, Q1-Q4), 4-digit years, or pure number/digit runs.
-  var datelike=/^\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december|m\d{1,2}|q[1-4]|\d{4}|\d{1,2})\s*$/i;
+  var datelike=/^\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)(?:\.?\s*\d{4})?|m\d{1,2}|q[1-4]|\d{4}|\d{1,2})\s*$/i;
   var re=/\(([^)]{1,60})\)/g;
   var m;
   while((m=re.exec(obj))!==null){
