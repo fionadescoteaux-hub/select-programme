@@ -34,6 +34,7 @@ var AT = (function() {
   var BACKUP_KEY = 'select_tracker_v4_bak';
   var SYNC_KEY   = 'select_sync_ts';
   var STAMP_KEY  = 'select_save_stamp';
+  var DIRTY_KEY  = 'select_dirty_orgs';   // FIX: org codes edited locally but not yet confirmed on Airtable
 
   var authToken            = '';
   var _online              = true;
@@ -385,7 +386,8 @@ var AT = (function() {
 
         cacheSet(data);
         _initialLoadComplete = true;  // unlock pushes
-        setStatus('Synced ✓', 'ok');
+        _flushDirty();                // FIX: replay any edits stranded before sync completed
+        setStatus('Synced \u2713', 'ok');
         setTimeout(function(){ setStatus('', 'ok'); }, 3000);
         if (callback) callback(data);
       })
@@ -400,6 +402,59 @@ var AT = (function() {
 
   function loadDataSync() { return cacheGet(); }
 
+  // ════════════════════════════════════════════════════════════════
+  // FIX (silent data loss): persistent "dirty org" set.
+  //
+  // Every edit always lands in localStorage (cacheSet), but the push to
+  // Airtable can be gated out — initial sync not yet complete, no auth token,
+  // offline, or rate-limited. Previously those edits were cached and then
+  // dropped silently with only a transient "Saved locally" warning, and were
+  // never retried unless the user happened to edit again that session. If the
+  // initial load failed at open, EVERY edit that session was lost from Airtable.
+  //
+  // We now record the org code in localStorage (survives refresh), replay it
+  // automatically whenever a push becomes possible, and clear it only on a
+  // CONFIRMED Airtable success. This is what the unused `_pendingPush` was for.
+  // ════════════════════════════════════════════════════════════════
+  function _getDirty() {
+    try { var a = JSON.parse(localStorage.getItem(DIRTY_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
+  }
+  function _setDirty(arr) {
+    try { localStorage.setItem(DIRTY_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+  function _markDirty(code) {
+    if (!code) return;
+    var a = _getDirty();
+    if (a.indexOf(code) === -1) { a.push(code); _setDirty(a); }
+    _pendingBanner();
+  }
+  function _clearDirty(code) {
+    if (!code) return;
+    _setDirty(_getDirty().filter(function(c){ return c !== code; }));
+    _pendingBanner();
+  }
+  function _pendingBanner() {
+    var n = _getDirty().length;
+    if (n > 0) setStatus('\u26a0 ' + n + ' change' + (n === 1 ? '' : 's') + ' saved locally, not yet on Airtable', 'warn');
+  }
+  // Replay every locally-stranded org. Safe to call repeatedly: pushOrg routes
+  // through the same debounced, backoff-aware queue, and success clears the flag.
+  function _flushDirty() {
+    if (!_initialLoadComplete || !authToken || !_online) return;
+    var codes = _getDirty();
+    if (!codes.length) return;
+    var snap = cacheGet();
+    if (!snap || !Array.isArray(snap.orgs)) return;
+    codes.forEach(function(code){
+      var org = null;
+      for (var i = 0; i < snap.orgs.length; i++) { if (snap.orgs[i].code === code) { org = snap.orgs[i]; break; } }
+      if (!org)                    { _clearDirty(code); return; }  // org gone locally
+      if (!isOrgSafeToPush(org))   { _clearDirty(code); return; }  // nothing substantive to push
+      pushOrg(org);                                                // success path clears the flag
+    });
+  }
+
   function saveData(data, changedOrgCode) {
     // Cache is always safe to write
     cacheSet(data);
@@ -411,16 +466,23 @@ var AT = (function() {
     }
     if (!org) return;
 
-    // SAFETY GATES - all four must pass before pushing to Airtable
-    if (!_initialLoadComplete) { setStatus('Saved locally (waiting for sync)', 'warn'); return; }
-    if (!authToken)            { setStatus('Saved locally', 'warn'); return; }
-    if (!_online)              { setStatus('Saved locally (offline)', 'warn'); return; }
+    // SAFETY GATES - all four must pass before pushing to Airtable.
+    // FIX: when a gate that is merely "not ready yet" blocks the push, record
+    // the org as dirty so it is replayed automatically once we CAN push. Without
+    // this, an edit made before the initial sync completed (or while offline /
+    // rate-limited) was cached locally and then silently never reached Airtable.
+    if (!_initialLoadComplete) { _markDirty(changedOrgCode); setStatus('Saved locally — will sync when ready', 'warn'); return; }
+    if (!authToken)            { _markDirty(changedOrgCode); setStatus('Saved locally', 'warn'); return; }
+    if (!_online)              { _markDirty(changedOrgCode); setStatus('Saved locally (offline) — will retry', 'warn'); return; }
     if (!isOrgSafeToPush(org)) {
       console.warn('[AT] Skipping push of empty org:', org.code);
       setStatus('Saved locally', 'warn');
       return;
     }
 
+    // FIX: mark dirty BEFORE the push; the queue clears it only on confirmed
+    // success, so a refresh or crash mid-push still replays the edit next load.
+    _markDirty(changedOrgCode);
     pushOrg(org);
   }
 
@@ -502,7 +564,8 @@ var AT = (function() {
         .then(function(){
           _online = true;
           _activeCode = null;
-          setStatus('Saved ✓', 'ok');
+          _clearDirty(code);                 // FIX: confirmed on Airtable — drop the dirty flag
+          setStatus('Saved \u2713', 'ok');
           setTimeout(function(){ setStatus('', 'ok'); }, 2000);
           _finish(code, true);
         })
@@ -888,6 +951,22 @@ var AT = (function() {
         }
       });
     });
+  }
+
+  // FIX: actively drain locally-stranded edits — don't wait for the user's
+  // next keystroke. Flush when the browser reports it is back online, when the
+  // tab regains visibility, and on a slow periodic sweep as a backstop. Also
+  // re-assert the pending banner on load so stranded edits are never invisible.
+  function _attemptFlush() { if (_initialLoadComplete && authToken && _online) _flushDirty(); }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', _attemptFlush);
+    window.addEventListener('focus', _attemptFlush);
+    window.addEventListener('load', _pendingBanner);
+    window.addEventListener('pagehide', _attemptFlush);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', function(){ if (!document.hidden) _attemptFlush(); });
+    }
+    setInterval(_attemptFlush, 60000);
   }
 
   function setAuth(token) { authToken = token; }

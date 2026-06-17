@@ -2228,6 +2228,17 @@ if(isAssessor && !window._autosaveWired){
     clearTimeout(saveTimer);
     try { saveTracker(); } catch(err) { console.error('Autosave error:', err); }
   }, true);
+
+  // FIX: commit on the way out. The autosave above is a 5s debounce, so an edit
+  // typed and then abandoned within that window (tab closed, laptop shut, app
+  // switched) never reaches saveData. Force a synchronous commit on exit so the
+  // dirty-set fix in airtable-data.js always has the edit to persist and replay.
+  window.addEventListener('pagehide', function(){
+    if(isAssessor){ try { saveTracker(); } catch(err) { console.error('Exit-save error:', err); } }
+  });
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden && isAssessor){ try { saveTracker(); } catch(err) { console.error('Exit-save error:', err); } }
+  });
 }
 }
 
