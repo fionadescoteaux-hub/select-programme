@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SELECT — Module 2 Feedback</title>
+<style>
+  :root {
+    --plum: #5B2245; --magenta: #C4467E; --blush: #EFE6ED; --blush-2: #F7F2F4;
+    --ink: #2a2228; --ts: #6b6068; --line: #e6dce3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--blush-2);
+    color: var(--ink);
+    margin: 0;
+    padding: 24px 14px 60px;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 22px;
+  }
+  .brand { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--magenta); font-weight: bold; margin: 0 0 6px; }
+  h1 { color: var(--plum); font-size: 22px; margin: 0 0 6px; }
+  .sub { color: var(--ts); font-size: 14px; margin: 0 0 24px; line-height: 1.5; }
+  .q { margin-bottom: 26px; }
+  .q-label { font-size: 15px; font-weight: bold; color: var(--plum); margin: 0 0 4px; }
+  .q-note { font-size: 13px; color: var(--ts); margin: 0 0 12px; }
+  .req { color: var(--magenta); }
+  label.name-label { display: block; font-size: 13px; font-weight: bold; color: var(--plum); margin: 0 0 6px; }
+  input[type=text] {
+    width: 100%; font-size: 15px; font-family: inherit; padding: 12px 14px;
+    border: 1.5px solid var(--line); border-radius: 10px; background: var(--blush-2);
+  }
+  textarea.field {
+    width: 100%; font-size: 15px; font-family: inherit; padding: 12px 14px;
+    border: 1.5px solid var(--line); border-radius: 10px; background: var(--blush-2);
+    min-height: 74px; resize: vertical;
+  }
+  .scale { display: flex; flex-wrap: wrap; gap: 8px; }
+  .scale label, .check label {
+    display: flex; align-items: center; gap: 6px;
+    border: 1.5px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; font-size: 13.5px; cursor: pointer;
+    background: var(--blush-2); transition: all .15s ease;
+  }
+  .scale label input, .check label input { accent-color: var(--plum); margin: 0; }
+  .scale label.selected, .check label.selected {
+    background: var(--plum); border-color: var(--plum); color: #fff;
+  }
+  .scale label.selected input, .check label.selected input { accent-color: #fff; }
+  .matrix-row { margin-bottom: 16px; }
+  .matrix-row:last-child { margin-bottom: 0; }
+  .matrix-topic { font-size: 14px; color: var(--ink); margin: 0 0 8px; }
+  .sub-block { margin-top: 12px; padding: 12px 14px; background: var(--blush); border-radius: 10px; display: none; }
+  .sub-block.show { display: block; }
+  .sub-note { font-size: 13px; color: var(--ts); margin: 0 0 8px; }
+  .err {
+    display: none; background: #fbeaea; border: 1px solid #e3a9a9; color: #8a2e2e;
+    padding: 12px 14px; border-radius: 10px; font-size: 13.5px; margin-bottom: 16px;
+  }
+  .err.show { display: block; }
+  .actions { margin-top: 6px; }
+  .btn {
+    width: 100%; background: var(--plum); color: #fff; border: none; border-radius: 10px;
+    padding: 14px; font-size: 15.5px; font-weight: bold; cursor: pointer;
+  }
+  .btn:disabled { opacity: .6; }
+  .footnote { text-align: center; font-size: 12px; color: var(--ts); margin-top: 18px; }
+  .thanks { display: none; text-align: center; padding: 40px 10px; }
+  .thanks .tick { width: 56px; height: 56px; margin: 0 auto 16px; }
+  .thanks h2 { color: var(--plum); margin: 0 0 8px; }
+  .thanks p { color: var(--ts); font-size: 14.5px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="formCard">
+      <p class="brand">SELECT Programme</p>
+      <h1>Module 2 Feedback</h1>
+      <p class="sub">Revenue Modelling &amp; Pricing — online working session, 16 July 2026. Two minutes to tell us how today landed.</p>
+
+      <form id="feedbackForm">
+        <div class="q">
+          <label class="name-label" for="name">Name (optional — leave blank to stay anonymous)</label>
+          <input type="text" id="name" name="name" placeholder="Your name" />
+        </div>
+
+        <!-- Q1 Overall satisfaction -->
+        <div class="q" data-required="overall_satisfaction">
+          <p class="q-label">How satisfied were you with today's session overall? <span class="req">*</span></p>
+          <div class="scale">
+            <label><input type="radio" name="overall_satisfaction" value="Very Satisfied" /><span class="opt">Very Satisfied</span></label>
+            <label><input type="radio" name="overall_satisfaction" value="Satisfied" /><span class="opt">Satisfied</span></label>
+            <label><input type="radio" name="overall_satisfaction" value="Neutral" /><span class="opt">Neutral</span></label>
+            <label><input type="radio" name="overall_satisfaction" value="Dissatisfied" /><span class="opt">Dissatisfied</span></label>
+            <label><input type="radio" name="overall_satisfaction" value="Very Dissatisfied" /><span class="opt">Very Dissatisfied</span></label>
+          </div>
+        </div>
+
+        <!-- Q2 Topic usefulness matrix -->
+        <div class="q">
+          <p class="q-label">How useful did you find the following parts of today's session? <span class="req">*</span></p>
+          <p class="q-note">Rate each one.</p>
+
+          <div class="matrix-row" data-required="topic_classification">
+            <p class="matrix-topic">Income classification — working out what you actually sell vs. what you're funded to do</p>
+            <div class="scale">
+              <label><input type="radio" name="topic_classification" value="Very Useful" /><span class="opt">Very Useful</span></label>
+              <label><input type="radio" name="topic_classification" value="Useful" /><span class="opt">Useful</span></label>
+              <label><input type="radio" name="topic_classification" value="Neutral" /><span class="opt">Neutral</span></label>
+              <label><input type="radio" name="topic_classification" value="Not Very Useful" /><span class="opt">Not Very Useful</span></label>
+              <label><input type="radio" name="topic_classification" value="Not Useful" /><span class="opt">Not Useful</span></label>
+            </div>
+          </div>
+
+          <div class="matrix-row" data-required="topic_pricing_logic">
+            <p class="matrix-topic">Building a cost floor and applying the three pricing logics (funder / procurement / commercial)</p>
+            <div class="scale">
+              <label><input type="radio" name="topic_pricing_logic" value="Very Useful" /><span class="opt">Very Useful</span></label>
+              <label><input type="radio" name="topic_pricing_logic" value="Useful" /><span class="opt">Useful</span></label>
+              <label><input type="radio" name="topic_pricing_logic" value="Neutral" /><span class="opt">Neutral</span></label>
+              <label><input type="radio" name="topic_pricing_logic" value="Not Very Useful" /><span class="opt">Not Very Useful</span></label>
+              <label><input type="radio" name="topic_pricing_logic" value="Not Useful" /><span class="opt">Not Useful</span></label>
+            </div>
+          </div>
+
+          <div class="matrix-row" data-required="topic_own_offer">
+            <p class="matrix-topic">Pricing your own offer in the breakout room tool</p>
+            <div class="scale">
+              <label><input type="radio" name="topic_own_offer" value="Very Useful" /><span class="opt">Very Useful</span></label>
+              <label><input type="radio" name="topic_own_offer" value="Useful" /><span class="opt">Useful</span></label>
+              <label><input type="radio" name="topic_own_offer" value="Neutral" /><span class="opt">Neutral</span></label>
+              <label><input type="radio" name="topic_own_offer" value="Not Very Useful" /><span class="opt">Not Very Useful</span></label>
+              <label><input type="radio" name="topic_own_offer" value="Not Useful" /><span class="opt">Not Useful</span></label>
+            </div>
+          </div>
+
+          <div class="matrix-row" data-required="topic_decision_grid">
+            <p class="matrix-topic">Using the decision grid to make scale / fix / stop calls</p>
+            <div class="scale">
+              <label><input type="radio" name="topic_decision_grid" value="Very Useful" /><span class="opt">Very Useful</span></label>
+              <label><input type="radio" name="topic_decision_grid" value="Useful" /><span class="opt">Useful</span></label>
+              <label><input type="radio" name="topic_decision_grid" value="Neutral" /><span class="opt">Neutral</span></label>
+              <label><input type="radio" name="topic_decision_grid" value="Not Very Useful" /><span class="opt">Not Very Useful</span></label>
+              <label><input type="radio" name="topic_decision_grid" value="Not Useful" /><span class="opt">Not Useful</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q3 Confidence -->
+        <div class="q" data-required="confidence_pricing">
+          <p class="q-label">As a result of today's session, how confident do you feel pricing your offers using a cost floor and the three pricing logics? <span class="req">*</span></p>
+          <div class="scale">
+            <label><input type="radio" name="confidence_pricing" value="Very Confident" /><span class="opt">Very Confident</span></label>
+            <label><input type="radio" name="confidence_pricing" value="Confident" /><span class="opt">Confident</span></label>
+            <label><input type="radio" name="confidence_pricing" value="Neutral" /><span class="opt">Neutral</span></label>
+            <label><input type="radio" name="confidence_pricing" value="Not Very Confident" /><span class="opt">Not Very Confident</span></label>
+            <label><input type="radio" name="confidence_pricing" value="Not Confident At All" /><span class="opt">Not Confident At All</span></label>
+          </div>
+        </div>
+
+        <!-- Q4 Takeaway -->
+        <div class="q">
+          <p class="q-label">What was the most valuable insight or takeaway for you from today's session?</p>
+          <textarea class="field" name="valuable_takeaway" placeholder="Your answer"></textarea>
+        </div>
+
+        <!-- Q5 Improvements -->
+        <div class="q">
+          <p class="q-label">What could be improved for future online working sessions?</p>
+          <textarea class="field" name="improvements" placeholder="Your answer"></textarea>
+        </div>
+
+        <!-- Q6 Future topic -->
+        <div class="q">
+          <p class="q-label">Is there a topic you would like covered in a future session?</p>
+          <textarea class="field" name="future_topic" placeholder="Your answer"></textarea>
+        </div>
+
+        <!-- Q7 Peer learning -->
+        <div class="q">
+          <p class="q-label">Are you interested in peer learning over the course of the programme?</p>
+          <p class="q-note">Tick all that apply.</p>
+          <div class="check">
+            <label><input type="checkbox" name="peer_learning" value="One-to-one meetings with other CEOs over the programme" data-peer /><span class="opt">One-to-one meetings with other CEOs</span></label>
+            <label><input type="checkbox" name="peer_learning" value="An online group" id="peerOnline" data-peer /><span class="opt">An online group</span></label>
+            <label><input type="checkbox" name="peer_learning" value="None at this stage" id="peerNone" /><span class="opt">None at this stage</span></label>
+          </div>
+
+          <div class="sub-block" id="platformBlock">
+            <p class="sub-note">Which platform would suit best?</p>
+            <div class="check">
+              <label><input type="radio" name="peer_platform" value="LinkedIn" /><span class="opt">LinkedIn</span></label>
+              <label><input type="radio" name="peer_platform" value="WhatsApp" /><span class="opt">WhatsApp</span></label>
+              <label><input type="radio" name="peer_platform" value="Other" id="peerOther" /><span class="opt">Other</span></label>
+            </div>
+            <input type="text" id="peerOtherText" name="peer_platform_other" placeholder="Which platform?" style="margin-top:10px;display:none" />
+          </div>
+
+          <textarea class="field" name="peer_suggestion" placeholder="Another suggestion for how peer learning could work? (optional)" style="margin-top:14px"></textarea>
+        </div>
+
+        <!-- Q8 Online format -->
+        <div class="q">
+          <p class="q-label">How did you find today's online format (tool navigation, breakout rooms, technical experience)?</p>
+          <div class="scale">
+            <label><input type="radio" name="online_format" value="Very Satisfied" /><span class="opt">Very Satisfied</span></label>
+            <label><input type="radio" name="online_format" value="Satisfied" /><span class="opt">Satisfied</span></label>
+            <label><input type="radio" name="online_format" value="Neutral" /><span class="opt">Neutral</span></label>
+            <label><input type="radio" name="online_format" value="Dissatisfied" /><span class="opt">Dissatisfied</span></label>
+            <label><input type="radio" name="online_format" value="Very Dissatisfied" /><span class="opt">Very Dissatisfied</span></label>
+          </div>
+        </div>
+
+        <!-- Q9 Additional comments -->
+        <div class="q">
+          <p class="q-label">Any additional comments?</p>
+          <textarea class="field" name="additional_comments" placeholder="Your answer"></textarea>
+        </div>
+
+        <!-- Q10 Pitched at the right level -->
+        <div class="q" data-required="pitched_level">
+          <p class="q-label">Do you feel the content was pitched at the right level? <span class="req">*</span></p>
+          <div class="scale">
+            <label><input type="radio" name="pitched_level" value="Yes, pitched just right" /><span class="opt">Yes, pitched just right</span></label>
+            <label><input type="radio" name="pitched_level" value="A little too basic for me" /><span class="opt">A little too basic for me</span></label>
+            <label><input type="radio" name="pitched_level" value="A little too advanced for me" /><span class="opt">A little too advanced for me</span></label>
+          </div>
+        </div>
+
+        <input type="hidden" name="_subject" value="SELECT Module 2 Feedback Response" />
+      </form>
+
+      <div class="err" id="errBox">Please answer the questions marked with an asterisk before submitting.</div>
+
+      <div class="actions">
+        <button class="btn" id="submitBtn" type="button">Submit feedback</button>
+      </div>
+
+      <p class="footnote">SELECT Programme · UNRAVEL Complexity for InterTradeIreland</p>
+    </div>
+
+    <!-- Thank you -->
+    <div class="card thanks" id="thanks">
+      <div class="tick">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#5B2245" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2>Thank you</h2>
+      <p>Your feedback has been recorded.</p>
+    </div>
+  </div>
+
+  <script>
+    var form = document.getElementById('feedbackForm');
+    var formCard = document.getElementById('formCard');
+    var thanks = document.getElementById('thanks');
+    var errBox = document.getElementById('errBox');
+    var submitBtn = document.getElementById('submitBtn');
+
+    // Pill highlight on selection for radios/checkboxes
+    document.querySelectorAll('.scale, .check').forEach(function (group) {
+      group.querySelectorAll('input').forEach(function (input) {
+        input.addEventListener('change', function () {
+          if (input.type === 'radio') {
+            group.querySelectorAll('label').forEach(function (l) { l.classList.remove('selected'); });
+            input.closest('label').classList.add('selected');
+          } else {
+            input.closest('label').classList.toggle('selected', input.checked);
+          }
+        });
+      });
+    });
+
+    // Peer learning interactions
+    var peerOnline = document.getElementById('peerOnline');
+    var peerNone = document.getElementById('peerNone');
+    var peerOther = document.getElementById('peerOther');
+    var platformBlock = document.getElementById('platformBlock');
+    var peerOtherText = document.getElementById('peerOtherText');
+    var peerOpts = document.querySelectorAll('[data-peer]');
+
+    function syncPeer() {
+      platformBlock.classList.toggle('show', peerOnline.checked);
+      if (!peerOnline.checked) {
+        document.querySelectorAll('input[name="peer_platform"]').forEach(function (c) {
+          c.checked = false;
+          var l = c.closest('label'); if (l) l.classList.remove('selected');
+        });
+        peerOtherText.value = '';
+        peerOtherText.style.display = 'none';
+      }
+    }
+
+    peerOpts.forEach(function (opt) {
+      opt.addEventListener('change', function () {
+        if (opt.checked) {
+          peerNone.checked = false;
+          peerNone.closest('label').classList.remove('selected');
+        }
+        syncPeer();
+      });
+    });
+    peerNone.addEventListener('change', function () {
+      if (peerNone.checked) {
+        peerOpts.forEach(function (o) {
+          o.checked = false;
+          o.closest('label').classList.remove('selected');
+        });
+      }
+      syncPeer();
+    });
+    if (peerOther) {
+      peerOther.addEventListener('change', function () {
+        peerOtherText.style.display = peerOther.checked ? 'block' : 'none';
+      });
+    }
+
+    function validate() {
+      var missing = false;
+      document.querySelectorAll('[data-required]').forEach(function (block) {
+        var name = block.getAttribute('data-required');
+        var checked = form.querySelector('input[name="' + name + '"]:checked');
+        block.style.outline = '';
+        if (!checked) {
+          missing = true;
+          block.style.outline = '2px solid #e3a9a9';
+          block.style.outlineOffset = '4px';
+          block.style.borderRadius = '10px';
+        }
+      });
+      return !missing;
+    }
+
+    submitBtn.addEventListener('click', function () {
+      if (!validate()) {
+        errBox.classList.add('show');
+        errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      errBox.classList.remove('show');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+
+      var formData = new FormData(form);
+      fetch('https://formspree.io/f/xyknvdgk', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      }).then(function (response) {
+        if (response.ok) {
+          formCard.style.display = 'none';
+          thanks.style.display = 'block';
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit feedback';
+          errBox.textContent = 'Something went wrong submitting your feedback. Please try again.';
+          errBox.classList.add('show');
+        }
+      }).catch(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit feedback';
+        errBox.textContent = 'No connection. Please check your network and try again.';
+        errBox.classList.add('show');
+      });
+    });
+  </script>
+</body>
+</html>
