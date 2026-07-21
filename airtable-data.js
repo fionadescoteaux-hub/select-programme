@@ -700,7 +700,22 @@ var AT = (function() {
           _uiLocks: merged._uiLocks
         };
 
-        return request('POST', null, payload);
+        return request('POST', null, payload).then(function(result){
+          // FIX (silent save failures): the server used to always resolve
+          // with {ok:true} even when it had silently dropped a row-level
+          // Airtable write (e.g. a rate-limited or rejected PATCH on a
+          // consulting/coaching/baseline/SMART/attendance row). This queue
+          // would then report "Saved ✓" while the record kept its old value.
+          // The server now reports ok:false + errors when that happens —
+          // treat it as a failed push so it falls into the normal retry /
+          // "Save failed" path below instead of being marked saved.
+          if (result && result.ok === false) {
+            var e = new Error('Airtable row-level save failure: ' + JSON.stringify(result.errors || []));
+            e.status = 500;
+            throw e;
+          }
+          return result;
+        });
       });
   }
 
