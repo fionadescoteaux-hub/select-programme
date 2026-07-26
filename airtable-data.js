@@ -65,12 +65,18 @@ var AT = (function() {
   }
 
   function _updateStamp() {
-    var el = document.getElementById('saveStamp'); if (!el) return;
-    var iso = localStorage.getItem(STAMP_KEY); if (!iso) return;
-    var d = new Date(iso);
-    el.textContent = 'Last saved: ' +
-      d.toLocaleDateString('en-IE', {day:'numeric',month:'short',year:'numeric'}) +
-      ' at ' + d.toLocaleTimeString('en-IE', {hour:'2-digit',minute:'2-digit'});
+    var iso = localStorage.getItem(STAMP_KEY);
+    var text = '';
+    if (iso) {
+      var d = new Date(iso);
+      text = 'Confirmed on Airtable: ' +
+        d.toLocaleDateString('en-IE', {day:'numeric',month:'short',year:'numeric'}) +
+        ' at ' + d.toLocaleTimeString('en-IE', {hour:'2-digit',minute:'2-digit'});
+    }
+    ['saveStamp','saveStampBar'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el && text) el.textContent = text;
+    });
   }
 
   function cacheGet() {
@@ -94,10 +100,11 @@ var AT = (function() {
       var str = JSON.stringify(data);
       localStorage.setItem(CACHE_KEY, str);
       localStorage.setItem(BACKUP_KEY, str);
-      var now = new Date().toISOString();
-      localStorage.setItem(SYNC_KEY, now);
-      localStorage.setItem(STAMP_KEY, now);
-      _updateStamp();
+      // FIX (false confirmation): this used to also write STAMP_KEY and call
+      // _updateStamp(), so "Last saved: <time>" was stamped by a localStorage
+      // write that had not touched Airtable. The stamp is now written only by
+      // _stampConfirmed(), on a confirmed Airtable response.
+      localStorage.setItem(SYNC_KEY, new Date().toISOString());
     } catch(e) {
       try {
         localStorage.removeItem(BACKUP_KEY);
@@ -106,6 +113,12 @@ var AT = (function() {
         setStatus('⚠ Local save failed — use Export', 'err');
       }
     }
+  }
+
+  // Written only when Airtable has confirmed a write.
+  function _stampConfirmed() {
+    try { localStorage.setItem(STAMP_KEY, new Date().toISOString()); } catch(e) {}
+    _updateStamp();
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -455,35 +468,48 @@ var AT = (function() {
     });
   }
 
-  function saveData(data, changedOrgCode) {
+  // saveData(data, changedOrgCode, callback)
+  // FIX (false "Saved ✓"): saveData was fire-and-forget, so the UI drew a green
+  // tick the instant the button was clicked — a full second before the debounced
+  // push even started, and regardless of whether it later failed. The optional
+  // callback now fires exactly once with (ok, reason): true ONLY when Airtable
+  // has confirmed the write, false with a reason in every other case.
+  function saveData(data, changedOrgCode, callback) {
+    var done = function(ok, reason){
+      if (!callback) return;
+      var cb = callback; callback = null;      // fire once
+      try { cb(!!ok, reason || ''); } catch (e) {}
+    };
+
     // Cache is always safe to write
     cacheSet(data);
 
-    if (!changedOrgCode) return;
+    if (!changedOrgCode) { done(true, 'local-only'); return; }
     var org = null;
     for (var i = 0; i < data.orgs.length; i++) {
       if (data.orgs[i].code === changedOrgCode) { org = data.orgs[i]; break; }
     }
-    if (!org) return;
+    if (!org) { done(false, 'org-not-found'); return; }
 
     // SAFETY GATES - all four must pass before pushing to Airtable.
     // FIX: when a gate that is merely "not ready yet" blocks the push, record
     // the org as dirty so it is replayed automatically once we CAN push. Without
     // this, an edit made before the initial sync completed (or while offline /
     // rate-limited) was cached locally and then silently never reached Airtable.
-    if (!_initialLoadComplete) { _markDirty(changedOrgCode); setStatus('Saved locally — will sync when ready', 'warn'); return; }
-    if (!authToken)            { _markDirty(changedOrgCode); setStatus('Saved locally', 'warn'); return; }
-    if (!_online)              { _markDirty(changedOrgCode); setStatus('Saved locally (offline) — will retry', 'warn'); return; }
+    if (!_initialLoadComplete) { _markDirty(changedOrgCode); setStatus('Saved locally — will sync when ready', 'warn'); done(false, 'not-ready'); return; }
+    if (!authToken)            { _markDirty(changedOrgCode); setStatus('Saved locally', 'warn');                        done(false, 'no-auth');   return; }
+    if (!_online)              { _markDirty(changedOrgCode); setStatus('Saved locally (offline) — will retry', 'warn'); done(false, 'offline');   return; }
     if (!isOrgSafeToPush(org)) {
       console.warn('[AT] Skipping push of empty org:', org.code);
       setStatus('Saved locally', 'warn');
+      done(false, 'empty-org');
       return;
     }
 
     // FIX: mark dirty BEFORE the push; the queue clears it only on confirmed
     // success, so a refresh or crash mid-push still replays the edit next load.
     _markDirty(changedOrgCode);
-    pushOrg(org);
+    pushOrg(org, function(ok){ done(ok, ok ? '' : 'push-failed'); });
   }
 
   // ── Serialised, debounced, backoff-aware save queue ──────────────────
@@ -565,6 +591,7 @@ var AT = (function() {
           _online = true;
           _activeCode = null;
           _clearDirty(code);                 // FIX: confirmed on Airtable — drop the dirty flag
+          _stampConfirmed();                 // FIX: stamp only now, not on the local cache write
           setStatus('Saved \u2713', 'ok');
           setTimeout(function(){ setStatus('', 'ok'); }, 2000);
           _finish(code, true);
