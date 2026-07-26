@@ -751,10 +751,28 @@ async function batchUpdate(tableId, updates, errors) {
   }
 }
 
-async function batchCreate(tableId, creates) {
+async function batchCreate(tableId, creates, errors) {
   const clean = creates.map((c) => ({ fields: scrubFields(c.fields) }));
   for (let i = 0; i < clean.length; i += 10) {
-    await airtableFetch(tableId, { method: "POST", body: JSON.stringify({ records: clean.slice(i, i + 10) }) });
+    const slice = clean.slice(i, i + 10);
+    try {
+      await airtableFetch(tableId, { method: "POST", body: JSON.stringify({ records: slice }) });
+    } catch (err) {
+      // FIX (silent save failures): creates used to be fire-and-forget. A
+      // rejected POST (rate limit, bad select option, validation) was thrown
+      // away and handleUpdate still returned 200 {ok:true}, so the client
+      // reported "Saved ✓" for a row that was never created. Retry one at a
+      // time and collect whatever still fails so the client can see it.
+      console.warn(`[SELECT API] batchCreate: batch failed on ${tableId}, retrying individually:`, err.message);
+      for (const rec of slice) {
+        try {
+          await airtableFetch(tableId, { method: "POST", body: JSON.stringify({ records: [rec] }) });
+        } catch (e2) {
+          console.warn(`[SELECT API] batchCreate: failed record on ${tableId}:`, e2.message);
+          if (errors) errors.push({ table: tableId, id: null, action: "create", message: e2.message });
+        }
+      }
+    }
   }
 }
 
@@ -1007,7 +1025,7 @@ async function handleUpdate(payload) {
       else if (score !== null || b.evidence) ops.push({ fields });
     });
     await batchUpdate(TABLES.BASELINE_SCORES, ops.filter((o) => o.id), _rowErrors);
-    await batchCreate(TABLES.BASELINE_SCORES, ops.filter((o) => !o.id));
+    await batchCreate(TABLES.BASELINE_SCORES, ops.filter((o) => !o.id), _rowErrors);
   }
 
   // ── ENDLINE SCORES table ──
@@ -1026,7 +1044,7 @@ async function handleUpdate(payload) {
       else if (score !== null) ops.push({ fields });
     });
     await batchUpdate(TABLES.ENDLINE_SCORES, ops.filter((o) => o.id), _rowErrors);
-    await batchCreate(TABLES.ENDLINE_SCORES, ops.filter((o) => !o.id));
+    await batchCreate(TABLES.ENDLINE_SCORES, ops.filter((o) => !o.id), _rowErrors);
   }
 
   // ── SMART table ──
@@ -1059,7 +1077,7 @@ async function handleUpdate(payload) {
       else ops.push({ fields });
     });
     await batchUpdate(TABLES.SMART, ops.filter((o) => o.id), _rowErrors);
-    await batchCreate(TABLES.SMART, ops.filter((o) => !o.id));
+    await batchCreate(TABLES.SMART, ops.filter((o) => !o.id), _rowErrors);
   }
 
   // ── CONSULTING table ──
@@ -1118,7 +1136,7 @@ async function handleUpdate(payload) {
       else creates.push({ fields });
     });
     await batchUpdate(TABLES.CONSULTING, updates, _rowErrors);
-    await batchCreate(TABLES.CONSULTING, creates);
+    await batchCreate(TABLES.CONSULTING, creates, _rowErrors);
   }
 
   // ── COACHING table ──
@@ -1156,7 +1174,7 @@ async function handleUpdate(payload) {
       else creates.push({ fields });
     });
     await batchUpdate(TABLES.COACHING, updates, _rowErrors);
-    await batchCreate(TABLES.COACHING, creates);
+    await batchCreate(TABLES.COACHING, creates, _rowErrors);
   }
 
   // ── CHECKLIST table (12 SOP items, indexed 0–11; from assessor.checklist) ──
@@ -1183,7 +1201,7 @@ async function handleUpdate(payload) {
       else creates.push({ fields });
     }
     await batchUpdate(TABLES.CHECKLIST, updates, _rowErrors);
-    await batchCreate(TABLES.CHECKLIST, creates);
+    await batchCreate(TABLES.CHECKLIST, creates, _rowErrors);
   }
 
   // ── VALIDATION table (vn1..vn5 notes, from assessor.validation) ──
@@ -1206,7 +1224,7 @@ async function handleUpdate(payload) {
       else creates.push({ fields });
     }
     await batchUpdate(TABLES.VALIDATION, updates, _rowErrors);
-    await batchCreate(TABLES.VALIDATION, creates);
+    await batchCreate(TABLES.VALIDATION, creates, _rowErrors);
   }
 
   // ── ATTENDANCE table ──
@@ -1245,7 +1263,7 @@ async function handleUpdate(payload) {
       else creates.push({ fields });
     });
     await batchUpdate(TABLES.ATTENDANCE, updates, _rowErrors);
-    await batchCreate(TABLES.ATTENDANCE, creates);
+    await batchCreate(TABLES.ATTENDANCE, creates, _rowErrors);
   }
 
   // ── NOTES table (progress + general notes) ──
@@ -1275,7 +1293,7 @@ async function handleUpdate(payload) {
         creates.push({ fields: { [F.N_ORG]: code, [F.N_TYPE]: n.type === "Coaching" ? "Coaching" : "Consulting", [F.N_DATE]: n.date || "", [F.N_TEXT]: n.text || "" } });
       });
     }
-    await batchCreate(TABLES.NOTES, creates);
+    await batchCreate(TABLES.NOTES, creates, _rowErrors);
   }
 
   // FIX (silent save failures): if any row-level write failed above, tell the
