@@ -294,6 +294,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .save-bar.hidden{display:none}
 .save-msg{font-size:13px;color:var(--teal);font-weight:600;align-self:center;margin-right:auto;opacity:0;transition:opacity .3s}
 .save-msg.show{opacity:1}
+.save-state-ok{color:var(--teal)}
+.save-state-pending{color:var(--ts)}
+.save-state-err{color:var(--coral)}
+.save-stamp-bar{font-size:11px;color:var(--tt);align-self:center;margin-right:12px}
 
 /* Data portability */
 .data-bar{display:flex;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--tb);margin-bottom:16px;flex-wrap:wrap}
@@ -671,7 +675,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- Save bar -->
 <div class="save-bar hidden" id="saveBar">
-<div class="save-msg" id="saveMsg">Saved ✓</div>
+<div class="save-msg" id="saveMsg" style="margin-right:auto"></div>
+<div class="save-stamp-bar" id="saveStampBar"></div>
 <button class="btn btn-navy" onclick="saveTracker()">Save changes</button>
 </div>
 
@@ -773,7 +778,10 @@ var SOP_STEPS=[
 ];
 
 function loadData(){return AT.loadDataSync();}
-function saveData(d){AT.saveData(d, currentOrg);}
+// FIX: this wrapper used to drop any extra arguments, so a completion callback
+// passed by saveTracker() never reached AT.saveData and the UI could not learn
+// whether Airtable actually accepted the write.
+function saveData(d, code, cb){ AT.saveData(d, (code !== undefined ? code : currentOrg), cb); }
 
 // ═══════════════════════════════════════════════════════════════
 // 2026-05-22: URL hash routing so the browser back button works.
@@ -4507,7 +4515,7 @@ var idx=parseInt(el.dataset.note);
 if(org.notes[idx])org.notes[idx].text=el.value;
 });
 
-saveData(data,currentOrg);showSaveMsg();
+saveData(data,currentOrg,saveResultHandler);setSaveState('pending','Saving to Airtable…');
 // Only re-render baseline and endline (to update weighted score footer).
 // Do NOT re-render consulting or coaching after save — it overwrites the
 // user's current input values before Airtable confirms the write, which
@@ -4538,7 +4546,35 @@ renderBaseline(org);renderEndline(org);
 })();
 }
 
-function showSaveMsg(){var msg=document.getElementById('saveMsg');msg.classList.add('show');setTimeout(function(){msg.classList.remove('show');},2000);}
+// FIX (false "Saved ✓"): showSaveMsg() used to flash a green tick the instant
+// the button was clicked — before the 1s debounce, before the push, and with no
+// idea whether it succeeded. The save bar now shows real state, driven by the
+// AT.saveData callback which only reports success on a confirmed Airtable write.
+function setSaveState(state, text){
+  var msg = document.getElementById('saveMsg');
+  if (!msg) return;
+  msg.className = 'save-msg show save-state-' + state;
+  msg.textContent = text;
+  if (state === 'ok') {
+    setTimeout(function(){
+      if (msg.className.indexOf('save-state-ok') > -1) msg.classList.remove('show');
+    }, 4000);
+  }
+}
+function showSaveMsg(){ setSaveState('ok','Saved \u2713'); }   // local-only saves (SOP screen)
+
+function saveResultHandler(ok, reason){
+  if (ok) { setSaveState('ok', 'Saved \u2713 confirmed on Airtable'); return; }
+  var m = {
+    'not-ready':    'Not on Airtable yet — still loading. Kept locally, will retry.',
+    'no-auth':      'Not on Airtable — not signed in. Kept locally.',
+    'offline':      'Not on Airtable — you are offline. Kept locally, will retry.',
+    'empty-org':    'Nothing substantive to save.',
+    'org-not-found':'Save failed — organisation not found.',
+    'push-failed':  '\u26a0 NOT saved to Airtable. Kept locally and will retry — do not close this tab.'
+  };
+  setSaveState('err', m[reason] || '\u26a0 NOT saved to Airtable. Kept locally.');
+}
 
 function exportAll(){
 var data=loadData();
