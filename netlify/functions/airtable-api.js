@@ -1293,7 +1293,17 @@ async function handleUpdate(payload) {
         creates.push({ fields: { [F.N_ORG]: code, [F.N_TYPE]: n.type === "Coaching" ? "Coaching" : "Consulting", [F.N_DATE]: n.date || "", [F.N_TEXT]: n.text || "" } });
       });
     }
-    await batchCreate(TABLES.NOTES, creates, _rowErrors);
+    // FIX 27/07/2026: dedupe before create. The delete-then-recreate pattern
+    // meant a payload carrying duplicate notes (stale cache union) re-inserted
+    // every copy. Identical (type|date|text) rows now collapse to one.
+    const _seenNotes = new Set();
+    const dedupedCreates = creates.filter((c) => {
+      const k = String(c.fields[F.N_TYPE] || "").trim() + "|" + String(c.fields[F.N_DATE] || "").trim() + "|" + String(c.fields[F.N_TEXT] || "").trim();
+      if (_seenNotes.has(k)) return false;
+      _seenNotes.add(k);
+      return true;
+    });
+    await batchCreate(TABLES.NOTES, dedupedCreates, _rowErrors);
   }
 
   // FIX (silent save failures): if any row-level write failed above, tell the
