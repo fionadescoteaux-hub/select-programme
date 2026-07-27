@@ -414,9 +414,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <button class="btn btn-sm btn-outline" onclick="AT.loadData(function(d){if(currentOrg){var o=d.orgs.find(function(x){return x.code===currentOrg;});if(o)renderAll(o);}else{showDash();}})" style="font-size:10px">&#8635; Refresh from Airtable</button>
 <button class="btn btn-sm btn-outline" onclick="exportToExcel()" style="font-size:10px">&#8595; Export to Excel</button>
 <button class="btn btn-sm btn-outline" onclick="exportAll()" style="font-size:10px">&#8595; Export JSON backup</button>
-<button class="btn btn-sm btn-outline" onclick="document.getElementById('importFileInput').click()" style="font-size:10px">&#8593; Import JSON backup</button>
-<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAll(event)">
-<button class="btn btn-sm btn-outline" onclick="AT.migrateFromCache(function(n){alert(n+' orgs migrated to Airtable');showDash();})" style="font-size:10px" id="migrateBtn">Migrate local &rarr; Airtable</button>
+<!-- REMOVED 27/07/2026: "Import JSON backup" and "Migrate local → Airtable".
+     Both pushed a full local payload over the shared Airtable base and caused
+     the 17 Jul and 25-26 Jul data-loss incidents. Export JSON remains. -->
+
 <button class="btn btn-teal" onclick="openAddOrg()" id="addOrgBtn">+ Add organisation</button>
 </div>
 </div>
@@ -722,7 +723,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <script>
 var MASTER_PW='SELECT2026';
 // Assessor passwords: Fiona = SELECT2026-FD, Clodagh = SELECT2026-COR
-var ASSESSOR_PASSWORDS=['SELECT2026-FD','SELECT2026-COR','SELECT2026'];
+// FIX 27/07/2026: the shared 'SELECT2026' login stamped every save as
+// generic 'Assessor', making incidents unattributable. Named logins only.
+var ASSESSOR_PASSWORDS=['SELECT2026-FD','SELECT2026-COR'];
 // Viewer passwords: read-only dashboard access (all orgs, no editing)
 // Steven Egan / ITI = SELECT2026-ITI
 var VIEWER_PASSWORDS=['SELECT2026-ITI'];
@@ -2053,9 +2056,9 @@ document.getElementById('trackerScreen').style.display='none';
 document.getElementById('sopScreen').style.display='none';
 document.getElementById('saveBar').classList.add('hidden');
 var addBtn=document.getElementById('addOrgBtn');
-var migBtn=document.getElementById('migrateBtn');
+
 if(addBtn)addBtn.style.display=isAssessor?'':'none';
-if(migBtn)migBtn.style.display=isAssessor?'':'none';
+
 AT.setStatus && AT._updateStamp && AT._updateStamp();
 renderCohortBar();
 renderOrgGrid();
@@ -4004,10 +4007,16 @@ org.consulting.forEach(function(c){
     }
   }
 });
-// Auto-push to Airtable so the migrated/templated data persists for all views
+// FIX 27/07/2026: this used to auto-PUSH the whole org to Airtable whenever
+// the template shape changed (new cycles, strand mode, days→hours). Opening
+// the RAG report after a deploy therefore bulk-wrote every org in one pass —
+// the 17 Jul overwrite. Structural migration now persists to the local cache
+// only; Airtable is written when a person explicitly saves an edit.
 if(migrated&&isAssessor&&typeof AT!=='undefined'&&AT.saveData){
   var d=loadData();
-  AT.saveData(d,org.code);
+  var tgt=d.orgs&&d.orgs.find(function(o){return o.code===org.code;});
+  if(tgt)tgt.consulting=org.consulting;
+  AT.saveData(d); // no org code = cache-only, never touches Airtable
 }
 return org.consulting;
 }
@@ -4588,35 +4597,10 @@ alert('Data exported. Share this file with your co-assessor to sync.');
 }
 
 function importAll(event){
-var file=event.target.files[0];
-if(!file) return;
-var reader=new FileReader();
-reader.onload=function(e){
-  try{
-    var imported=JSON.parse(e.target.result);
-    if(!imported.orgs||!Array.isArray(imported.orgs)){
-      alert('This does not appear to be a valid SELECT tracker export.');return;
-    }
-    var existing=loadData();
-    var existingCount=existing.orgs?existing.orgs.length:0;
-    var importCount=imported.orgs.length;
-    var importDate=imported._exportedAt?imported._exportedAt.slice(0,16).replace('T',' '):'unknown date';
-    if(existingCount>0){
-      if(!confirm('You have '+existingCount+' organisation(s) currently.\n\nThe import file has '+importCount+' organisation(s) (exported '+importDate+').\n\nChoose OK to REPLACE all current data, or Cancel to keep current data.\n\n(Tip: Export your current data first as a backup.)')) return;
-    }
-    saveData(imported);
-    // Push all imported orgs to Airtable
-    AT.migrateFromCache(function(n){
-      console.log('Migrated '+n+' orgs to Airtable after import');
-    });
-    showDash();
-    alert('Imported '+importCount+' organisation(s) successfully. Syncing to Airtable…');
-  }catch(err){
-    alert('Could not read file. Make sure it is a valid JSON export from this tracker.');
-  }
-};
-reader.readAsText(file);
-event.target.value='';
+  // REMOVED 27/07/2026: JSON import pushed the whole imported payload to
+  // Airtable via migrateFromCache and could flatten both assessors' live data.
+  alert('JSON import has been disabled. Data now lives in Airtable; contact Fi to restore from a backup file.');
+  if(event&&event.target)event.target.value='';
 }
 
 function loadSampleOrg(){

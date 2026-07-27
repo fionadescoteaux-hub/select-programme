@@ -214,8 +214,19 @@ var AT = (function() {
             // CACHE PROTECTS LOCAL EDITS: if cache has data Airtable returned empty, keep cache
             var co = cacheMap[o.code];
             if (co) {
-              // Notes: keep whichever has more entries
-              if ((co.notes || []).length > (o.notes || []).length) o.notes = co.notes;
+              // FIX 27/07/2026: was "keep whichever array is longer", which
+              // resurrected historical duplicates from stale caches (13 notes
+              // local vs 3 on server, 6 byte-identical). Union + dedupe instead.
+              o.notes = (function(remote, local){
+                var seen = {}, out = [];
+                (remote || []).concat(local || []).forEach(function(n){
+                  if (!n) return;
+                  var k = String(n.type||'').trim() + '|' + String(n.date||'').trim() + '|' + String(n.text||'').trim();
+                  if (seen[k]) return;
+                  seen[k] = 1; out.push(n);
+                });
+                return out;
+              })(o.notes, co.notes);
 
               // For consulting/coaching/attendance, merge per-row by code.
               // AIRTABLE WINS: Airtable is the shared source of truth across both
@@ -938,7 +949,7 @@ var AT = (function() {
     var l = Array.isArray(localNotes)  ? localNotes  : [];
     var seen = {};
     var out = [];
-    function key(n) { return (n.type||'') + '|' + (n.date||'') + '|' + (n.text||''); }
+    function key(n) { return String(n.type||'').trim() + '|' + String(n.date||'').trim() + '|' + String(n.text||'').trim(); }
     r.concat(l).forEach(function(n){
       if (!n) return;
       var k = key(n);
@@ -961,39 +972,9 @@ var AT = (function() {
       });
   }
 
-  function migrateFromCache(callback) {
-    if (!_initialLoadComplete) {
-      alert('Cannot migrate yet — wait for initial sync to complete.');
-      if (callback) callback(0);
-      return;
-    }
-    var data = cacheGet();
-    if (!data.orgs || !data.orgs.length) { if (callback) callback(0); return; }
-
-    var pushable = data.orgs.filter(isOrgSafeToPush);
-    if (!pushable.length) {
-      alert('No organisations with substantive data to migrate.');
-      if (callback) callback(0);
-      return;
-    }
-    if (!confirm('Push ' + pushable.length + ' organisations to Airtable?')) {
-      if (callback) callback(0);
-      return;
-    }
-
-    setStatus('Migrating ' + pushable.length + ' orgs…', 'info');
-    var pending = pushable.length, done = 0;
-    pushable.forEach(function(org){
-      pushOrg(org, function(ok){
-        if (ok) done++;
-        pending--;
-        if (pending === 0) {
-          setStatus('Migration complete (' + done + ' orgs)', 'ok');
-          if (callback) callback(done);
-        }
-      });
-    });
-  }
+  // REMOVED 27/07/2026: migrateFromCache. It pushed every cached org over the
+  // shared base in one burst and was the mechanism behind the 17 Jul bulk
+  // overwrite. Per-org read-merge-write saves are the only write path now.
 
   // FIX: actively drain locally-stranded edits — don't wait for the user's
   // next keystroke. Flush when the browser reports it is back online, when the
@@ -1017,7 +998,7 @@ var AT = (function() {
 
   return {
     loadData: loadData, loadDataSync: loadDataSync, saveData: saveData,
-    pushOrg: pushOrg, deleteOrg: deleteOrg, migrateFromCache: migrateFromCache,
+    pushOrg: pushOrg, deleteOrg: deleteOrg,
     setAuth: setAuth, isOnline: isOnline, isReady: isReady, setStatus: setStatus
   };
 })();
