@@ -1,6 +1,24 @@
 // ═══════════════════════════════════════════════════════════════
 // SELECT Programme — Airtable Data Layer
-// Version: 2026-05-27-SMART-DUPLICATE-CASCADE-FIX
+// Version: 2026-07-28-SILENT-CREATE-PATH-FIX
+//
+// SILENT CREATE-PATH FIX (2026-07-28):
+// _doPushOrg decided create-vs-update from the LOCAL _rid. Any cache that had
+// lost its _rid (stale cache, org-code mismatch, a prior incident) therefore
+// took the create branch on EVERY save. That payload carries only name/ceo/
+// code/jurisdiction — all consulting, SMART, baseline and notes content was
+// silently discarded — yet it resolved successfully, so the queue cleared the
+// dirty flag, called _stampConfirmed() and displayed "Saved ✓ confirmed on
+// Airtable". This is how Codema's OR2/OR3 edits never reached the base.
+// Remote existence is now determined by a fresh list read keyed on `code`.
+// A create is followed by a re-read and a full update, so content is never
+// dropped. _stampConfirmed() fires only when a content update actually ran.
+//
+// DIRTY-FLAG FIX (2026-07-28):
+// The isOrgSafeToPush gate in saveData returned without _markDirty, so those
+// edits were cached and never retried. _flushDirty also actively _clearDirty'd
+// any org failing the same check, deleting pending flags that had been set
+// correctly. Both now preserve the flag: data preservation > a tidy banner.
 //
 // CRITICAL SAFETY RULES (prevent Airtable wipes):
 // 1. NEVER push to Airtable until loadData() succeeds at least once.
@@ -474,7 +492,11 @@ var AT = (function() {
       var org = null;
       for (var i = 0; i < snap.orgs.length; i++) { if (snap.orgs[i].code === code) { org = snap.orgs[i]; break; } }
       if (!org)                    { _clearDirty(code); return; }  // org gone locally
-      if (!isOrgSafeToPush(org))   { _clearDirty(code); return; }  // nothing substantive to push
+      // FIX 28/07/2026: do NOT clear the flag for an org that fails the safety
+      // check. Clearing it threw away a pending edit that had been queued
+      // correctly — the flag is the only record that something is unsynced.
+      // Skip instead, so it retries and stays visible in the pending banner.
+      if (!isOrgSafeToPush(org))   { return; }                     // keep flag; retry later
       pushOrg(org);                                                // success path clears the flag
     });
   }
@@ -511,8 +533,14 @@ var AT = (function() {
     if (!authToken)            { _markDirty(changedOrgCode); setStatus('Saved locally', 'warn');                        done(false, 'no-auth');   return; }
     if (!_online)              { _markDirty(changedOrgCode); setStatus('Saved locally (offline) — will retry', 'warn'); done(false, 'offline');   return; }
     if (!isOrgSafeToPush(org)) {
-      console.warn('[AT] Skipping push of empty org:', org.code);
-      setStatus('Saved locally', 'warn');
+      // FIX 28/07/2026: this gate used to return WITHOUT _markDirty, so the
+      // edit was cached and then never retried by any later flush. If an org
+      // was missing `name` (isOrgSafeToPush's first test) it could never sync
+      // again, silently, for the rest of the programme. Mark it dirty and say
+      // so plainly instead of the reassuring "Saved locally".
+      _markDirty(changedOrgCode);
+      console.warn('[AT] Push gated — org has no substantive data yet:', org.code);
+      setStatus('⚠ Not on Airtable — record incomplete. Kept locally, will retry.', 'warn');
       done(false, 'empty-org');
       return;
     }
@@ -598,11 +626,14 @@ var AT = (function() {
       setStatus('Saving…', 'info');
 
       _doPushOrg(entry.org)
-        .then(function(){
+        .then(function(result){
           _online = true;
           _activeCode = null;
           _clearDirty(code);                 // FIX: confirmed on Airtable — drop the dirty flag
-          _stampConfirmed();                 // FIX: stamp only now, not on the local cache write
+          // FIX 28/07/2026: stamp "confirmed" only when a content update ran.
+          // A bare create writes identity fields only; stamping that produced a
+          // green tick and a confirmation timestamp for an empty write.
+          if (result && result.__wroteContent) _stampConfirmed();
           setStatus('Saved \u2713', 'ok');
           setTimeout(function(){ setStatus('', 'ok'); }, 2000);
           _finish(code, true);
@@ -671,30 +702,55 @@ var AT = (function() {
   // Performs the actual network write for one org and returns a Promise.
   // Create, or read-merge-write update. Throttling / retry / status are all
   // handled by the queue above — this only builds and sends the request.
-  function _doPushOrg(org) {
-    var isNew = !org._rid;
-
-    if (isNew) {
-      var newPayload = {
-        action: 'create', password: authToken,
-        name: org.name || '', ceo: org.ceo || '', code: org.code || '',
-        jurisdiction: (org.kpi && org.kpi.jurisdiction) || 'ROI'
-      };
-      return request('POST', null, newPayload);
+  function _findOrgByCode(resp, code) {
+    if (!resp || !Array.isArray(resp.orgs)) return null;
+    for (var i = 0; i < resp.orgs.length; i++) {
+      if (resp.orgs[i] && resp.orgs[i].code === code) return resp.orgs[i];
     }
+    return null;
+  }
 
-    // READ-MERGE-WRITE for updates: fetch the current Airtable state for THIS
-    // org, merge the local change into the latest shared record, then write.
+  // FIX 28/07/2026: remote existence is decided by a fresh list read, never by
+  // the local _rid. Previously a cache missing its _rid sent an identity-only
+  // create on every save and still reported success — the silent data-loss path
+  // behind Codema's missing OR2/OR3 content.
+  function _doPushOrg(org) {
     return request('POST', null, { action: 'list' })
       .then(function(latest){
-        var latestOrg = null;
-        if (latest && Array.isArray(latest.orgs)) {
-          for (var i = 0; i < latest.orgs.length; i++) {
-            if (latest.orgs[i].code === org.code) { latestOrg = latest.orgs[i]; break; }
-          }
+        var latestOrg = _findOrgByCode(latest, org.code);
+
+        if (latestOrg) {
+          if (latestOrg._rid && !org._rid) org._rid = latestOrg._rid;   // re-adopt a lost _rid
+          return _sendUpdate(org, latestOrg);
         }
 
-        var basis  = latestOrg ? latestOrg : org;
+        // Genuinely absent on Airtable: create the shell, re-read to pick up
+        // the new _rid, then immediately push the full content payload. The
+        // create alone carries no content, so it must never be the last step.
+        return request('POST', null, {
+          action: 'create', password: authToken,
+          name: org.name || '', ceo: org.ceo || '', code: org.code || '',
+          jurisdiction: (org.kpi && org.kpi.jurisdiction) || 'ROI'
+        })
+        .then(function(){ return request('POST', null, { action: 'list' }); })
+        .then(function(after){
+          var created = _findOrgByCode(after, org.code);
+          if (!created) {
+            var e = new Error('Create succeeded but org not found on re-read: ' + org.code);
+            e.status = 500;
+            throw e;                 // fail loudly rather than report a phantom save
+          }
+          if (created._rid) org._rid = created._rid;
+          return _sendUpdate(org, created);
+        });
+      });
+  }
+
+  // Builds the merged payload and performs the content write for one org.
+  // Resolves with __wroteContent so the queue only stamps "confirmed on
+  // Airtable" when real content actually went over the wire.
+  function _sendUpdate(org, basis) {
+    {
         var loaded = _loadedByCode[org.code] || {};
         var merged = {
           kpi:          mergeObj(basis.kpi, org.kpi, loaded.kpi),
@@ -752,9 +808,11 @@ var AT = (function() {
             e.status = 500;
             throw e;
           }
-          return result;
+          // Flag a genuine content write so _runQueue can stamp "confirmed".
+          if (result && typeof result === 'object') result.__wroteContent = true;
+          return result || { __wroteContent: true };
         });
-      });
+      }
   }
 
   // ── Merge helpers used by read-merge-write pushOrg ──

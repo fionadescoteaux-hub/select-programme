@@ -5,9 +5,12 @@
 [functions]
   node_bundler = "esbuild"
 
+# FIXED 28/07/2026: this pointed at "airtable" (netlify/functions/airtable.js,
+# last updated a month ago), so the maintained function airtable-api.js was
+# never invoked. Every save hit the stale function.
 [[redirects]]
   from = "/api/airtable"
-  to = "/.netlify/functions/airtable"
+  to = "/.netlify/functions/airtable-api"
   status = 200
   force = true
 
