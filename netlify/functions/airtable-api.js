@@ -173,6 +173,12 @@ const F = {
   CO_STRAND:         "fldBkEge6nqs2dpyE",
   CO_STRAND_LABEL:   "fldFjbAmmyD1guXbb",
   CO_LINKS:          "fldxBql9mBLrZZowJ",
+  // FIX 28/07/2026: CO_NOT_APPLICABLE was referenced at two places but never
+  // defined here, so [F.CO_NOT_APPLICABLE] evaluated to the literal key
+  // "undefined" and Airtable rejected EVERY consulting-row write with
+  // 422 UNKNOWN_FIELD_NAME: "undefined". Field is the notApplicable checkbox
+  // on ConsultingCycles (tblG8VPd93xafzBJ6).
+  CO_NOT_APPLICABLE: "fldzDK8sr0YiJmufB",
   // ── ORGANISATIONS table (tblYFWYwyK6nKQu9b) — v10: gSmart1-5 source for Validation tab ──
   ORGS_NAME:   "fldjeQ6vZBIXO9ATu",
   ORGS_GSMART1: "fldE90jxx8DyB2kG9",
