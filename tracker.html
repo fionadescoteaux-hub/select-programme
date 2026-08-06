@@ -399,7 +399,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <div class="auth-box">
 <h2>Access your tracker</h2>
 <p id="authSubtitle">Programme team: enter your assessor password. CEOs: enter your personal password.</p>
-<input type="password" id="authPw" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()">
+<input type="password" id="authPw" placeholder="Password" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')doAuth()">
 <button onclick="doAuth()">Continue</button>
 <div class="auth-err" id="authErr">Incorrect password. Please try again.</div>
 </div>
@@ -1971,9 +1971,26 @@ function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent
 
 var targetOrgId=null; // set from URL param
 
+// Normalises a pasted/typed password. Mail clients and mobile keyboards add
+// trailing spaces, non-breaking spaces, zero-width chars and en/em dashes in
+// place of the hyphen — all of which broke login silently before this.
+function _normPw(v){
+return String(v||'')
+  .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g,'')
+  .replace(/[\u2010-\u2015\u2212]/g,'-')
+  .trim();
+}
+// Case-insensitive match against a role password list. All role passwords are
+// uppercase by convention, so this only ever relaxes autocapitalise errors.
+function _matchRole(pw,list){
+var u=pw.toUpperCase();
+for(var i=0;i<list.length;i++){if(list[i].toUpperCase()===u)return list[i];}
+return null;
+}
 function doAuth(){
-var pw=document.getElementById('authPw').value;
-if(ASSESSOR_PASSWORDS.indexOf(pw)>-1){
+var pw=_normPw(document.getElementById('authPw').value);
+var _m=_matchRole(pw,ASSESSOR_PASSWORDS);
+if(_m){pw=_m;
 isAssessor=true;isViewer=false;isCoach=false;
 if(pw==='SELECT2026-FD')assessorName='Fiona';
 else if(pw==='SELECT2026-COR')assessorName='Clodagh';
@@ -1987,7 +2004,8 @@ showDash();
 return;
 }
 // Coach login (Sarah / Aoife) — coaching tab writeable, rest read-only
-if(Object.prototype.hasOwnProperty.call(COACH_PASSWORDS,pw)){
+var _mc=_matchRole(pw,Object.keys(COACH_PASSWORDS));
+if(_mc){pw=_mc;
 isAssessor=false;isViewer=false;isCoach=true;
 assessorName=COACH_PASSWORDS[pw];
 AT.setAuth(MASTER_PW);
@@ -1997,7 +2015,8 @@ showDash();
 return;
 }
 // Viewer (ITI read-only) login
-if(VIEWER_PASSWORDS.indexOf(pw)>-1){
+var _mv=_matchRole(pw,VIEWER_PASSWORDS);
+if(_mv){pw=_mv;
 isAssessor=false;isViewer=true;isCoach=false;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
