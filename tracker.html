@@ -729,9 +729,14 @@ var ASSESSOR_PASSWORDS=['SELECT2026-FD','SELECT2026-COR'];
 // Viewer passwords: read-only dashboard access (all orgs, no editing)
 // Steven Egan / ITI = SELECT2026-ITI
 var VIEWER_PASSWORDS=['SELECT2026-ITI'];
+// Coach passwords: edit access to the Coaching tab + Coaching notes only.
+// Everything else (baseline, SMART, consulting, endline) is read-only.
+// Sarah Lennon = SELECT2026-SL, Aoife Donovan Lee = SELECT2026-AD
+var COACH_PASSWORDS={'SELECT2026-SL':'Sarah','SELECT2026-AD':'Aoife'};
 var STORE_KEY='select_tracker_v4';
 var isAssessor=false;
 var isViewer=false; // ITI read-only dashboard
+var isCoach=false;  // Sarah / Aoife — coaching-tab write access only
 var currentOrg=null;
 // Per-cycle edit state. Keyed by org.consulting array index. When a card is in
 // edit mode, the form is editable and Save/Cancel buttons appear. Save commits
@@ -802,7 +807,7 @@ function _setHash(){
       var tab=activeTabBtn.getAttribute('data-tab');
       if(tab)hash+='&tab='+encodeURIComponent(tab);
     }
-  }else if(document.getElementById('dashScreen') && document.getElementById('dashScreen').style.display!=='none' && (isAssessor||isViewer)){
+  }else if(document.getElementById('dashScreen') && document.getElementById('dashScreen').style.display!=='none' && (isAssessor||isViewer||isCoach)){
     hash='#cohort';
   }
   if(hash && window.location.hash!==hash){
@@ -823,17 +828,17 @@ function _parseHash(){
 }
 function _readHash(){
   // Only act if we have a valid auth state — otherwise login screen handles it.
-  if(!isAssessor && !isViewer && !currentOrg)return;
+  if(!isAssessor && !isViewer && !isCoach && !currentOrg)return;
   var p=_parseHash();
   _suppressHashChange=true;
   try{
     if(p.cohort){
-      if((isAssessor||isViewer) && currentOrg){currentOrg=null;showDash();}
-      else if((isAssessor||isViewer) && !currentOrg){showDash();}
+      if((isAssessor||isViewer||isCoach) && currentOrg){currentOrg=null;showDash();}
+      else if((isAssessor||isViewer||isCoach) && !currentOrg){showDash();}
       // CEO trying to hit #cohort: ignore — keep them on their org
     }else if(p.org){
       // Only open if user is allowed (assessor/viewer OR this is their own org)
-      if(isAssessor || isViewer || p.org===currentOrg){
+      if(isAssessor || isViewer || isCoach || p.org===currentOrg){
         if(p.org!==currentOrg)openTracker(p.org);
         if(p.tab){
           var tabBtn=document.querySelector('[data-tab="'+p.tab+'"]');
@@ -1969,7 +1974,7 @@ var targetOrgId=null; // set from URL param
 function doAuth(){
 var pw=document.getElementById('authPw').value;
 if(ASSESSOR_PASSWORDS.indexOf(pw)>-1){
-isAssessor=true;isViewer=false;
+isAssessor=true;isViewer=false;isCoach=false;
 if(pw==='SELECT2026-FD')assessorName='Fiona';
 else if(pw==='SELECT2026-COR')assessorName='Clodagh';
 else assessorName='Assessor';
@@ -1981,9 +1986,19 @@ AT.loadData(function(data){showDash();_readHash();});
 showDash();
 return;
 }
+// Coach login (Sarah / Aoife) — coaching tab writeable, rest read-only
+if(Object.prototype.hasOwnProperty.call(COACH_PASSWORDS,pw)){
+isAssessor=false;isViewer=false;isCoach=true;
+assessorName=COACH_PASSWORDS[pw];
+AT.setAuth(MASTER_PW);
+document.getElementById('authScreen').style.display='none';
+AT.loadData(function(data){showDash();_readHash();});
+showDash();
+return;
+}
 // Viewer (ITI read-only) login
 if(VIEWER_PASSWORDS.indexOf(pw)>-1){
-isAssessor=false;isViewer=true;
+isAssessor=false;isViewer=true;isCoach=false;
 AT.setAuth(MASTER_PW);
 document.getElementById('authScreen').style.display='none';
 AT.loadData(function(data){showDash();_readHash();});
@@ -2168,11 +2183,11 @@ currentOrg=code;
 document.getElementById('dashScreen').style.display='none';
 document.getElementById('sopScreen').style.display='none';
 document.getElementById('trackerScreen').style.display='block';
-document.getElementById('backDash').style.display=isAssessor?'inline-block':'none';
-document.getElementById('readonlyNotice').style.display=isAssessor?'none':'block';
-document.getElementById('saveBar').classList.toggle('hidden',!isAssessor);
+document.getElementById('backDash').style.display=(isAssessor||isViewer||isCoach)?'inline-block':'none';
+document.getElementById('readonlyNotice').style.display=(isAssessor||isCoach)?'none':'block';
+document.getElementById('saveBar').classList.toggle('hidden',!(isAssessor||isCoach));
 document.getElementById('trkOrgName').textContent=org.name;
-document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · '+org.code+' · '+(org.kpi.jurisdiction||'')+(org.intensity?' · '+org.intensity:'');
+document.getElementById('trkMeta').textContent='CEO: '+org.ceo+' · '+org.code+' · '+(org.kpi.jurisdiction||'')+(org.intensity?' · '+org.intensity:'')+(isCoach?' · Coach view ('+assessorName+') — Coaching tab editable, all other tabs read-only':'');
 switchTab('profile',document.querySelector('[data-tab="profile"]'));
 renderAll(org);
 _setHash();
@@ -2180,7 +2195,7 @@ _setHash();
 // AUTO-SAVE: any change to any field in the tracker triggers a save.
 // input/change events are debounced (2000ms) so typing isn't interrupted.
 // blur (leaving a field) saves immediately as a safety commit.
-if(isAssessor && !window._autosaveWired){
+if((isAssessor||isCoach) && !window._autosaveWired){
   window._autosaveWired = true;
   var saveTimer = null;
   function autosaveGuard(){
@@ -2583,7 +2598,7 @@ var GOAL_FIELDS=[
 // 2026-05-22: CEOs can edit their own Goal statement and 5 SMART objectives under Validation.
 // All other Validation fields (problem-why, goal1/2/3, validation notes, priority domains, lock) remain assessor-only.
 var CEO_EDITABLE_GOAL_FIELDS={g_problem:1,g_goal1:1,g_goal2:1,g_goal3:1,g_smart1:1,g_smart2:1,g_smart3:1,g_smart4:1,g_smart5:1};
-function canEditGoalField(key){return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[key];}
+function canEditGoalField(key){if(isCoach||isViewer)return false;return isAssessor || !!CEO_EDITABLE_GOAL_FIELDS[key];}
 
 // 2026-05-27: Map a goal text to a business-case domain by finding the domain name
 // anywhere within the goal text (case-insensitive substring match). This is the primary
@@ -2894,7 +2909,7 @@ if(_smartIdxs.length){
 html+='<div class="bc-val-smart-list">';
 _smartIdxs.forEach(function(sIdx,ord){
 var s=org.smart[sIdx];
-var canEditSmart=isAssessor?!lgs:true; // CEOs always editable; assessors when unlocked
+var canEditSmart=(isCoach||isViewer)?false:(isAssessor?!lgs:true); // CEOs always editable; assessors when unlocked
 html+='<div class="bc-val-smart">';
 if(isAssessor&&!lgs){
   html+='<button class="bc-val-smart-del" onclick="deleteSMART('+sIdx+')" title="Remove this SMART objective">&times;</button>';
@@ -2930,7 +2945,7 @@ if(_orphans.length){
 html+='<div class="bc-val-orphans"><div class="bc-val-orphans-label">SMART objectives without a linked business case</div>';
 _orphans.forEach(function(sIdx,ord){
 var s=org.smart[sIdx];
-var canEditSmart=isAssessor?!lgs:true;
+var canEditSmart=(isCoach||isViewer)?false:(isAssessor?!lgs:true);
 html+='<div class="bc-val-smart">';
 if(isAssessor&&!lgs){
   html+='<button class="bc-val-smart-del" onclick="deleteSMART('+sIdx+')" title="Remove this SMART objective">&times;</button>';
@@ -4302,7 +4317,7 @@ list+='</div>';
 list+='<div style="font-size:12px;color:var(--tt);margin:4px 0">'+esc(ref.date)+'</div>';
 list+='<div style="font-size:12px;color:var(--ts);margin:6px 0;padding:8px 12px;background:var(--bg2);border-radius:var(--r);font-style:italic">'+esc(ref.focus)+'</div>';
 
-if(isAssessor){
+if(isAssessor||isCoach){
 list+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">';
 list+='<div><div style="font-size:11px;color:var(--tt)">Hours</div><input data-coach-hours="'+i+'" value="'+esc(c.hours||'')+'" type="number" step="0.5" min="0" style="width:70px"></div>';
 list+='<div><div style="font-size:11px;color:var(--tt)">Coach</div><select data-coach-by="'+i+'"><option'+(c.coach==='Sarah'?' selected':'')+'>Sarah</option><option'+(c.coach==='Aoife'?' selected':'')+'>Aoife</option><option'+(c.coach==='Sarah / Aoife'?' selected':'')+'>Sarah / Aoife</option></select></div>';
@@ -4310,6 +4325,11 @@ list+='<div><div style="font-size:11px;color:var(--tt)">Completed?</div><label s
 list+='</div>';
 list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Focus theme (confidential -- high-level only)</div><textarea data-coach-theme="'+i+'">'+esc(c.theme||'')+'</textarea></div>';
 list+='<div style="margin-top:8px"><div style="font-size:11px;color:var(--tt)">Leadership action agreed</div><textarea data-coach-action="'+i+'">'+esc(c.actionAgreed||'')+'</textarea></div>';
+if(c.lastSavedBy){
+var _sa='';
+if(c.lastSavedAt){try{_sa=new Date(c.lastSavedAt).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){_sa=c.lastSavedAt;}}
+list+='<div style="font-size:10px;color:var(--tt);font-style:italic;margin-top:8px;text-align:right">Last saved by '+esc(c.lastSavedBy)+(_sa?' \u00b7 '+esc(_sa):'')+'</div>';
+}
 }else{
 if(c.completed){
 list+='<div style="margin-top:8px;font-size:13px;color:var(--ts2)"><b>Hours:</b> '+(c.hours||'--')+' · <b>Coach:</b> '+(c.coach||'--')+'</div>';
@@ -4358,7 +4378,7 @@ html+='<div class="note-meta"><span class="note-type '+cls+'">'+esc(n.type||'Con
 if(isForm){
 // Form submissions always shown as readable text, never editable textarea
 html+='<div class="log-text" style="white-space:pre-wrap;font-size:12px;line-height:1.6;color:var(--ts)">'+esc(n.text||'')+'</div>';
-}else if(isAssessor&&!lkN){
+}else if((isAssessor||(isCoach&&n.type==='Coaching'))&&!lkN){
 html+='<textarea data-note="'+i+'">'+esc(n.text||'')+'</textarea>';
 }else{
 html+='<div class="log-text">'+(n.text||'--')+'</div>';
@@ -4368,6 +4388,8 @@ html+='</div>';
 document.getElementById('notesList').innerHTML=html;
 if(isAssessor){
 document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" onclick="addNote(\'Consulting\')">+ Consulting</button><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching</button><button class="btn btn-outline" onclick="addNote(\'Session\')">+ Group Session</button></div>';
+}else if(isCoach){
+document.getElementById('notesAddWrap').innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" onclick="addNote(\'Coaching\')">+ Coaching note</button></div>';
 }else{document.getElementById('notesAddWrap').innerHTML='';}
 }
 _uiLockCaptureMap['notes']=function(org,key){
@@ -4513,11 +4535,21 @@ document.querySelectorAll('[data-con-na]').forEach(function(el){var i=parseInt(e
 document.querySelectorAll('[data-con-done]').forEach(function(el){var i=parseInt(el.dataset.conDone);if(org.consulting[i])org.consulting[i].completed=el.checked;});
 // Coaching (5 pre-populated cycles)
 ensureCoaching(org);
+// Attribution: snapshot before collect so we can stamp only the cycles that
+// actually changed, rather than re-stamping all five on every save.
+var _coachBefore=org.coaching.map(function(c){return JSON.stringify([c.hours,c.coach,c.theme,c.actionAgreed,c.completed]);});
 document.querySelectorAll('[data-coach-hours]').forEach(function(el){var i=parseInt(el.dataset.coachHours);if(org.coaching[i])org.coaching[i].hours=el.value;});
 document.querySelectorAll('[data-coach-by]').forEach(function(el){var i=parseInt(el.dataset.coachBy);if(org.coaching[i])org.coaching[i].coach=el.value;});
 document.querySelectorAll('[data-coach-theme]').forEach(function(el){var i=parseInt(el.dataset.coachTheme);if(org.coaching[i])org.coaching[i].theme=el.value;});
 document.querySelectorAll('[data-coach-action]').forEach(function(el){var i=parseInt(el.dataset.coachAction);if(org.coaching[i])org.coaching[i].actionAgreed=el.value;});
 document.querySelectorAll('[data-coach-done]').forEach(function(el){var i=parseInt(el.dataset.coachDone);if(org.coaching[i])org.coaching[i].completed=el.checked;});
+org.coaching.forEach(function(c,i){
+  var after=JSON.stringify([c.hours,c.coach,c.theme,c.actionAgreed,c.completed]);
+  if(_coachBefore[i]!==undefined&&_coachBefore[i]!==after){
+    c.lastSavedBy=assessorName||'Assessor';
+    c.lastSavedAt=new Date().toISOString();
+  }
+});
 // Notes
 document.querySelectorAll('[data-note]').forEach(function(el){
 var idx=parseInt(el.dataset.note);
