@@ -4450,7 +4450,7 @@ document.getElementById('sopContent').innerHTML=html;
 }
 
 function saveTracker(){
-if(!isAssessor)return;
+if(!isAssessor&&!isCoach)return;
 var data=loadData();
 
 // If on SOP screen, save SOP data
