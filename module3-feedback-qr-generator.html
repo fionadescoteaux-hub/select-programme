@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SELECT — Module 3 Feedback QR Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+    :root {
+      --plum: #5B2245; --magenta: #C4467E; --blush: #EFE6ED; --blush-2: #F7F2F4;
+      --ink: #2a2228; --ts: #6b6068; --line: #e6dce3;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--blush-2);
+      color: var(--ink); margin: 0; padding: 32px 16px; }
+    .panel { max-width: 560px; margin: 0 auto 24px; background: #fff;
+      border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    h1 { color: var(--plum); font-size: 20px; margin: 0 0 4px; }
+    .sub { color: var(--ts); font-size: 13px; margin: 0 0 16px; }
+    label { display: block; font-size: 13px; color: var(--ts); margin-bottom: 6px; }
+    input[type="text"] { width: 100%; padding: 10px 12px; font-size: 14px;
+      border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; }
+    button { background: var(--magenta); color: #fff; border: none; border-radius: 999px;
+      padding: 10px 22px; font-size: 14px; cursor: pointer; margin-right: 8px; }
+    button.secondary { background: var(--plum); }
+    .card { max-width: 560px; margin: 0 auto; background: #fff; border: 1px solid var(--line);
+      border-radius: 14px; padding: 32px 24px; text-align: center; }
+    .card h2 { color: var(--plum); font-size: 22px; margin: 0 0 4px; }
+    .card .tag { color: var(--magenta); font-size: 13px; letter-spacing: 1px;
+      text-transform: uppercase; margin: 0 0 20px; }
+    #qr { border: 10px solid var(--blush); border-radius: 12px; }
+    .card .url { color: var(--ts); font-size: 13px; margin-top: 16px; word-break: break-all; }
+    .card .footer { color: var(--ts); font-size: 11px; margin-top: 20px; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .panel { display: none; }
+      .card { border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <h1>Module 3 Feedback — QR Generator</h1>
+    <p class="sub">Prefilled with the live form URL. Hit Generate if you change it, then Print or Download.</p>
+    <label for="url">Form URL</label>
+    <input type="text" id="url" value="https://select-programme.netlify.app/module3-feedback" />
+    <button onclick="generate()">Generate</button>
+    <button class="secondary" onclick="window.print()">Print card</button>
+    <button class="secondary" onclick="downloadPNG()">Download PNG</button>
+  </div>
+
+  <div class="card">
+    <h2>SELECT — Module 3 Feedback</h2>
+    <p class="tag">Change Management for Commercial Scaling</p>
+    <canvas id="qr"></canvas>
+    <p class="url">select-programme.netlify.app/module3-feedback</p>
+    <p class="footer">SELECT Programme · Built to Scale · InterTradeIreland · UNRAVEL Complexity Ltd</p>
+  </div>
+
+  <script>
+    var qr = new QRious({
+      element: document.getElementById('qr'),
+      size: 260,
+      level: 'M',
+      foreground: '#5B2245',
+      value: document.getElementById('url').value
+    });
+
+    function generate() {
+      var url = document.getElementById('url').value.trim();
+      if (!url) { alert('Enter the form URL first.'); return; }
+      qr.value = url;
+      document.querySelector('.card .url').textContent = url.replace(/^https?:\/\//, '');
+    }
+
+    function downloadPNG() {
+      generate();
+      var canvas = document.getElementById('qr');
+      var link = document.createElement('a');
+      link.download = 'SELECT_Module3_Feedback_QR.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    generate();
+  </script>
+</body>
+</html>
