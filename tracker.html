@@ -2360,7 +2360,7 @@ try{
 // On the Action Plan tab, CEOs can edit even though they can't edit other tabs.
 // Update the read-only banner so it doesn't mislead them on this one.
 var notice=document.getElementById('readonlyNotice');
-if(notice&&!isAssessor){
+if(notice&&!isAssessor&&!isCoach){
   if(tab==='actionplan'){
     notice.textContent='You can add and edit actions here \u2014 this is your live action plan. Other tabs remain read-only.';
     notice.style.display='block';
