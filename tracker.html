@@ -358,6 +358,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .stage-pill.s-wait{background:var(--bg3);color:var(--ts)}
 .stage-pill.s-miss{background:#fdecea;color:#c62828}
 .stage-sub{display:block;font-size:11px;color:var(--tt);margin-top:3px}
+.stage-flag{display:block;font-size:10px;font-weight:600;margin-top:4px}
+.stage-flag.f-apol{color:#b26a00}
+.stage-flag.f-miss{color:#c62828}
 .rag-banner{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;background:linear-gradient(90deg,var(--navy-light) 0%,var(--teal-light) 100%);border:1px solid var(--tb2);border-radius:var(--r2);padding:14px 18px;margin-bottom:18px}
 .rag-banner .b-week{font-family:var(--serif);font-size:18px;color:var(--navy);font-weight:700}
 .rag-banner .b-week small{display:block;font-family:var(--sans);font-size:11px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
@@ -921,7 +924,7 @@ function ragOrgDeliverables(org){
     org.attendance.forEach(function(a,i){
       var gs=GROUP_SESSIONS[i];if(!gs)return;
       var closed=!!a.attended;
-      items.push({kind:'module',code:gs.code,title:gs.title,state:ragItemState(closed,gs.startDate,gs.endDate)});
+      items.push({kind:'module',code:gs.code,title:gs.title,apology:!!a.apology&&!closed,state:ragItemState(closed,gs.startDate,gs.endDate)});
     });
   }
   // Consulting cycles - parse date string from the OUTREACH_CYCLES record on the org
@@ -956,17 +959,24 @@ function ragCalcProgress(org){
 
 // Compute the "current stage" label for an org. Priority:
 // 1. Awaiting baseline lock (blocked)
-// 2. Anything in window today (amber state)
-// 3. Anything missed (red state)
-// 4. Up to date — show next upcoming item
-// Returns {cls, label, sub} where cls is the pill style class.
+// 2. Anything in window today (amber state) - "X in progress"
+// 3. Otherwise the next upcoming item - "Up to date / X next"
+// 4. Nothing left - "Programme complete"
+// Past gaps (red state) are NOT the stage. They are returned separately as
+// `missed` (unclosed items) and `apologies` (module apologies) so the row
+// can flag them without pinning the org to a session it missed months ago.
+// Returns {cls, label, sub, missed, apologies}.
 function ragOrgStage(org){
   if(!org.baselineLocked){
-    return{cls:'s-wait',label:'Awaiting baseline lock',sub:'Pre-programme'};
+    return{cls:'s-wait',label:'Awaiting baseline lock',sub:'Pre-programme',missed:[],apologies:[]};
   }
   var d=ragOrgDeliverables(org);
-  // Build a flat list with dates so we can pick what's in flight or next.
-  var today=new Date();today.setHours(0,0,0,0);
+  var missed=[],apologies=[];
+  d.items.forEach(function(it){
+    if(it.state!=='red')return;
+    var lbl=ragItemShortLabel(it);
+    if(it.apology)apologies.push(lbl);else missed.push(lbl);
+  });
   // 1. Anything in window today (amber)
   var inFlight=null;
   d.items.forEach(function(it){
@@ -974,18 +984,9 @@ function ragOrgStage(org){
   });
   if(inFlight){
     var label=ragItemShortLabel(inFlight);
-    return{cls:'s-flow',label:label+' in progress',sub:'In window now'};
+    return{cls:'s-flow',label:label+' in progress',sub:'In window now',missed:missed,apologies:apologies};
   }
-  // 2. Anything missed (red)
-  var missed=null;
-  d.items.forEach(function(it){
-    if(it.state==='red'&&!missed)missed=it;
-  });
-  if(missed){
-    var ml=ragItemShortLabel(missed);
-    return{cls:'s-miss',label:ml+' missed',sub:'Window passed'};
-  }
-  // 3. Up to date — find the next NA item with the earliest start date
+  // 2. Up to date - find the next NA item with the earliest start date
   var nextItem=null,nextDate=null;
   d.items.forEach(function(it){
     if(it.state!=='na')return;
@@ -996,10 +997,22 @@ function ragOrgStage(org){
   if(nextItem){
     var nl=ragItemShortLabel(nextItem);
     var dateStr=nextDate.toLocaleDateString('en-IE',{day:'numeric',month:'short'});
-    return{cls:'s-ok',label:'Up to date',sub:nl+' next \u00b7 '+dateStr};
+    return{cls:'s-ok',label:'Up to date',sub:nl+' next \u00b7 '+dateStr,missed:missed,apologies:apologies};
   }
-  // Nothing pending or in flight — programme complete
-  return{cls:'s-ok',label:'Programme complete',sub:'All cycles closed'};
+  // 3. Nothing pending or in flight - programme complete
+  return{cls:'s-ok',label:'Programme complete',sub:'All cycles closed',missed:missed,apologies:apologies};
+}
+
+// Secondary flags under the stage pill listing past gaps, if any.
+function ragStageFlagsHtml(stage){
+  var out='';
+  if(stage.apologies&&stage.apologies.length){
+    out+='<span class="stage-flag f-apol">Apology: '+esc(stage.apologies.join(', '))+'</span>';
+  }
+  if(stage.missed&&stage.missed.length){
+    out+='<span class="stage-flag f-miss">Not closed: '+esc(stage.missed.join(', '))+'</span>';
+  }
+  return out;
 }
 
 function ragItemShortLabel(it){
@@ -1187,7 +1200,7 @@ function renderRagReport(){
     rows+='<tr>';
     rows+='<td><button class="rag-org-link" onclick="openTracker('+JSON.stringify(org.code||'').replace(/"/g,'&quot;')+')">'+esc(org.name||'')+'</button>';
     rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
-    rows+='<td class="c-stage-td"><span class="stage-pill '+stage.cls+'">'+esc(stage.label)+'</span><span class="stage-sub">'+esc(stage.sub)+'</span></td>';
+    rows+='<td class="c-stage-td"><span class="stage-pill '+stage.cls+'">'+esc(stage.label)+'</span><span class="stage-sub">'+esc(stage.sub)+'</span>'+ragStageFlagsHtml(stage)+'</td>';
     rows+='<td class="rag-right" style="font-weight:600;color:var(--navy)">'+(blScore?blScore+'/5':'-')+'</td>';
     rows+='<td style="text-align:center">'+(org.baselineLocked?'<span style="color:#2e7d32;font-weight:700;font-size:11px">LOCKED</span>':'<span style="color:#ed6c02;font-size:11px">Pending</span>')+'</td>';
     rows+='<td class="rag-right" style="'+attCol+'">'+attCount+' / 8'+attBreakdown+'</td>';
