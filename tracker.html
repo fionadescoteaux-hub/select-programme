@@ -891,6 +891,10 @@ function getConsultHours(c){
 var MENTORING_BASE=35, FLEXI_POOL=9;
 var NIGEL_REALLOCATED={'waymaker':12,'connections':8.5,'pace':5}; // approved by Steven Egan (ITI) in writing, 3 Nov 2026
 var FLEXI_AGREED=['waymaker','pace','siel','codema'];
+var FLEXI_APPROVED={'waymaker':'4 Nov 2026','pace':'4 Nov 2026','siel':'11 Nov 2026','codema':'18 Nov 2026'};
+var NIGEL_APPROVED='3 Nov 2026';
+// Nigel's hours at Connections Arts were for Fiona's ACT video work only.
+var NIGEL_ONLY_BY={'connections':'Fiona'};
 function _hrsKey(org){return ((org.code||'')+' '+(org.name||'')).toLowerCase();}
 function hoursSplit(org){
   var total=0;
@@ -923,6 +927,35 @@ function hoursCellHtml(hs){
   }
   if(hs.total>hs.ment)l+='<div class="hrs-sub" style="font-weight:700;color:var(--navy)">Total '+_h(hs.total)+'</div>';
   return l;
+}
+
+// Per-cycle split, in cycle order: baseline first, then Nigel's reallocated
+// hours, then agreed flexi (max 9), then additional mentoring on top of 35.
+var _cycleSplit=(typeof WeakMap!=='undefined')?new WeakMap():null;
+function computeCycleSplits(org){
+  if(!_cycleSplit)return;
+  var key=_hrsKey(org),nigelLeft=0,onlyBy='',flexiLeft=0,flexiDate='';
+  for(var k in NIGEL_REALLOCATED){if(key.indexOf(k)>-1){nigelLeft=NIGEL_REALLOCATED[k];onlyBy=NIGEL_ONLY_BY[k]||'';break;}}
+  FLEXI_AGREED.forEach(function(k){if(key.indexOf(k)>-1){flexiLeft=FLEXI_POOL;flexiDate=FLEXI_APPROVED[k]||'';}});
+  var run=0;
+  (org.consulting||[]).forEach(function(c){
+    if(!c||c.notApplicable)return;
+    var h=getConsultHours(c); if(!h)return;
+    var base=Math.min(h,Math.max(0,MENTORING_BASE-run)),rem=h-base;
+    var n=0; if(!onlyBy||(c.consultedBy||'').indexOf(onlyBy)>-1){n=Math.min(rem,nigelLeft);nigelLeft-=n;rem-=n;}
+    var fx=Math.min(rem,flexiLeft); flexiLeft-=fx; rem-=fx;
+    run+=h;
+    _cycleSplit.set(c,{base:base,nigel:n,flexi:fx,extra:rem,run:run,flexiDate:flexiDate});
+  });
+}
+function cycleSplitHtml(c){
+  var sp=_cycleSplit&&_cycleSplit.get(c); if(!sp)return '';
+  var p=[];
+  if(sp.base>0)p.push(_h(sp.base)+' mentoring baseline');
+  if(sp.nigel>0)p.push(_h(sp.nigel)+" Nigel's reallocated (ITI approved "+NIGEL_APPROVED+')');
+  if(sp.flexi>0)p.push(_h(sp.flexi)+' flexi (ITI approved '+sp.flexiDate+')');
+  if(sp.extra>0)p.push(_h(sp.extra)+' additional mentoring over 35');
+  return '<div style="grid-column:1/-1;font-size:11px;color:var(--ts)"><span style="color:var(--tt)">Funded from:</span> '+p.join(' &middot; ')+' &middot; <b>running total '+_h(sp.run)+'</b></div>';
 }
 
 function consultStatsHtml(org,completed){
@@ -4235,6 +4268,7 @@ function renderConsultingCard(c,i,ref){
       html+='<div><span style="font-size:11px;color:var(--tt)">Format:</span> <b>'+esc(c.format||'\u2014')+'</b></div>';
       html+='<div><span style="font-size:11px;color:var(--tt)">SMART progressed:</span> '+esc(c.smartProgressed||'\u2014')+'</div>';
       html+='<div><span style="font-size:11px;color:var(--tt)">Hours used:</span> <b>'+esc(c.hours||'\u2014')+'</b></div>';
+      html+=cycleSplitHtml(c);
       html+='</div>';
       if(c.actionsAgreed)html+='<div style="margin-top:8px;font-size:13px"><span style="font-size:11px;color:var(--tt)">Key actions agreed:</span><br>'+esc(c.actionsAgreed)+'</div>';
       if(c.keyOutputs)html+='<div style="margin-top:8px;font-size:13px"><span style="font-size:11px;color:var(--tt)">Key outputs / evidence:</span><br>'+esc(c.keyOutputs)+'</div>';
@@ -4311,6 +4345,7 @@ function renderConsultingCard(c,i,ref){
 
 function renderConsulting(org){
 ensureConsulting(org);
+computeCycleSplits(org);
 var strandMode=(org.baseline_structure==='strand');
 var perCycle=strandMode?STRANDS.length:1;
 
