@@ -882,14 +882,14 @@ function getConsultHours(c){
 // ── Hours split: mentoring, Nigel's reallocated hours, flexi ──
 // Rules agreed by Fiona (Nov 2026):
 // - incredABLE exited with 25.5 of its 35 mentoring hours unused. Those 25.5
-//   were reallocated (in date order) as in NIGEL_REALLOCATED and count as
+//   were reallocated as in NIGEL_REALLOCATED (ITI-approved split) and count as
 //   mentoring on top of the receiving enterprise's 35.
 // - Flexi is only the 9 hours, and only for enterprises whose flexi request
 //   ITI agreed (FLEXI_AGREED). Hours over 35 + Nigel's go to flexi first, up
 //   to 9. Anything beyond that is mentoring on top of the 35, not flexi.
 // Update both lists if an allocation changes.
 var MENTORING_BASE=35, FLEXI_POOL=9;
-var NIGEL_REALLOCATED={'waymaker':12,'pace':0.75,'siel':0.25,'connections':12.5};
+var NIGEL_REALLOCATED={'waymaker':12,'connections':8.5,'pace':5}; // approved by Steven Egan (ITI) in writing, 3 Nov 2026
 var FLEXI_AGREED=['waymaker','pace','siel','codema'];
 function _hrsKey(org){return ((org.code||'')+' '+(org.name||'')).toLowerCase();}
 function hoursSplit(org){
