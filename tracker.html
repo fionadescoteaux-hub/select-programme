@@ -879,14 +879,18 @@ function getConsultHours(c){
   return 0;
 }
 
-// ── Hours split: mentoring baseline, Nigel's reallocated hours, flexi ──
-// Rule agreed by Fiona (Nov 2026): time over the 35-hour mentoring baseline
-// draws first on Nigel's (incredABLE) reallocated hours, then on that
-// enterprise's 9 flexi hours. incredABLE exited with 25.5 of its 35 unused;
-// those 25.5 were reallocated as below (in date order). Update this map if
-// any reallocation changes.
+// ── Hours split: mentoring, Nigel's reallocated hours, flexi ──
+// Rules agreed by Fiona (Nov 2026):
+// - incredABLE exited with 25.5 of its 35 mentoring hours unused. Those 25.5
+//   were reallocated (in date order) as in NIGEL_REALLOCATED and count as
+//   mentoring on top of the receiving enterprise's 35.
+// - Flexi is only the 9 hours, and only for enterprises whose flexi request
+//   ITI agreed (FLEXI_AGREED). Hours over 35 + Nigel's go to flexi first, up
+//   to 9. Anything beyond that is mentoring on top of the 35, not flexi.
+// Update both lists if an allocation changes.
 var MENTORING_BASE=35, FLEXI_POOL=9;
 var NIGEL_REALLOCATED={'waymaker':12,'pace':0.75,'siel':0.25,'connections':12.5};
+var FLEXI_AGREED=['waymaker','pace','siel','codema'];
 function _hrsKey(org){return ((org.code||'')+' '+(org.name||'')).toLowerCase();}
 function hoursSplit(org){
   var total=0;
@@ -894,23 +898,28 @@ function hoursSplit(org){
   total=Math.round(total*100)/100;
   var key=_hrsKey(org), nigelCap=0;
   for(var k in NIGEL_REALLOCATED){if(key.indexOf(k)>-1){nigelCap=NIGEL_REALLOCATED[k];break;}}
+  var flexiAgreed=FLEXI_AGREED.some(function(k){return key.indexOf(k)>-1;});
   var exited=key.indexOf('incredable')>-1;
-  var ment=Math.min(total,MENTORING_BASE);
   var over=Math.max(0,total-MENTORING_BASE);
   var nigel=Math.min(over,nigelCap);
-  var flexi=Math.round((over-nigel)*100)/100;
-  return {total:total,ment:ment,mentLeft:Math.round((MENTORING_BASE-ment)*100)/100,
-    nigel:nigel,flexi:flexi,flexiLeft:Math.round((FLEXI_POOL-flexi)*100)/100,
+  var flexi=flexiAgreed?Math.min(FLEXI_POOL,over-nigel):0;
+  var extra=Math.round((over-nigel-flexi)*100)/100;
+  flexi=Math.round(flexi*100)/100;
+  var ment=Math.round((total-flexi)*100)/100;   // mentoring = 35 + Nigel's + any extra
+  return {total:total,ment:ment,mentLeft:Math.max(0,Math.round((MENTORING_BASE-ment)*100)/100),
+    nigel:nigel,extra:extra,flexi:flexi,flexiAgreed:flexiAgreed,
+    flexiLeft:flexiAgreed?Math.round((FLEXI_POOL-flexi)*100)/100:0,
     exited:exited,released:exited?Math.round((MENTORING_BASE-total)*100)/100:0};
 }
 function _h(n){return String(parseFloat((+n).toFixed(2)));}
 function hoursCellHtml(hs){
   var l='<div>'+_h(hs.ment)+' / '+MENTORING_BASE+'</div>';
   if(hs.exited){l+='<div class="hrs-sub">Exited: '+_h(hs.released)+' reallocated</div>';return l;}
-  if(hs.nigel>0)l+='<div class="hrs-sub">+ '+_h(hs.nigel)+" Nigel's hrs</div>";
-  if(hs.ment>=MENTORING_BASE){
-    var col=hs.flexiLeft<0?'#c62828':hs.flexiLeft<=2?'#ed6c02':'var(--ts)';
-    l+='<div class="hrs-sub" style="color:'+col+'">Flexi '+_h(hs.flexi)+' / '+FLEXI_POOL+(hs.flexiLeft<0?' ('+_h(-hs.flexiLeft)+' over)':'')+'</div>';
+  if(hs.nigel>0)l+='<div class="hrs-sub">incl. '+_h(hs.nigel)+" Nigel's hrs</div>";
+  if(hs.extra>0)l+='<div class="hrs-sub">incl. '+_h(hs.extra)+' over 35</div>';
+  if(hs.flexiAgreed&&hs.flexi>0){
+    var col=hs.flexiLeft<=0?'#2e7d32':hs.flexiLeft<=2?'#ed6c02':'var(--ts)';
+    l+='<div class="hrs-sub" style="color:'+col+'">Flexi '+_h(hs.flexi)+' / '+FLEXI_POOL+'</div>';
   }
   if(hs.total>hs.ment)l+='<div class="hrs-sub" style="font-weight:700;color:var(--navy)">Total '+_h(hs.total)+'</div>';
   return l;
@@ -918,14 +927,14 @@ function hoursCellHtml(hs){
 
 function consultStatsHtml(org,completed){
   var hs=hoursSplit(org);
-  var h='<div class="coaching-stat"><div class="cs-val">'+_h(hs.ment)+' / '+MENTORING_BASE+'</div><div class="cs-lbl">Mentoring Hours Used</div></div>';
-  h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.mentLeft)+'</div><div class="cs-lbl">Mentoring Remaining</div></div>';
+  var h='<div class="coaching-stat"><div class="cs-val">'+_h(hs.ment)+' / '+MENTORING_BASE+'</div><div class="cs-lbl">Mentoring Hours</div></div>';
   if(hs.exited){
     h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.released)+'</div><div class="cs-lbl">Reallocated (exited)</div></div>';
   }else{
-    if(hs.nigel>0)h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.nigel)+'</div><div class="cs-lbl">Nigel\'s Reallocated Hrs</div></div>';
-    var fcol=hs.flexiLeft<0?' style="color:#c62828"':'';
-    h+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val"'+fcol+'>'+_h(hs.flexi)+' / '+FLEXI_POOL+'</div><div class="cs-lbl">Flexi Used ('+(hs.flexiLeft<0?_h(-hs.flexiLeft)+' over':_h(hs.flexiLeft)+' left')+')</div></div>';
+    h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.mentLeft)+'</div><div class="cs-lbl">Mentoring Remaining</div></div>';
+    if(hs.nigel>0)h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.nigel)+'</div><div class="cs-lbl">Incl. Nigel\'s Hrs</div></div>';
+    if(hs.extra>0)h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.extra)+'</div><div class="cs-lbl">Incl. Over 35</div></div>';
+    if(hs.flexiAgreed)h+='<div class="coaching-stat coaching-stat-flex"><div class="cs-val">'+_h(hs.flexi)+' / '+FLEXI_POOL+'</div><div class="cs-lbl">Flexi Used ('+_h(hs.flexiLeft)+' left)</div></div>';
   }
   h+='<div class="coaching-stat"><div class="cs-val">'+_h(hs.total)+'</div><div class="cs-lbl">Total Hours</div></div>';
   h+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 8</div><div class="cs-lbl">Cycles Completed</div></div>';
@@ -1279,16 +1288,16 @@ function renderRagReport(){
   var avgProg=progCount?Math.round(totalProg/progCount):null;
   var avgSurplus=surplusCount?(totalSurplus/surplusCount).toFixed(1):null;
   // Programme totals
-  var totalMentHrs=0,totalCoachHrs=0,totalAtt=0,totNigel=0,totFlexi=0,totAll=0;
+  var totalMentHrs=0,totalCoachHrs=0,totalAtt=0,totNigel=0,totFlexi=0,totAll=0,totFlexiOrgs=0;
   orgs.forEach(function(o){
-    var hsT=hoursSplit(o);totalMentHrs+=hsT.ment;totNigel+=hsT.nigel;totFlexi+=hsT.flexi;totAll+=hsT.total;
+    var hsT=hoursSplit(o);totalMentHrs+=hsT.ment;totNigel+=hsT.nigel;totFlexi+=hsT.flexi;totAll+=hsT.total;if(hsT.flexiAgreed)totFlexiOrgs++;
     if(o.coaching)o.coaching.forEach(function(c){totalCoachHrs+=parseFloat(c.hours||0);});
     if(o.attendance)o.attendance.forEach(function(a){if(a.attended)totalAtt++;});
   });
   rows+='<tr class="rag-summary-row">';
   rows+='<td colspan="4"><strong>Programme Totals ('+orgs.length+' orgs)</strong></td>';
   rows+='<td class="rag-right"><strong>'+totalAtt+' / '+(orgs.length*8)+'</strong></td>';
-  rows+='<td class="rag-right"><strong>'+_h(totalMentHrs)+' / '+(orgs.length*35)+'</strong><div class="hrs-sub">+ '+_h(totNigel)+' Nigel\'s hrs</div><div class="hrs-sub">Flexi '+_h(totFlexi)+' / '+(orgs.length*FLEXI_POOL)+'</div><div class="hrs-sub" style="font-weight:700;color:var(--navy)">Total '+_h(totAll)+'</div></td>';
+  rows+='<td class="rag-right"><strong>'+_h(totalMentHrs)+' / '+(orgs.length*35)+'</strong><div class="hrs-sub">incl. '+_h(totNigel)+' Nigel\'s hrs</div><div class="hrs-sub">Flexi '+_h(totFlexi)+' / '+(totFlexiOrgs*FLEXI_POOL)+' ('+totFlexiOrgs+' agreed)</div><div class="hrs-sub" style="font-weight:700;color:var(--navy)">Total '+_h(totAll)+'</div></td>';
   rows+='<td class="rag-right"><strong>'+parseFloat(totalCoachHrs.toFixed(1))+' / '+(orgs.length*12)+'</strong></td>';
   rows+='<td></td>';
   rows+='<td class="rag-right"><strong>'+(avgProg!==null?(avgProg>0?'+':'')+avgProg+'% avg':'-')+'</strong></td>';
@@ -1327,7 +1336,7 @@ function renderRagReport(){
     }
     attEl.innerHTML=attHtml;
   }
-  if(mentEl)mentEl.innerHTML=_h(totalMentHrs)+' / '+(orgs.length*35)+'<div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px;text-transform:none;letter-spacing:0">+ '+_h(totNigel)+" Nigel's &middot; flexi "+_h(totFlexi)+' &middot; total '+_h(ragTotMent)+'</div>';
+  if(mentEl)mentEl.innerHTML=_h(totalMentHrs)+' / '+(orgs.length*35)+'<div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px;text-transform:none;letter-spacing:0">incl. '+_h(totNigel)+' Nigel\'s &middot; flexi '+_h(totFlexi)+' / '+(totFlexiOrgs*FLEXI_POOL)+' &middot; total '+_h(ragTotMent)+'</div>';
   if(coachEl)coachEl.textContent=parseFloat(ragTotCoach.toFixed(1))+' / '+(orgs.length*12);
   document.getElementById('ragLastUpdated').textContent='Last updated: '+new Date().toLocaleString('en-IE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
@@ -4385,7 +4394,7 @@ var totalHours=0;var completed=0;
 org.coaching.forEach(function(c){totalHours+=parseFloat(c.hours)||0;if(c.completed)completed++;});
 var html='<div class="coaching-stat"><div class="cs-val">'+totalHours.toFixed(1)+'</div><div class="cs-lbl">Hours Used</div></div>';
 html+='<div class="coaching-stat"><div class="cs-val">'+(12-totalHours).toFixed(1)+'</div><div class="cs-lbl">Hours Remaining (of 12)</div></div>';
-html+=(function(){var hs=hoursSplit(org);return '<div class="coaching-stat coaching-stat-flex"><div class="cs-val"'+(hs.flexiLeft<0?' style="color:#c62828"':'')+'>'+_h(Math.max(0,hs.flexiLeft))+'</div><div class="cs-lbl">Flexi Left (of 9, after mentoring)</div></div>';})();
+html+=(function(){var hs=hoursSplit(org);if(!hs.flexiAgreed)return '';return '<div class="coaching-stat coaching-stat-flex"><div class="cs-val">'+_h(hs.flexiLeft)+'</div><div class="cs-lbl">Flexi Left (of 9, after mentoring)</div></div>';})();
 html+='<div class="coaching-stat"><div class="cs-val">'+completed+' / 5</div><div class="cs-lbl">Cycles Completed</div></div>';
 document.getElementById('coachingSummary').innerHTML=html;
 
