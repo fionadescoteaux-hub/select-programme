@@ -1054,12 +1054,25 @@ var AT = (function() {
   }
 
   function setAuth(token) { authToken = token; }
+  // Direct API call for one-off actions (e.g. attaching the commercialisation plan).
+  function call(body) { return request('POST', null, Object.assign({ password: authToken }, body)); }
+  // Update the cached copy of one org's commercialisation-plan files without
+  // queuing a save (the plan file is never written by the normal save).
+  function setPlanFiles(code, files) {
+    var d = cacheGet();
+    var o = (d.orgs || []).find(function(x){ return x.code === code; });
+    if (!o) return null;
+    o.commercialPlan = o.commercialPlan || { status: '', links: '', files: [] };
+    o.commercialPlan.files = files || [];
+    cacheSet(d);
+    return o;
+  }
   function isOnline() { return _online; }
   function isReady() { return _initialLoadComplete; }
 
   return {
     loadData: loadData, loadDataSync: loadDataSync, saveData: saveData,
     pushOrg: pushOrg, deleteOrg: deleteOrg,
-    setAuth: setAuth, isOnline: isOnline, isReady: isReady, setStatus: setStatus
+    setAuth: setAuth, call: call, setPlanFiles: setPlanFiles, isOnline: isOnline, isReady: isReady, setStatus: setStatus
   };
 })();

@@ -4504,7 +4504,9 @@ function renderCommercialPlan(org){
     html+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:'+(links.length?'14px':'0')+'">';
     files.forEach(function(f){
       var kb=f.size?(' <span style="opacity:.75;font-weight:400">('+Math.max(1,Math.round(f.size/1024))+' KB)</span>'):'';
-      html+='<a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#2e7d32;color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
+      html+='<span style="display:inline-flex;align-items:center;gap:8px"><a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#2e7d32;color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
+      if(isAssessor&&f.id)html+='<button onclick="removePlanFile(\''+esc(f.id)+'\')" style="background:none;border:none;color:var(--tt);font-size:12px;cursor:pointer;text-decoration:underline">Remove</button>';
+      html+='</span>';
     });
     html+='</div>';
   }
@@ -4522,11 +4524,42 @@ function renderCommercialPlan(org){
     });
     html+='</ul>';
   }
-  if(!files.length&&!links.length){
-    html+='<div style="margin-top:10px;color:var(--tt);font-size:13px;font-style:italic">No plan attached yet.'+(isAssessor?' Attach the file and add links in Airtable (OrgProfile → CommercialPlanFile / CommercialPlanLinks).':'')+'</div>';
+  if(!files.length&&!links.length&&!isAssessor){
+    html+='<div style="margin-top:10px;color:var(--tt);font-size:13px;font-style:italic">No plan attached yet.</div>';
+  }
+  if(isAssessor){
+    html+='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--tb2);display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
+    html+='<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid #2e7d32;color:#2e7d32;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer">&#128206; Attach plan<input id="planFileInput" type="file" accept=".docx,.doc,.pdf" onchange="uploadPlanFile(this)" style="display:none"></label>';
+    html+='<span id="planUploadStatus" style="font-size:12.5px;color:var(--tt)">Word or PDF, up to 4 MB. Links are added in Airtable (CommercialPlanLinks).</span>';
+    html+='</div>';
   }
   html+='</div>';
   slot.innerHTML=html;
+}
+function _setPlanFiles(files){
+  var org=AT.setPlanFiles(currentOrg,files);
+  if(org)renderCommercialPlan(org);
+}
+function uploadPlanFile(input){
+  var file=input&&input.files&&input.files[0];if(!file)return;
+  var st=document.getElementById('planUploadStatus');
+  if(file.size>4*1024*1024){if(st)st.textContent='That file is over 4 MB. Attach it directly in Airtable instead.';input.value='';return;}
+  if(st)st.textContent='Uploading '+file.name+'…';
+  var reader=new FileReader();
+  reader.onload=function(){
+    var b64=String(reader.result).split(',')[1]||'';
+    AT.call({action:'uploadPlanFile',code:currentOrg,filename:file.name,contentType:file.type||'application/octet-stream',base64:b64})
+      .then(function(r){_setPlanFiles(r.files);})
+      .catch(function(e){var s=document.getElementById('planUploadStatus');if(s)s.textContent='Upload failed: '+(e&&e.message?e.message:'please try again');});
+  };
+  reader.onerror=function(){if(st)st.textContent='Could not read that file.';};
+  reader.readAsDataURL(file);
+}
+function removePlanFile(id){
+  if(!confirm('Remove this file from the plan box? It is deleted from Airtable too.'))return;
+  AT.call({action:'removePlanFile',code:currentOrg,attachmentId:id})
+    .then(function(r){_setPlanFiles(r.files);})
+    .catch(function(e){alert('Could not remove the file: '+(e&&e.message?e.message:'please try again'));});
 }
 function renderEndline(org){
 renderCommercialPlan(org);

@@ -297,6 +297,55 @@ function selectVal(v) {
   return s;
 }
 
+// ── Final commercialisation plan: attach / remove files (added 2026-11-25) ──
+// Only these two actions touch CommercialPlanFile. The normal "update" save never
+// writes it, so a stale tracker cache can't wipe an attached plan.
+const PLAN_MAX_BYTES = 4 * 1024 * 1024; // Netlify request limit is ~6 MB once base64-encoded
+
+async function findProfileByCode(orgCode) {
+  if (!orgCode) return null;
+  const formula = encodeURIComponent(`{OrgCode}="${String(orgCode).replace(/"/g, '')}"`);
+  const data = await airtableFetch(`${TABLES.ORG_PROFILE}?filterByFormula=${formula}&maxRecords=1`);
+  return (data.records && data.records[0]) || null;
+}
+
+function planFilesFrom(fields) {
+  return (Array.isArray(fields[F.CP_FILE]) ? fields[F.CP_FILE] : []).map((a) => ({
+    id: a.id || "", url: a.url || "", filename: a.filename || "Commercialisation plan", size: a.size || 0, type: a.type || "",
+  }));
+}
+
+async function handleUploadPlanFile(body) {
+  const { code, filename, contentType, base64 } = body;
+  if (!code || !filename || !base64) return jsonResponse(400, { error: "code, filename and base64 are required" });
+  const bytes = Math.floor(String(base64).length * 3 / 4);
+  if (bytes > PLAN_MAX_BYTES) return jsonResponse(413, { error: "File is larger than 4 MB. Attach it directly in Airtable instead." });
+  const profile = await findProfileByCode(code);
+  if (!profile) return jsonResponse(404, { error: "Org not found" });
+  const url = `https://content.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${profile.id}/${F.CP_FILE}/uploadAttachment`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.AIRTABLE_PAT}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ contentType: contentType || "application/octet-stream", file: base64, filename }),
+  });
+  const out = await res.json();
+  if (!res.ok) throw new Error(`Airtable upload ${res.status}: ${JSON.stringify(out)}`);
+  // Read the record back so the tracker shows exactly what Airtable now holds.
+  const fresh = await findProfileByCode(code);
+  return jsonResponse(200, { ok: true, files: planFilesFrom(fresh ? fresh.fields : {}) });
+}
+
+async function handleRemovePlanFile(body) {
+  const { code, attachmentId } = body;
+  if (!code || !attachmentId) return jsonResponse(400, { error: "code and attachmentId are required" });
+  const profile = await findProfileByCode(code);
+  if (!profile) return jsonResponse(404, { error: "Org not found" });
+  const keep = planFilesFrom(profile.fields).filter((a) => a.id && a.id !== attachmentId).map((a) => ({ id: a.id }));
+  await airtableFetch(`${TABLES.ORG_PROFILE}/${profile.id}`, { method: "PATCH", body: JSON.stringify({ fields: { [F.CP_FILE]: keep } }) });
+  const fresh = await findProfileByCode(code);
+  return jsonResponse(200, { ok: true, files: planFilesFrom(fresh ? fresh.fields : {}) });
+}
+
 // ── UI Locks read helper (unified blob, holds both generic uiLocks and diagnosis locks) ──
 // Blob schema: { ui: {scope.key:bool}, diag: {section:bool} }
 // Backward compat: a flat blob (no ui/diag wrappers) is treated as ui-only.
@@ -417,6 +466,7 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
       status: (f[F.CP_STATUS] && typeof f[F.CP_STATUS] === "object") ? (f[F.CP_STATUS].name || "") : (f[F.CP_STATUS] || ""),
       links: f[F.CP_LINKS] || "",
       files: (Array.isArray(f[F.CP_FILE]) ? f[F.CP_FILE] : []).map((a) => ({
+        id: a.id || "",
         url: a.url || "",
         filename: a.filename || "Commercialisation plan",
         size: a.size || 0,
@@ -1448,7 +1498,7 @@ exports.handler = async (event) => {
   const masterPw = process.env.TRACKER_MASTER_PW || "SELECT2026";
   const authHeader = event.headers['x-auth'] || event.headers['X-Auth'] || '';
   const isAssessor = body.password === masterPw || authHeader === masterPw;
-  const writeActions = new Set(["create", "update", "remove", "seed", "dedupe"]);
+  const writeActions = new Set(["create", "update", "remove", "seed", "dedupe", "uploadPlanFile", "removePlanFile"]);
   if (writeActions.has(body.action) && !isAssessor) return jsonResponse(403, { error: "Assessor password required for this action" });
 
   try {
@@ -1459,6 +1509,8 @@ exports.handler = async (event) => {
       case "update": return await handleUpdate(body);
       case "remove": return await handleRemove(body.code);
       case "dedupe": return await handleDedupe();
+      case "uploadPlanFile": return await handleUploadPlanFile(body);
+      case "removePlanFile": return await handleRemovePlanFile(body);
       case "seed": {
         // Seed consulting+coaching templates for an existing org
         const code = body.code;
