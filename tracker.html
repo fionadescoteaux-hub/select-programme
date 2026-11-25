@@ -116,9 +116,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .tab-btn[data-tab="actionplan"]{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:700;padding:10px 22px;font-size:13.5px;box-shadow:0 1px 3px rgba(0,140,130,0.25);margin-right:6px}
 .tab-btn[data-tab="actionplan"]:hover:not(.active){background:#006b63;color:#fff;border-color:#006b63}
 .tab-btn[data-tab="actionplan"].active{background:#004a44;color:#fff;border-color:#004a44}
-.tab-btn[data-tab="endline"]{background:#2e7d32;color:#fff;border-color:#2e7d32;font-weight:700}
-.tab-btn[data-tab="endline"]:hover:not(.active){background:#256628;color:#fff;border-color:#256628}
-.tab-btn[data-tab="endline"].active{background:#1b4d1e;color:#fff;border-color:#1b4d1e}
+.tab-btn[data-tab="endline"]{background:#d9640f;color:#fff;border-color:#d9640f;font-weight:700}
+.tab-btn[data-tab="endline"]:hover:not(.active){background:#b85309;color:#fff;border-color:#b85309}
+.tab-btn[data-tab="endline"].active{background:#8a3e06;color:#fff;border-color:#8a3e06}
 .tab-panel{display:none}.tab-panel.active{display:block}
 
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
@@ -238,7 +238,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .ap-status-pill{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px}
 .aps-not{background:var(--bg3);color:var(--ts)}
 .aps-prog{background:#e3f2fd;color:#1565c0}
-.aps-done{background:#e8f5e9;color:#2e7d32}
+.aps-done{background:#e8f5e9;color:#d9640f}
 .aps-block{background:#fdecea;color:#c62828}
 .ap-empty{color:var(--tt);font-style:italic;font-size:13px;padding:14px 0}
 .ap-no-smart{background:#fff4e5;border:1px solid rgba(237,108,2,0.25);color:#8a4500;padding:16px 20px;border-radius:var(--r2);font-size:14px;line-height:1.5}
@@ -328,14 +328,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .rag-header h3{font-family:var(--serif);font-size:20px;color:var(--navy)}
 .rag-legend{display:flex;gap:16px;font-size:12px;color:var(--ts)}
 .rag-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
-.rag-g{background:#2e7d32}.rag-a{background:#ed6c02}.rag-r{background:#c62828}
+.rag-g{background:#d9640f}.rag-a{background:#ed6c02}.rag-r{background:#c62828}
 .rag-summary-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
 .rag-sum-card{border-radius:var(--r);padding:14px 16px;text-align:center}
 .rag-sum-card.green-card{background:#e8f5e9;border:1px solid rgba(46,125,50,0.15)}
 .rag-sum-card.amber-card{background:#fff4e5;border:1px solid rgba(237,108,2,0.15)}
 .rag-sum-card.red-card{background:#fdecea;border:1px solid rgba(198,40,40,0.15)}
 .rag-sum-num{font-size:28px;font-weight:700;line-height:1}
-.green-card .rag-sum-num{color:#2e7d32}.amber-card .rag-sum-num{color:#ed6c02}.red-card .rag-sum-num{color:#c62828}
+.green-card .rag-sum-num{color:#d9640f}.amber-card .rag-sum-num{color:#ed6c02}.red-card .rag-sum-num{color:#c62828}
 .rag-sum-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;color:var(--ts)}
 .rag-table-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--tb2)}
 .rag-table{width:100%;border-collapse:collapse;min-width:1620px;table-layout:fixed}
@@ -357,7 +357,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .rag-table td.c-stage-td{font-size:12px;line-height:1.4;white-space:normal;word-wrap:break-word;color:var(--ts2)}
 .stage-pill{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase}
 .stage-pill.s-flow{background:#e3f2fd;color:#1565c0}
-.stage-pill.s-ok{background:#e8f5e9;color:#2e7d32}
+.stage-pill.s-ok{background:#e8f5e9;color:#d9640f}
 .stage-pill.s-wait{background:var(--bg3);color:var(--ts)}
 .stage-pill.s-miss{background:#fdecea;color:#c62828}
 .stage-sub{display:block;font-size:11px;color:var(--tt);margin-top:3px}
@@ -383,10 +383,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .prog-bar-wrap{display:flex;align-items:center;gap:8px}
 .prog-bar-bg{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:60px}
 .prog-bar-fill{height:100%;border-radius:3px}
-.pbf-green{background:#2e7d32}.pbf-amber{background:#ed6c02}.pbf-red{background:#c62828}
-.prog-pos{color:#2e7d32;font-weight:700}.prog-neg{color:#c62828;font-weight:700}.prog-neu{color:var(--ts);font-weight:700}
+.pbf-green{background:#d9640f}.pbf-amber{background:#ed6c02}.pbf-red{background:#c62828}
+.prog-pos{color:#d9640f;font-weight:700}.prog-neg{color:#c62828;font-weight:700}.prog-neu{color:var(--ts);font-weight:700}
 .rag-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.rag-pill.green{background:#e8f5e9;color:#2e7d32}.rag-pill.amber{background:#fff4e5;color:#ed6c02}
+.rag-pill.green{background:#e8f5e9;color:#d9640f}.rag-pill.amber{background:#fff4e5;color:#ed6c02}
 .rag-pill.red{background:#fdecea;color:#c62828}.rag-pill.na{background:var(--bg3);color:var(--tt)}
 .rag-summary-row td{background:var(--navy-light);font-weight:700;font-size:12px;color:var(--navy)}
 .rag-last-updated{font-size:11px;color:var(--tt);margin-top:12px;text-align:right}
@@ -638,7 +638,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- ENDLINE TAB -->
 <div class="tab-panel" id="tab-endline">
-<div class="section-title" style="color:#2e7d32">Final Commercialisation Plan</div>
+<div class="section-title" style="color:#d9640f">Final Commercialisation Plan</div>
 <div class="section-note">The plan the CEO takes to their board at the close of the programme, with any online links that go with it.</div>
 <div id="commercialPlanSlot" style="margin-bottom:28px"></div>
 <div class="section-title">Endline Scores vs. Baseline</div>
@@ -928,7 +928,7 @@ function hoursCellHtml(hs){
   if(hs.nigel>0)l+='<div class="hrs-sub">incl. '+_h(hs.nigel)+" Nigel's hrs</div>";
   if(hs.extra>0)l+='<div class="hrs-sub">incl. '+_h(hs.extra)+' over 35</div>';
   if(hs.flexiAgreed&&hs.flexi>0){
-    var col=hs.flexiLeft<=0?'#2e7d32':hs.flexiLeft<=2?'#ed6c02':'var(--ts)';
+    var col=hs.flexiLeft<=0?'#d9640f':hs.flexiLeft<=2?'#ed6c02':'var(--ts)';
     l+='<div class="hrs-sub" style="color:'+col+'">Flexi '+_h(hs.flexi)+' / '+FLEXI_POOL+'</div>';
   }
   if(hs.total>hs.ment)l+='<div class="hrs-sub" style="font-weight:700;color:var(--navy)">Total '+_h(hs.total)+'</div>';
@@ -1250,12 +1250,12 @@ function renderRagReport(){
     // Mentoring hours
     var hs=hoursSplit(org);
     var mentHrs=hs.ment;
-    var mentCol=mentHrs>=35?'color:#2e7d32;font-weight:700':mentHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
+    var mentCol=mentHrs>=35?'color:#d9640f;font-weight:700':mentHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
     // Coaching hours
     var coachHrs=0;
     if(org.coaching&&org.coaching.length){org.coaching.forEach(function(c){coachHrs+=parseFloat(c.hours||0);});}
     coachHrs=parseFloat(coachHrs.toFixed(1));
-    var coachCol=coachHrs>=12?'color:#2e7d32;font-weight:700':coachHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
+    var coachCol=coachHrs>=12?'color:#d9640f;font-weight:700':coachHrs>0?'color:var(--navy);font-weight:600':'color:var(--tt)';
     // Attendance
     var attCount=0,attOnline=0,attInPerson=0,attHybrid=0;
     if(org.attendance&&org.attendance.length){org.attendance.forEach(function(a){
@@ -1265,7 +1265,7 @@ function renderRagReport(){
         else attOnline++;
       }
     });}
-    var attCol=attCount>=8?'color:#2e7d32;font-weight:700':attCount>=6?'color:#ed6c02;font-weight:600':attCount>0?'color:#c62828;font-weight:600':'color:var(--tt)';
+    var attCol=attCount>=8?'color:#d9640f;font-weight:700':attCount>=6?'color:#ed6c02;font-weight:600':attCount>0?'color:#c62828;font-weight:600':'color:var(--tt)';
     var attBreakdown='';
     if(attCount>0){
       var parts=[];
@@ -1279,7 +1279,7 @@ function renderRagReport(){
     var blTrad=parseFloat(finObj.blTradedIncome)||0;
     var curTrad=parseFloat(finObj.curTradedIncome)||0;
     var tradGrowth=blTrad>0?parseFloat(((curTrad-blTrad)/blTrad*100).toFixed(1)):null;
-    var growthCol=tradGrowth===null?'color:var(--tt)':tradGrowth>=15?'color:#2e7d32;font-weight:700':tradGrowth>=0?'color:#ed6c02;font-weight:600':'color:#c62828;font-weight:600';
+    var growthCol=tradGrowth===null?'color:var(--tt)':tradGrowth>=15?'color:#d9640f;font-weight:700':tradGrowth>=0?'color:#ed6c02;font-weight:600':'color:#c62828;font-weight:600';
     // Baseline score
     var blScore='';
     if(org.baseline&&org.baseline.length){var tot=0;org.baseline.forEach(function(b,i){var w=(DOMAINS[i]&&DOMAINS[i].wt)?DOMAINS[i].wt/100:0;tot+=parseFloat(b.score||0)*w;});blScore=tot?parseFloat(tot.toFixed(2)):'';}
@@ -1303,7 +1303,7 @@ function renderRagReport(){
     rows+='<span class="region-badge '+(isNI?'rb-ni':'rb-roi')+'">'+esc(juris)+'</span></td>';
     rows+='<td class="c-stage-td"><span class="stage-pill '+stage.cls+'">'+esc(stage.label)+'</span><span class="stage-sub">'+esc(stage.sub)+'</span>'+ragStageFlagsHtml(stage)+'</td>';
     rows+='<td class="rag-right" style="font-weight:600;color:var(--navy)">'+(blScore?blScore+'/5':'-')+'</td>';
-    rows+='<td style="text-align:center">'+(org.baselineLocked?'<span style="color:#2e7d32;font-weight:700;font-size:11px">LOCKED</span>':'<span style="color:#ed6c02;font-size:11px">Pending</span>')+'</td>';
+    rows+='<td style="text-align:center">'+(org.baselineLocked?'<span style="color:#d9640f;font-weight:700;font-size:11px">LOCKED</span>':'<span style="color:#ed6c02;font-size:11px">Pending</span>')+'</td>';
     rows+='<td class="rag-right" style="'+attCol+'">'+attCount+' / 8'+attBreakdown+'</td>';
     rows+='<td class="rag-right" style="'+mentCol+'">'+hoursCellHtml(hs)+'</td>';
     rows+='<td class="rag-right" style="'+coachCol+'">'+coachHrs+' / 12</td>';
@@ -1784,7 +1784,7 @@ function renderCohortAttendance(){
       var bg='var(--bg2)',label='&middot;',color='var(--tt)';
       if(s.attended){
         orgAtt++;totalAttended++;sessionStats[si].att++;
-        if(s.format==='In Person'){bg='#e8f5e9';label='IP';color='#2e7d32';totalInPerson++;sessionStats[si].inperson++;}
+        if(s.format==='In Person'){bg='#e8f5e9';label='IP';color='#d9640f';totalInPerson++;sessionStats[si].inperson++;}
         else if(s.format==='Hybrid'){bg='#fff4e5';label='HY';color='#ed6c02';totalHybrid++;sessionStats[si].hybrid++;}
         else{bg='#e3f2fd';label='ON';color='#1565c0';totalOnline++;sessionStats[si].online++;}
       }else if(s.apology){
@@ -1798,7 +1798,7 @@ function renderCohortAttendance(){
       }
     });
     var pct=Math.round((orgAtt/8)*100);
-    var pctCol=pct>=80?'#2e7d32':pct>=50?'#ed6c02':orgAtt>0?'#c62828':'var(--tt)';
+    var pctCol=pct>=80?'#d9640f':pct>=50?'#ed6c02':orgAtt>0?'#c62828':'var(--tt)';
     html+='<td style="text-align:center;font-weight:700;color:'+pctCol+';background:var(--bg2)">'+orgAtt+' / 8<div style="font-size:10px;font-weight:400;margin-top:2px">'+pct+'%</div></td>';
     html+='</tr>';
   });
@@ -1808,7 +1808,7 @@ function renderCohortAttendance(){
   html+='<td style="position:sticky;left:0;background:var(--navy-light);font-weight:700;color:var(--navy)">Per-session totals</td>';
   sessionStats.forEach(function(st){
     var sessPct=orgs.length?Math.round((st.att/orgs.length)*100):0;
-    var col=sessPct>=80?'#2e7d32':sessPct>=50?'#ed6c02':st.att>0?'#c62828':'var(--tt)';
+    var col=sessPct>=80?'#d9640f':sessPct>=50?'#ed6c02':st.att>0?'#c62828':'var(--tt)';
     html+='<td style="text-align:center;font-size:11px;color:'+col+';font-weight:700">'+st.att+'/'+orgs.length+'<div style="font-size:9px;font-weight:600;margin-top:1px">'+sessPct+'%</div></td>';
   });
   var grandPct=orgs.length?Math.round((totalAttended/(orgs.length*8))*100):0;
@@ -1876,11 +1876,11 @@ function renderAttendance(org){
   var inPerson=att.filter(function(a){return a.attended&&a.format==='In Person';}).length;
   var hybrid=att.filter(function(a){return a.attended&&a.format==='Hybrid';}).length;
   var pct=Math.round((attended/8)*100);
-  var pctCol=pct>=80?'#2e7d32':pct>=50?'#ed6c02':'#c62828';
+  var pctCol=pct>=80?'#d9640f':pct>=50?'#ed6c02':'#c62828';
   var sumHtml='';
   sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+pctCol+'">'+attended+' / 8</div><div class="cs-lbl">Attended</div></div>';
   sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#1565c0">'+online+'</div><div class="cs-lbl">Online</div></div>';
-  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#2e7d32">'+inPerson+'</div><div class="cs-lbl">In Person</div></div>';
+  sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#d9640f">'+inPerson+'</div><div class="cs-lbl">In Person</div></div>';
   if(hybrid>0)sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#ed6c02">'+hybrid+'</div><div class="cs-lbl">Hybrid</div></div>';
   sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:#ed6c02">'+apologies+'</div><div class="cs-lbl">Apologies</div></div>';
   sumHtml+='<div class="coaching-stat"><div class="cs-val" style="color:'+pctCol+'">'+pct+'%</div><div class="cs-lbl">Attendance Rate</div></div>';
@@ -1900,7 +1900,7 @@ function renderAttendance(org){
   list+='</tr></thead><tbody>';
   att.forEach(function(s,i){
     var rowBg=s.attended?'rgba(46,125,50,0.05)':s.apology?'rgba(237,108,2,0.05)':'rgba(198,40,40,0.03)';
-    var statusDot=s.attended?'<span style="color:#2e7d32;font-size:16px">&#10003;</span>':s.apology?'<span style="color:#ed6c02;font-size:12px">A</span>':'<span style="color:#c62828;font-size:12px">-</span>';
+    var statusDot=s.attended?'<span style="color:#d9640f;font-size:16px">&#10003;</span>':s.apology?'<span style="color:#ed6c02;font-size:12px">A</span>':'<span style="color:#c62828;font-size:12px">-</span>';
     list+='<tr style="border-bottom:1px solid var(--tb);background:'+rowBg+'">';
     list+='<td style="padding:10px 12px;font-weight:700;color:var(--navy);white-space:nowrap">'+esc(s.code)+'</td>';
     list+='<td style="padding:10px 12px;color:var(--tp)">'+esc(s.title)+'</td>';
@@ -2050,7 +2050,7 @@ function renderFinancial(org){
   var target=bl*1.15;
   var gs='';
   if(bl&&cur){
-    var gcol=growth>=15?'#2e7d32':growth>=0?'#ed6c02':'#c62828';
+    var gcol=growth>=15?'#d9640f':growth>=0?'#ed6c02':'#c62828';
     gs+='<div class="coaching-stat"><div class="cs-val" style="color:'+gcol+'">'+(growth>=0?'+':'')+growth.toFixed(1)+'%</div><div class="cs-lbl">Traded Income Growth</div></div>';
     gs+='<div class="coaching-stat"><div class="cs-val">'+sym+bl.toLocaleString()+'</div><div class="cs-lbl">Baseline Traded Income</div></div>';
     gs+='<div class="coaching-stat"><div class="cs-val">'+sym+cur.toLocaleString()+'</div><div class="cs-lbl">Current Traded Income</div></div>';
@@ -4289,7 +4289,7 @@ function renderConsultingCard(c,i,ref){
         html+='</div>';
       }
       if(c.completed){
-        html+='<div style="margin-top:10px"><span style="font-size:10px;font-weight:700;color:#2e7d32;background:#e8f5e9;padding:3px 8px;border-radius:3px">\u2713 CYCLE COMPLETED</span></div>';
+        html+='<div style="margin-top:10px"><span style="font-size:10px;font-weight:700;color:#d9640f;background:#e8f5e9;padding:3px 8px;border-radius:3px">\u2713 CYCLE COMPLETED</span></div>';
       }
     }else{
       html+='<div style="margin-top:8px;font-size:13px;color:var(--tt);font-style:italic">No data yet for this cycle.</div>';
@@ -4494,7 +4494,7 @@ function renderCommercialPlan(org){
   var status=(cp.status||'').trim();
   var files=Array.isArray(cp.files)?cp.files.filter(function(f){return f&&f.url;}):[];
   var links=String(cp.links||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
-  var html='<div style="background:var(--card);border:1px solid var(--tb2);border-left:4px solid #2e7d32;border-radius:var(--r2);padding:16px 18px">';
+  var html='<div style="background:var(--card);border:1px solid var(--tb2);border-left:4px solid #d9640f;border-radius:var(--r2);padding:16px 18px">';
   var st=CP_STATUS_STYLE[status]||CP_STATUS_STYLE['Not started'];
   html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+((files.length||links.length)?'14px':'0')+'">';
   html+='<span style="font-size:12px;color:var(--tt);text-transform:uppercase;letter-spacing:.04em">Status</span>';
@@ -4504,7 +4504,7 @@ function renderCommercialPlan(org){
     html+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:'+(links.length?'14px':'0')+'">';
     files.forEach(function(f){
       var kb=f.size?(' <span style="opacity:.75;font-weight:400">('+Math.max(1,Math.round(f.size/1024))+' KB)</span>'):'';
-      html+='<span style="display:inline-flex;align-items:center;gap:8px"><a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#2e7d32;color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
+      html+='<span style="display:inline-flex;align-items:center;gap:8px"><a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#d9640f;color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
       if(isAssessor&&f.id)html+='<button onclick="removePlanFile(\''+esc(f.id)+'\')" style="background:none;border:none;color:var(--tt);font-size:12px;cursor:pointer;text-decoration:underline">Remove</button>';
       html+='</span>';
     });
@@ -4529,7 +4529,7 @@ function renderCommercialPlan(org){
   }
   if(isAssessor){
     html+='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--tb2);display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
-    html+='<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid #2e7d32;color:#2e7d32;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer">&#128206; Attach plan<input id="planFileInput" type="file" accept=".docx,.doc,.pdf" onchange="uploadPlanFile(this)" style="display:none"></label>';
+    html+='<label style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid #d9640f;color:#d9640f;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer">&#128206; Attach plan<input id="planFileInput" type="file" accept=".docx,.doc,.pdf" onchange="uploadPlanFile(this)" style="display:none"></label>';
     html+='<span id="planUploadStatus" style="font-size:12.5px;color:var(--tt)">Word or PDF, up to 4 MB. Links are added in Airtable (CommercialPlanLinks).</span>';
     html+='</div>';
   }
