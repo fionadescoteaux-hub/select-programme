@@ -635,6 +635,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- ENDLINE TAB -->
 <div class="tab-panel" id="tab-endline">
+<div class="section-title">Final Commercialisation Plan</div>
+<div class="section-note">The plan the CEO takes to their board at the close of the programme, with any online links that go with it.</div>
+<div id="commercialPlanSlot" style="margin-bottom:28px"></div>
 <div class="section-title">Endline Scores vs. Baseline</div>
 <div class="section-note">Identical 9-domain assessment at programme end. Compared against locked baseline.</div>
 <table class="score-table" id="endlineTable">
@@ -4472,7 +4475,58 @@ document.getElementById('coachingAddWrap').innerHTML='';
 }
 /* addCoaching no longer needed -- cycles are pre-populated */
 
+// Final commercialisation plan — READ-ONLY. The file, links and status are
+// entered directly in Airtable (OrgProfile: CommercialPlanStatus,
+// CommercialPlanFile, CommercialPlanLinks). Nothing here writes them back.
+var CP_STATUS_STYLE={
+  'Not started':{bg:'var(--bg2)',fg:'var(--ts)'},
+  'Draft':{bg:'#fdf3d8',fg:'#7a5a00'},
+  'Issued to CEO':{bg:'var(--navy-light)',fg:'var(--navy)'},
+  'Board adopted':{bg:'var(--teal-light)',fg:'var(--teal)'}
+};
+function renderCommercialPlan(org){
+  var slot=document.getElementById('commercialPlanSlot');
+  if(!slot)return;
+  var cp=org.commercialPlan||{};
+  var status=(cp.status||'').trim();
+  var files=Array.isArray(cp.files)?cp.files.filter(function(f){return f&&f.url;}):[];
+  var links=String(cp.links||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+  var html='<div style="background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:16px 18px">';
+  var st=CP_STATUS_STYLE[status]||CP_STATUS_STYLE['Not started'];
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+((files.length||links.length)?'14px':'0')+'">';
+  html+='<span style="font-size:12px;color:var(--tt);text-transform:uppercase;letter-spacing:.04em">Status</span>';
+  html+='<span style="padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600;background:'+st.bg+';color:'+st.fg+'">'+esc(status||'Not started')+'</span>';
+  html+='</div>';
+  if(files.length){
+    html+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:'+(links.length?'14px':'0')+'">';
+    files.forEach(function(f){
+      var kb=f.size?(' <span style="opacity:.75;font-weight:400">('+Math.max(1,Math.round(f.size/1024))+' KB)</span>'):'';
+      html+='<a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--navy);color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
+    });
+    html+='</div>';
+  }
+  if(links.length){
+    html+='<div style="font-size:12px;color:var(--tt);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Online links</div>';
+    html+='<ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.7">';
+    links.forEach(function(l){
+      var m=l.match(/https?:\/\/\S+/);
+      if(m){
+        var label=l.replace(m[0],'').replace(/[\s:–—-]+$/,'').trim();
+        html+='<li>'+(label?esc(label)+': ':'')+'<a href="'+esc(m[0])+'" target="_blank" rel="noopener" style="color:var(--teal)">'+esc(m[0].replace(/^https?:\/\//,''))+'</a></li>';
+      } else {
+        html+='<li>'+esc(l)+'</li>';
+      }
+    });
+    html+='</ul>';
+  }
+  if(!files.length&&!links.length){
+    html+='<div style="margin-top:10px;color:var(--tt);font-size:13px;font-style:italic">No plan attached yet.'+(isAssessor?' Attach the file and add links in Airtable (OrgProfile → CommercialPlanFile / CommercialPlanLinks).':'')+'</div>';
+  }
+  html+='</div>';
+  slot.innerHTML=html;
+}
 function renderEndline(org){
+renderCommercialPlan(org);
 var tbody=document.querySelector('#endlineTable tbody');var html='';
 org.endline.forEach(function(e,i){
 var d=DOMAINS[i];var bl=org.baseline[i]?org.baseline[i].score:'';

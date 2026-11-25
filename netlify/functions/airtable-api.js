@@ -53,6 +53,13 @@ const F = {
   // SMART slot (s0, s1, …); each value is an array of {desc,who,byWhen,status}.
   // Persisted as long-text on ORG_PROFILE, mirroring UI_LOCKS.
   ACTION_PLAN: "flduDNQr0iTtbUuzY",
+  // ── Final commercialisation plan (added 2026-11-25) ──
+  // READ-ONLY in the tracker. Fiona and Clodagh attach the plan and add links
+  // directly in Airtable (OrgProfile); the tracker only displays them and never
+  // writes these fields back.
+  CP_STATUS: "fldW52QUlylgmDX33", // single select: Not started / Draft / Issued to CEO / Board adopted
+  CP_FILE: "fld7rzzSqli3z5ONr",   // attachments
+  CP_LINKS: "fldtk9zUsLA2PLdom",  // long text, one link per line
   // ── New fields (Phase 1) ──
   NEW_TO_ITI: "fldGjr9YiJ2ufglnJ",
   FIRST_TIME_CB: "fld150A4iIyzD3gPF",
@@ -406,6 +413,16 @@ function buildOrgFromAirtable(profile, organisations, baseline, endline, smart, 
     intensity: f[F.INTENSITY] || "",
     baselineNotes: f[F.BASELINE_NOTES] || "",
     baselineReportUrl: f[F.BASELINE_REPORT_URL] || "",
+    commercialPlan: {
+      status: (f[F.CP_STATUS] && typeof f[F.CP_STATUS] === "object") ? (f[F.CP_STATUS].name || "") : (f[F.CP_STATUS] || ""),
+      links: f[F.CP_LINKS] || "",
+      files: (Array.isArray(f[F.CP_FILE]) ? f[F.CP_FILE] : []).map((a) => ({
+        url: a.url || "",
+        filename: a.filename || "Commercialisation plan",
+        size: a.size || 0,
+        type: a.type || "",
+      })),
+    },
     baseline_structure: f[F.BASELINE_STRUCT] || "domain",
     assessor: assessorObj,
     kpi: {

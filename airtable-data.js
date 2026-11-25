@@ -227,6 +227,9 @@ var AT = (function() {
             if (!o._uiLocks   || typeof o._uiLocks   !== 'object') o._uiLocks   = {};
             if (typeof o.baselineNotes !== 'string') o.baselineNotes = '';
             if (typeof o.baselineReportUrl !== 'string') o.baselineReportUrl = '';
+            // Final commercialisation plan: read-only, always taken fresh from Airtable
+            // (attachment links expire, so the cached copy is never preferred).
+            if (!o.commercialPlan || typeof o.commercialPlan !== 'object') o.commercialPlan = { status: '', links: '', files: [] };
             if (typeof o.baseline_structure !== 'string') o.baseline_structure = 'domain';
 
             // CACHE PROTECTS LOCAL EDITS: if cache has data Airtable returned empty, keep cache
