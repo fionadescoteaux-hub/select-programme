@@ -116,6 +116,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 .tab-btn[data-tab="actionplan"]{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:700;padding:10px 22px;font-size:13.5px;box-shadow:0 1px 3px rgba(0,140,130,0.25);margin-right:6px}
 .tab-btn[data-tab="actionplan"]:hover:not(.active){background:#006b63;color:#fff;border-color:#006b63}
 .tab-btn[data-tab="actionplan"].active{background:#004a44;color:#fff;border-color:#004a44}
+.tab-btn[data-tab="endline"]{background:#2e7d32;color:#fff;border-color:#2e7d32;font-weight:700}
+.tab-btn[data-tab="endline"]:hover:not(.active){background:#256628;color:#fff;border-color:#256628}
+.tab-btn[data-tab="endline"].active{background:#1b4d1e;color:#fff;border-color:#1b4d1e}
 .tab-panel{display:none}.tab-panel.active{display:block}
 
 .kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
@@ -529,7 +532,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 <button class="tab-btn" data-tab="smart" onclick="switchTab('smart',this)">SMART Objectives</button>
 <button class="tab-btn" data-tab="consulting" onclick="switchTab('consulting',this)">1:1 Consulting</button>
 <button class="tab-btn" data-tab="coaching" onclick="switchTab('coaching',this)">Coaching</button>
-<button class="tab-btn" data-tab="endline" onclick="switchTab('endline',this)">Endline</button>
+<button class="tab-btn" data-tab="endline" onclick="switchTab('endline',this)">Exit &amp; Commercialisation Plan</button>
 <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance',this)">Attendance</button>
 <button class="tab-btn" data-tab="financial" onclick="switchTab('financial',this)">Financial</button>
 <button class="tab-btn" data-tab="notes" onclick="switchTab('notes',this)">Notes</button>
@@ -635,7 +638,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tp);line-height:1.
 
 <!-- ENDLINE TAB -->
 <div class="tab-panel" id="tab-endline">
-<div class="section-title">Final Commercialisation Plan</div>
+<div class="section-title" style="color:#2e7d32">Final Commercialisation Plan</div>
 <div class="section-note">The plan the CEO takes to their board at the close of the programme, with any online links that go with it.</div>
 <div id="commercialPlanSlot" style="margin-bottom:28px"></div>
 <div class="section-title">Endline Scores vs. Baseline</div>
@@ -4491,7 +4494,7 @@ function renderCommercialPlan(org){
   var status=(cp.status||'').trim();
   var files=Array.isArray(cp.files)?cp.files.filter(function(f){return f&&f.url;}):[];
   var links=String(cp.links||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
-  var html='<div style="background:var(--card);border:1px solid var(--tb2);border-radius:var(--r2);padding:16px 18px">';
+  var html='<div style="background:var(--card);border:1px solid var(--tb2);border-left:4px solid #2e7d32;border-radius:var(--r2);padding:16px 18px">';
   var st=CP_STATUS_STYLE[status]||CP_STATUS_STYLE['Not started'];
   html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:'+((files.length||links.length)?'14px':'0')+'">';
   html+='<span style="font-size:12px;color:var(--tt);text-transform:uppercase;letter-spacing:.04em">Status</span>';
@@ -4501,7 +4504,7 @@ function renderCommercialPlan(org){
     html+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:'+(links.length?'14px':'0')+'">';
     files.forEach(function(f){
       var kb=f.size?(' <span style="opacity:.75;font-weight:400">('+Math.max(1,Math.round(f.size/1024))+' KB)</span>'):'';
-      html+='<a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--navy);color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
+      html+='<a href="'+esc(f.url)+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#2e7d32;color:#fff;border-radius:var(--r);font-size:13px;font-weight:600;text-decoration:none">&#128196; '+esc(f.filename||'Commercialisation plan')+kb+'</a>';
     });
     html+='</div>';
   }
