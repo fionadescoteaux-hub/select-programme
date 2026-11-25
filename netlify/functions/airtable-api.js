@@ -302,6 +302,25 @@ function selectVal(v) {
 // writes it, so a stale tracker cache can't wipe an attached plan.
 const PLAN_MAX_BYTES = 4 * 1024 * 1024; // Netlify request limit is ~6 MB once base64-encoded
 
+// CEOs (non-assessor requests) never receive a draft plan file: the file is
+// sent only once CommercialPlanStatus is "Issued to CEO" or "Board adopted".
+function hideDraftPlans(res) {
+  try {
+    const body = JSON.parse(res.body);
+    const strip = (o) => {
+      if (!o || !o.commercialPlan) return;
+      const st = o.commercialPlan.status || "";
+      if (st !== "Issued to CEO" && st !== "Board adopted") {
+        o.commercialPlan.hasDraft = (o.commercialPlan.files || []).length > 0;
+        o.commercialPlan.files = [];
+      }
+    };
+    (body.orgs || []).forEach(strip);
+    strip(body.org);
+    return { ...res, body: JSON.stringify(body) };
+  } catch (e) { return res; }
+}
+
 async function findProfileByCode(orgCode) {
   if (!orgCode) return null;
   const formula = encodeURIComponent(`{OrgCode}="${String(orgCode).replace(/"/g, '')}"`);
@@ -1503,8 +1522,8 @@ exports.handler = async (event) => {
 
   try {
     switch (body.action) {
-      case "list": return await handleList();
-      case "get": return await handleGet(body.code);
+      case "list": return isAssessor ? await handleList() : hideDraftPlans(await handleList());
+      case "get": return isAssessor ? await handleGet(body.code) : hideDraftPlans(await handleGet(body.code));
       case "create": return await handleCreate(body);
       case "update": return await handleUpdate(body);
       case "remove": return await handleRemove(body.code);

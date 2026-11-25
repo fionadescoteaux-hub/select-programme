@@ -4493,6 +4493,10 @@ function renderCommercialPlan(org){
   var cp=org.commercialPlan||{};
   var status=(cp.status||'').trim();
   var files=Array.isArray(cp.files)?cp.files.filter(function(f){return f&&f.url;}):[];
+  // CEOs only see the plan file once it has been issued to them; drafts stay with the assessors.
+  var issued=(status==='Issued to CEO'||status==='Board adopted');
+  var hiddenDraft=(!isAssessor&&!issued&&(files.length>0||cp.hasDraft));
+  if(!isAssessor&&!issued)files=[];
   var links=String(cp.links||'').split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
   var html='<div style="background:var(--card);border:1px solid var(--tb2);border-left:4px solid #d9640f;border-radius:var(--r2);padding:16px 18px">';
   var st=CP_STATUS_STYLE[status]||CP_STATUS_STYLE['Not started'];
@@ -4524,8 +4528,11 @@ function renderCommercialPlan(org){
     });
     html+='</ul>';
   }
-  if(!files.length&&!links.length&&!isAssessor){
-    html+='<div style="margin-top:10px;color:var(--tt);font-size:13px;font-style:italic">No plan attached yet.</div>';
+  if(!files.length&&!isAssessor){
+    html+='<div style="margin-top:10px;color:var(--tt);font-size:13px;font-style:italic">'+(hiddenDraft?'Your plan is being finalised and will appear here once it is issued to you.':'No plan attached yet.')+'</div>';
+  }
+  if(isAssessor&&files.length&&!issued){
+    html+='<div style="margin-top:-4px;margin-bottom:12px;font-size:12.5px;color:var(--tt)">Draft: only you and Clodagh can see the file. The CEO sees it once the status is set to Issued to CEO.</div>';
   }
   if(isAssessor){
     html+='<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--tb2);display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
